@@ -58,6 +58,8 @@ export const bw =
 	<C extends Parser<unknown> = Parser<string>>(consume?: C) =>
 		between(a)(b ?? a)(consume ?? everyCharUntil(b ?? a)) as C;
 
+export const quoted: Parser<string> = choice([bw(str('"'))(), bw(str("'"))()]);
+
 export const wsed = <T>(parser: Parser<T>) => bw(wss, wss)(parser);
 
 const Brackets = {
@@ -72,33 +74,3 @@ export const bracketed = <T>(parser: Parser<T>, type: Brackets = "(") =>
 	bw(str(type), str(Brackets[type]))(wsed(parser));
 
 export const maybeBracketed = <T>(parser: Parser<T>, type: Brackets = "(") => choice([bracketed(parser, type), parser]);
-
-Deno.test("maybeBracketed: 1", () => {
-	assertParser(maybeBracketed(str("Hello, World!")), "Hello, World!", "Hello, World!");
-});
-
-Deno.test("maybeBracketed: 2", () => {
-	assertParser(maybeBracketed(str("Hello, World!")), "(Hello, World!)", "Hello, World!");
-});
-
-Deno.test("maybeBracketed: 3", () => {
-	assertParser(maybeBracketed(str("Hello, World!")), "( Hello, World!   )", "Hello, World!");
-});
-
-Deno.test("maybeBracketed: 4", () => {
-	assertParser(maybeBracketed(str("Hello, World!"), "["), "[ Hello, World! ]", "Hello, World!");
-});
-
-Deno.test("maybeBracketed: 5", () => {
-	assertParser(maybeBracketed(str("Hello, World!"), "{"), "{ Hello, World! }", "Hello, World!");
-});
-
-export const quoted: Parser<string> = choice([bw(str('"'))(), bw(str("'"))()]);
-
-Deno.test("quoted: 1", () => {
-	assertParser(quoted, '"Hello, World!"', "Hello, World!");
-});
-
-Deno.test("quoted: 2", () => {
-	assertParser(quoted, "'Hello, World!'", "Hello, World!");
-});
