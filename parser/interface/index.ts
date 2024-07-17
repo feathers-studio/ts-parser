@@ -1,6 +1,5 @@
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
-import { many, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
-import { bw } from "../utils.ts";
+import { many, optionalWhitespace, Parser, possibly, sequenceOf, str } from "npm:arcsecond";
+import { assertParser, bw } from "../utils.ts";
 import { type DocString, docString } from "../docString.ts";
 import { type InterfaceMember, interfaceMember } from "./member.ts";
 import { interfaceHeader } from "./header.ts";
@@ -27,28 +26,70 @@ export const iface: Parser<Interface> = sequenceOf([
 	members,
 }));
 
-Deno.test("iface", () => {
-	{
-		const result = iface.run(`interface Hello extends World {
+Deno.test("iface: 1", () => {
+	assertParser(
+		iface,
+		`interface Hello extends World {
 		readonly hello ? : World;
 		readonly hello : "World";
-	}`);
-		assert(!result.isError);
-		assertEquals(result.result.type, "interface");
-		assertEquals(result.result.name, "Hello");
-		assertEquals(result.result.extends, "World");
-		assertEquals(result.result.members.length, 2);
-	}
+	}`,
+		{
+			type: "interface",
+			doc: null,
+			name: "Hello",
+			extends: "World",
+			members: [
+				{
+					type: "member",
+					doc: null,
+					modifier: ["readonly"],
+					name: { type: "identifier", value: "hello" },
+					optional: true,
+					defn: { type: "identifier", value: "World" },
+				},
+				{
+					type: "member",
+					doc: null,
+					modifier: ["readonly"],
+					name: { type: "identifier", value: "hello" },
+					optional: false,
+					defn: { primitive: true, type: "string", value: "World" },
+				},
+			],
+		},
+	);
+});
 
-	{
-		const result = iface.run(`interface Hello {
+Deno.test("iface: 2", () => {
+	assertParser(
+		iface,
+		`interface Hello {
 		readonly hello ? : World;
 		readonly hello : "World";
-	}`);
-		assert(!result.isError);
-		assertEquals(result.result.type, "interface");
-		assertEquals(result.result.name, "Hello");
-		assertEquals(result.result.extends, null);
-		assertEquals(result.result.members.length, 2);
-	}
+	}`,
+		{
+			type: "interface",
+			doc: null,
+			name: "Hello",
+			extends: null,
+			members: [
+				{
+					type: "member",
+					doc: null,
+					modifier: ["readonly"],
+					name: { type: "identifier", value: "hello" },
+					optional: true,
+					defn: { type: "identifier", value: "World" },
+				},
+				{
+					type: "member",
+					doc: null,
+					modifier: ["readonly"],
+					name: { type: "identifier", value: "hello" },
+					optional: false,
+					defn: { primitive: true, type: "string", value: "World" },
+				},
+			],
+		},
+	);
 });

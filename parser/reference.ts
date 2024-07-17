@@ -1,6 +1,5 @@
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
 import { Parser, str } from "npm:arcsecond";
-import { bw, quoted } from "./utils.ts";
+import { assertParser, bw, quoted } from "./utils.ts";
 
 export interface Reference {
 	type: "reference";
@@ -14,8 +13,5 @@ export const reference: Parser<Reference> = bw(
 )(quoted).map(path => ({ type: "reference", path }));
 
 Deno.test("reference", () => {
-	const result = reference.run('/// <reference path="./iterable.d.ts" />');
-	assert(!result.isError);
-	assertEquals(result.result.type, "reference");
-	assertEquals(result.result.path, "./iterable.d.ts");
+	assertParser(reference, '/// <reference path="./iterable.d.ts" />', { type: "reference", path: "./iterable.d.ts" });
 });

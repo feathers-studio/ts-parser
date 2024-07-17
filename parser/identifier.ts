@@ -1,5 +1,6 @@
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
+import { assert, assertObjectMatch } from "jsr:@std/assert@1.0.0";
 import { choice, digit, letter, many, Parser, sequenceOf, str } from "npm:arcsecond";
+import { assertParser, assertParserFails } from "./utils.ts";
 
 // "(_|$|[a-zA-Z])(_|$|[a-zA-Z0-9])+";
 
@@ -15,80 +16,54 @@ export const identifier: Parser<Identifier> = //
 		.map(([n, d]) => n + d)
 		.map(str => ({ type: "identifier", value: str }));
 
-Deno.test("identifier", () => {
-	{
-		const result = identifier.run("helloWorld");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld" });
-	}
+Deno.test("identifier: 1", () => {
+	assertParser(identifier, "helloWorld", { type: "identifier", value: "helloWorld" });
+});
 
-	{
-		const result = identifier.run("_helloWorld");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "_helloWorld" });
-	}
+Deno.test("identifier: 2", () => {
+	assertParser(identifier, "_helloWorld", { type: "identifier", value: "_helloWorld" });
+});
 
-	{
-		const result = identifier.run("$helloWorld");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "$helloWorld" });
-	}
+Deno.test("identifier: 3", () => {
+	assertParser(identifier, "$helloWorld", { type: "identifier", value: "$helloWorld" });
+});
 
-	{
-		const result = identifier.run("_$helloWorld");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "_$helloWorld" });
-	}
+Deno.test("identifier: 4", () => {
+	assertParser(identifier, "_$helloWorld", { type: "identifier", value: "_$helloWorld" });
+});
 
-	{
-		const result = identifier.run("helloWorld_");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld_" });
-	}
+Deno.test("identifier: 5", () => {
+	assertParser(identifier, "helloWorld_", { type: "identifier", value: "helloWorld_" });
+});
 
-	{
-		const result = identifier.run("helloWorld$");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld$" });
-	}
+Deno.test("identifier: 6", () => {
+	assertParser(identifier, "helloWorld$", { type: "identifier", value: "helloWorld$" });
+});
 
-	{
-		const result = identifier.run("helloWorld0");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld0" });
-	}
+Deno.test("identifier: 7", () => {
+	assertParser(identifier, "helloWorld0", { type: "identifier", value: "helloWorld0" });
+});
 
-	{
-		const result = identifier.run("helloWorld_0");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld_0" });
-	}
+Deno.test("identifier: 8", () => {
+	assertParser(identifier, "helloWorld_0", { type: "identifier", value: "helloWorld_0" });
+});
 
-	{
-		const result = identifier.run("helloWorld$0");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld$0" });
-	}
+Deno.test("identifier: 9", () => {
+	assertParser(identifier, "helloWorld$0", { type: "identifier", value: "helloWorld$0" });
+});
 
-	{
-		const result = identifier.run("helloWorld_0$");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld_0$" });
-	}
+Deno.test("identifier: 10", () => {
+	assertParser(identifier, "helloWorld_0$", { type: "identifier", value: "helloWorld_0$" });
+});
 
-	{
-		const result = identifier.run("helloWorld$0_");
-		assert(!result.isError);
-		assertEquals(result.result, { type: "identifier", value: "helloWorld$0_" });
-	}
+Deno.test("identifier: 11", () => {
+	assertParser(identifier, "helloWorld$0_", { type: "identifier", value: "helloWorld$0_" });
+});
 
-	{
-		const result = identifier.run("0helloWorld");
-		assert(result.isError);
-	}
+Deno.test("identifier: 12", () => {
+	assertParserFails(identifier, "0helloWorld");
+});
 
-	{
-		const result = identifier.run("-");
-		assert(result.isError);
-	}
+Deno.test("identifier: 13", () => {
+	assertParserFails(identifier, "hello-World");
 });

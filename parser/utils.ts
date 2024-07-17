@@ -4,7 +4,6 @@ import {
 	choice,
 	endOfInput,
 	everyCharUntil,
-	many,
 	optionalWhitespace,
 	Parser,
 	sepBy,
@@ -12,6 +11,16 @@ import {
 	str,
 	whitespace,
 } from "npm:arcsecond";
+
+export const assertParser = (parser: Parser<unknown>, source: string, expected: unknown) => {
+	const result = ends(parser).run(source);
+	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
+};
+
+export const assertParserFails = (parser: Parser<unknown>, source: string) => {
+	const result = ends(parser).run(source);
+	assert(result.isError);
+};
 
 export const ws = whitespace.map(() => null);
 export const wss = optionalWhitespace.map(() => null);
@@ -64,50 +73,32 @@ export const bracketed = <T>(parser: Parser<T>, type: Brackets = "(") =>
 
 export const maybeBracketed = <T>(parser: Parser<T>, type: Brackets = "(") => choice([bracketed(parser, type), parser]);
 
-Deno.test("maybeBracketed", () => {
-	{
-		const result = maybeBracketed(str("Hello, World!")).run("Hello, World!");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("maybeBracketed: 1", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "Hello, World!", "Hello, World!");
+});
 
-	{
-		const result = maybeBracketed(str("Hello, World!")).run("(Hello, World!)");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("maybeBracketed: 2", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "(Hello, World!)", "Hello, World!");
+});
 
-	{
-		const result = maybeBracketed(str("Hello, World!")).run("( Hello, World!   )");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("maybeBracketed: 3", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "( Hello, World!   )", "Hello, World!");
+});
 
-	{
-		const result = maybeBracketed(str("Hello, World!"), "[").run("[ Hello, World! ]");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("maybeBracketed: 4", () => {
+	assertParser(maybeBracketed(str("Hello, World!"), "["), "[ Hello, World! ]", "Hello, World!");
+});
 
-	{
-		const result = maybeBracketed(str("Hello, World!"), "{").run("{ Hello, World! }");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("maybeBracketed: 5", () => {
+	assertParser(maybeBracketed(str("Hello, World!"), "{"), "{ Hello, World! }", "Hello, World!");
 });
 
 export const quoted: Parser<string> = choice([bw(str('"'))(), bw(str("'"))()]);
 
-Deno.test("quoted", () => {
-	{
-		const result = quoted.run('"Hello, World!"');
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("quoted: 1", () => {
+	assertParser(quoted, '"Hello, World!"', "Hello, World!");
+});
 
-	{
-		const result = quoted.run("'Hello, World!'");
-		assert(!result.isError);
-		assertEquals(result.result, "Hello, World!");
-	}
+Deno.test("quoted: 2", () => {
+	assertParser(quoted, "'Hello, World!'", "Hello, World!");
 });

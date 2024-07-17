@@ -1,6 +1,5 @@
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
 import { choice, Parser, str } from "npm:arcsecond";
-import { bw } from "./utils.ts";
+import { assertParser, bw } from "./utils.ts";
 
 export interface Comment {
 	type: "comment";
@@ -19,33 +18,33 @@ export const comment: {
 export const anyComment: Parser<Comment> = choice([comment.single, comment.multi]);
 
 Deno.test("comment.single", () => {
-	const result = comment.single.run("// Hello, World!\n");
-	assert(!result.isError);
-	assertEquals(result.result.type, "comment");
-	assertEquals(result.result.text, " Hello, World!");
-	assertEquals(result.result.multi, false);
+	assertParser(comment.single, "// Hello, World!\n", {
+		type: "comment",
+		text: " Hello, World!",
+		multi: false,
+	});
 });
 
 Deno.test("comment.multi", () => {
-	const result = comment.multi.run(`/* Hello, many\n worlds! */`);
-	assert(!result.isError);
-	assertEquals(result.result.type, "comment");
-	assertEquals(result.result.text, " Hello, many\n worlds! ");
-	assertEquals(result.result.multi, true);
+	assertParser(comment.multi, "/* Hello, many\n worlds! */", {
+		type: "comment",
+		text: " Hello, many\n worlds! ",
+		multi: true,
+	});
 });
 
 Deno.test("anyComment:single", () => {
-	const result = anyComment.run("// Hello, World!\n");
-	assert(!result.isError);
-	assertEquals(result.result.type, "comment");
-	assertEquals(result.result.text, " Hello, World!");
-	assertEquals(result.result.multi, false);
+	assertParser(anyComment, "// Hello, World!\n", {
+		type: "comment",
+		text: " Hello, World!",
+		multi: false,
+	});
 });
 
 Deno.test("anyComment:multi", () => {
-	const result = comment.multi.run(`/* Hello, many\n worlds! */`);
-	assert(!result.isError);
-	assertEquals(result.result.type, "comment");
-	assertEquals(result.result.text, " Hello, many\n worlds! ");
-	assertEquals(result.result.multi, true);
+	assertParser(anyComment, "/* Hello, many\n worlds! */", {
+		type: "comment",
+		text: " Hello, many\n worlds! ",
+		multi: true,
+	});
 });

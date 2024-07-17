@@ -1,7 +1,9 @@
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
+import { assert, assertEquals, assertObjectMatch } from "jsr:@std/assert@1.0.0";
 import { optionalWhitespace, Parser, sequenceOf, str } from "npm:arcsecond";
 import { identifier } from "../identifier.ts";
 import { value, Value } from "../value/index.ts";
+import { primitive } from "../value/primitive.ts";
+import { assertParser } from "../utils.ts";
 
 export interface IndexKey {
 	type: "index-key";
@@ -26,9 +28,9 @@ export const indexKey: Parser<IndexKey> = sequenceOf([
 );
 
 Deno.test("indexSignature", () => {
-	const result = indexKey.run("[key: string]");
-	assert(!result.isError);
-	assertEquals(result.result.type, "index-key");
-	assertEquals(result.result.name, "key");
-	assertEquals(result.result.indexType, { primitive: true, type: "string", value: null });
+	assertParser(indexKey, "[key: string]", {
+		type: "index-key",
+		name: "key",
+		indexType: { primitive: true, type: "string", value: null },
+	});
 });

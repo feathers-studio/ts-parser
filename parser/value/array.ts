@@ -1,6 +1,5 @@
-import { assertEquals } from "jsr:@std/assert@1.0.0";
 import { choice, many1, Parser, sequenceOf } from "npm:arcsecond";
-import { wss, maybeBracketed, wsed, bracketed, ends } from "../utils.ts";
+import { wss, maybeBracketed, wsed, bracketed, assertParser } from "../utils.ts";
 import { unionValue, UnionValue } from "./union.ts";
 import { tupleValue, TupleValue } from "./tuple.ts";
 import { PrimitiveOrId, primitiveOrId } from "./base.ts";
@@ -21,24 +20,29 @@ export const arrayValue: Parser<ArrayValue> = sequenceOf([
 	});
 
 Deno.test("arrayValue: 1", () => {
-	const source = "string [  ]";
-	const result = ends(arrayValue).run(source);
-
-	assertEquals(result, {
-		isError: false,
-		result: { type: "array", value: { primitive: true, type: "string", value: null } },
-		index: source.length,
-		data: null,
+	assertParser(arrayValue, "string[]", {
+		type: "array",
+		value: { primitive: true, type: "string", value: null },
 	});
 });
 
 Deno.test("arrayValue: 2", () => {
-	const source = "( string | number  ) [ ]";
-	const result = ends(arrayValue).run(source);
+	assertParser(arrayValue, "(string | number)[]", {
+		type: "array",
+		value: {
+			type: "union",
+			options: [
+				{ primitive: true, type: "string", value: null },
+				{ primitive: true, type: "number", value: null },
+			],
+		},
+	});
+});
 
-	assertEquals(result, {
-		isError: false,
-		result: {
+Deno.test("arrayValue: 3", () => {
+	assertParser(arrayValue, "(string | number)[][]", {
+		type: "array",
+		value: {
 			type: "array",
 			value: {
 				type: "union",
@@ -48,32 +52,5 @@ Deno.test("arrayValue: 2", () => {
 				],
 			},
 		},
-		index: source.length,
-		data: null,
-	});
-});
-
-Deno.test("arrayValue: 3", () => {
-	const source = "( string | number | null ) [ ] []";
-	const result = ends(arrayValue).run(source);
-
-	assertEquals(result, {
-		isError: false,
-		result: {
-			type: "array",
-			value: {
-				type: "array",
-				value: {
-					type: "union",
-					options: [
-						{ primitive: true, type: "string", value: null },
-						{ primitive: true, type: "number", value: null },
-						{ primitive: true, type: "null" },
-					],
-				},
-			},
-		},
-		index: source.length,
-		data: null,
 	});
 });
