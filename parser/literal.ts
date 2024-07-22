@@ -1,11 +1,15 @@
 import { possibly, choice, digits, Parser, sequenceOf, str } from "npm:arcsecond";
 import { bw, seq, wsed } from "./utils.ts";
+import { ParserBase } from "./base.ts";
 
 export namespace Literal {
-	export class String {
+	export class String extends ParserBase {
 		primitive: true = true;
 		type: "string" = "string";
-		constructor(public value: string) {}
+
+		constructor(public value: string) {
+			super();
+		}
 
 		static from(value: string) {
 			return new String(value);
@@ -20,10 +24,13 @@ export namespace Literal {
 		}
 	}
 
-	export class Number {
+	export class Number extends ParserBase {
 		primitive: true = true;
 		type: "number" = "number";
-		constructor(public value: number) {}
+
+		constructor(public value: number) {
+			super();
+		}
 
 		static from(value: number) {
 			return new Number(value);
@@ -42,10 +49,13 @@ export namespace Literal {
 		}
 	}
 
-	export class Boolean {
+	export class Boolean extends ParserBase {
 		primitive: true = true;
 		type: "boolean" = "boolean";
-		constructor(public value: boolean) {}
+
+		constructor(public value: boolean) {
+			super();
+		}
 
 		static from(value: boolean) {
 			return new Boolean(value);
@@ -60,7 +70,7 @@ export namespace Literal {
 		}
 	}
 
-	export class Null {
+	export class Null extends ParserBase {
 		primitive: true = true;
 		type: "null" = "null";
 
@@ -77,7 +87,7 @@ export namespace Literal {
 		}
 	}
 
-	export class Undefined {
+	export class Undefined extends ParserBase {
 		primitive: true = true;
 		type: "undefined" = "undefined";
 
@@ -94,10 +104,13 @@ export namespace Literal {
 		}
 	}
 
-	export class SymbolType {
+	export class SymbolType extends ParserBase {
 		primitive: true = true;
 		type: "symbol" = "symbol";
-		constructor(public unique: boolean) {}
+
+		constructor(public unique: boolean) {
+			super();
+		}
 
 		static from(unique: boolean) {
 			return new SymbolType(unique);
@@ -114,10 +127,13 @@ export namespace Literal {
 		}
 	}
 
-	export class BigIntType {
+	export class BigIntType extends ParserBase {
 		primitive: true = true;
 		type: "bigint" = "bigint";
-		constructor(public value: bigint) {}
+
+		constructor(public value: bigint) {
+			super();
+		}
 
 		static from(value: bigint) {
 			return new BigIntType(value);

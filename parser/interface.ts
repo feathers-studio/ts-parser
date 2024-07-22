@@ -3,13 +3,15 @@ import { DocString } from "./docString.ts";
 import { Member, ObjectType, Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { MaybeExtends } from "./extends.ts";
+import { ParserBase } from "./base.ts";
 
-export class InterfaceHeader {
+export class InterfaceHeader extends ParserBase {
 	type: "interface-header" = "interface-header";
 
 	extends: Type[] | null;
 
 	private constructor(public name: string, ext?: Type[] | null) {
+		super();
 		this.extends = ext ?? null;
 	}
 
@@ -28,7 +30,7 @@ export class InterfaceHeader {
 	}
 }
 
-export class InterfaceDeclaration {
+export class InterfaceDeclaration extends ParserBase {
 	type: "interface" = "interface";
 
 	extends: Type[] | null;
@@ -42,6 +44,7 @@ export class InterfaceDeclaration {
 			doc?: DocString | null;
 		},
 	) {
+		super();
 		this.extends = extra?.extends ?? null;
 		this.doc = extra?.doc ?? null;
 	}

@@ -1,4 +1,5 @@
 import { choice, Parser, str } from "npm:arcsecond";
+import { ParserBase } from "./base.ts";
 
 /*
 PredefinedType:
@@ -13,11 +14,13 @@ PredefinedType:
 */
 
 export namespace Predefined {
-	export class Any {
+	export class Any extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "any" = "any";
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new Any();
@@ -32,12 +35,14 @@ export namespace Predefined {
 		}
 	}
 
-	export class Number {
+	export class Number extends ParserBase {
 		primitive: true = true;
 		type: "number" = "number";
 		value: null = null;
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new Number();
@@ -52,12 +57,14 @@ export namespace Predefined {
 		}
 	}
 
-	export class Boolean {
+	export class Boolean extends ParserBase {
 		primitive: true = true;
 		type: "boolean" = "boolean";
 		value: null = null;
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new Boolean();
@@ -72,12 +79,14 @@ export namespace Predefined {
 		}
 	}
 
-	export class BigInt {
+	export class BigInt extends ParserBase {
 		primitive: true = true;
 		type: "bigint" = "bigint";
 		value: null = null;
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new BigInt();
@@ -92,12 +101,14 @@ export namespace Predefined {
 		}
 	}
 
-	export class String {
+	export class String extends ParserBase {
 		primitive: true = true;
 		type: "string" = "string";
 		value: null = null;
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new String();
@@ -112,11 +123,13 @@ export namespace Predefined {
 		}
 	}
 
-	export class Void {
+	export class Void extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "void" = "void";
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new Void();
@@ -131,11 +144,13 @@ export namespace Predefined {
 		}
 	}
 
-	export class Never {
+	export class Never extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "never" = "never";
 
-		private constructor() {}
+		private constructor() {
+			super();
+		}
 
 		static from() {
 			return new Never();

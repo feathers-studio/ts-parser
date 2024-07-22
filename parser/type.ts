@@ -1,9 +1,10 @@
 import { Parser, choice, many, possibly, sequenceOf, str, takeLeft, char } from "npm:arcsecond";
-import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws, assertParser } from "./utils.ts";
+import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { DocString } from "./docString.ts";
+import { ParserBase } from "./base.ts";
 
 const arrayPostfix = bracketed(
 	wss.map(() => "array"),
@@ -29,10 +30,12 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 		}),
 );
 
-export class IntersectionType {
+export class IntersectionType extends ParserBase {
 	type: "intersection" = "intersection";
 
-	private constructor(public types: Type[]) {}
+	private constructor(public types: Type[]) {
+		super();
+	}
 
 	static from(types: Type[]) {
 		return new IntersectionType(types);
@@ -54,10 +57,12 @@ export class IntersectionType {
 export type IntersectionOrPrimaryType = IntersectionType | PrimaryType;
 export const IntersectionOrPrimaryType = choice([IntersectionType.parse, PrimaryType]);
 
-export class UnionType {
+export class UnionType extends ParserBase {
 	type: "union" = "union";
 
-	private constructor(public types: Type[]) {}
+	private constructor(public types: Type[]) {
+		super();
+	}
 
 	static from(types: Type[]) {
 		return new UnionType(types);
@@ -107,10 +112,12 @@ QualifiedName = Name . Identifier
 
 */
 
-export class QualifiedName {
+export class QualifiedName extends ParserBase {
 	type: "qualified-name" = "qualified-name";
 
-	private constructor(public left: TypeName, public name: Identifier) {}
+	private constructor(public left: TypeName, public name: Identifier) {
+		super();
+	}
 
 	static from(left: TypeName, name: Identifier) {
 		return new QualifiedName(left, name);
@@ -147,12 +154,13 @@ export interface TypeReference {
 	typeArguments: Type[] | null;
 }
 
-export class TypeReference {
+export class TypeReference extends ParserBase {
 	type: "type-reference" = "type-reference";
 
 	typeArguments: Type[] | null;
 
 	private constructor(public name: TypeName, typeArguments?: Type[] | null) {
+		super();
 		this.typeArguments = typeArguments ?? null;
 	}
 
@@ -173,10 +181,12 @@ export class TypeReference {
 	}
 }
 
-export class IndexKey {
+export class IndexKey extends ParserBase {
 	type: "index-key" = "index-key";
 
-	private constructor(public key: string, public indexType: Type) {}
+	private constructor(public key: string, public indexType: Type) {
+		super();
+	}
 
 	static from(key: string, indexType: Type) {
 		return new IndexKey(key, indexType);
@@ -202,7 +212,7 @@ export const Modifier: Parser<Modifier> = choice([
 	str("protected"),
 ]) as Parser<Modifier>;
 
-export class Member {
+export class Member extends ParserBase {
 	type: "member" = "member";
 
 	doc: DocString | null;
@@ -218,6 +228,7 @@ export class Member {
 			optional?: boolean;
 		},
 	) {
+		super();
 		this.doc = extra?.doc ?? null;
 		this.modifier = extra?.modifier ?? [];
 		this.optional = extra?.optional ?? false;
@@ -259,12 +270,13 @@ export class Member {
 
 const PropertySeparator = choice([char(";"), char(",")]);
 
-export class ObjectType {
+export class ObjectType extends ParserBase {
 	type: "object" = "object";
 
 	doc: DocString | null;
 
 	private constructor(public members: Member[], extra?: { doc?: DocString }) {
+		super();
 		this.doc = extra?.doc ?? null;
 	}
 
@@ -291,10 +303,12 @@ export class ObjectType {
 	}
 }
 
-export class ArrayType {
+export class ArrayType extends ParserBase {
 	type: "array" = "array";
 
-	private constructor(public value: Type) {}
+	private constructor(public value: Type) {
+		super();
+	}
 
 	static from(value: Type) {
 		return new ArrayType(value);
@@ -309,10 +323,12 @@ export class ArrayType {
 	}
 }
 
-export class TupleType {
+export class TupleType extends ParserBase {
 	type: "tuple" = "tuple";
 
-	private constructor(public values: Type[]) {}
+	private constructor(public values: Type[]) {
+		super();
+	}
 
 	static from(values: Type[]) {
 		return new TupleType(values);
@@ -327,7 +343,7 @@ export class TupleType {
 	}
 }
 
-export class ThisType {
+export class ThisType extends ParserBase {
 	type: "this" = "this";
 
 	static get parse(): Parser<ThisType> {

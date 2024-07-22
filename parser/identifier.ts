@@ -1,12 +1,15 @@
 import { choice, digit, letter, many, Parser, sequenceOf, str } from "npm:arcsecond";
+import { ParserBase } from "./base.ts";
 
 // "(_|$|[a-zA-Z])(_|$|[a-zA-Z0-9])+";
 
 const fstChar = choice([str("_"), str("$"), letter]);
 
-export class Identifier {
+export class Identifier extends ParserBase {
 	type: "identifier" = "identifier";
-	constructor(public name: string) {}
+	constructor(public name: string) {
+		super();
+	}
 
 	static from(name: string) {
 		return new Identifier(name);

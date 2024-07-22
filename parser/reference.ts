@@ -1,10 +1,12 @@
 import { Parser, str } from "npm:arcsecond";
 import { bw, quoted } from "./utils.ts";
+import { ParserBase } from "./base.ts";
 
-export class Reference {
+export class Reference extends ParserBase {
 	type: "reference" = "reference";
 
 	private constructor(public path: string) {
+		super();
 		this.path = path;
 	}
 
