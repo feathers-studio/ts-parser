@@ -1,4 +1,4 @@
-import { parser } from "./index.ts";
+import { parse } from "./index.ts";
 import { assertParser } from "./utils.ts";
 
 import { Comment } from "./comment.ts";
@@ -12,7 +12,7 @@ import { Identifier } from "./identifier.ts";
 
 Deno.test("parse", () => {
 	assertParser(
-		parser,
+		parse,
 		`
 /// Extract from lib.dom.d.ts
 /// <reference path="./iterable.d.ts" />
