@@ -6,13 +6,20 @@ import {
 	everyCharUntil,
 	optionalWhitespace,
 	Parser,
+	recursiveParser,
 	sepBy,
 	sequenceOf,
 	str,
+	takeLeft,
 	whitespace,
 } from "npm:arcsecond";
 
-export const assertParser = (parser: Parser<unknown>, source: string, expected: unknown) => {
+export const head = <T>(xs: T[]) => xs[0];
+export const tail = <T>(xs: T[]) => xs.slice(1);
+export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
+export const last = <T>(xs: T[]) => xs[xs.length - 1];
+
+export const assertParser = <T>(parser: Parser<T>, source: string, expected: T) => {
 	const result = ends(parser).run(source);
 	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
 };
@@ -22,10 +29,12 @@ export const assertParserFails = (parser: Parser<unknown>, source: string) => {
 	assert(result.isError);
 };
 
+export const seq = sequenceOf;
+export const lazy = recursiveParser;
+
 export const ws = whitespace.map(() => null);
 export const wss = optionalWhitespace.map(() => null);
-export const ends = <P extends Parser<unknown>>(parser: P): P =>
-	sequenceOf([parser, endOfInput]).map(([value]) => value) as P;
+export const ends = <P extends Parser<T>, T>(parser: P): P => takeLeft(parser)(endOfInput) as P;
 
 export function nonNull<T>(value: T | null): value is T {
 	return value != null;
@@ -36,7 +45,7 @@ export const updateError = (state: { isError: boolean; error: string }, error: s
 	Object.assign(Object.assign({}, state), { isError: true, error });
 
 // sepByN :: (Parser e a s, n) -> Parser e b s -> Parser e [b] s
-export const sepByN = <Sep, V>(sepParser: Parser<Sep>, n: number) => {
+export const sepByN = <V, Sep = unknown>(sepParser: Parser<Sep>, n: number) => {
 	return function sepByN$valParser(valueParser: Parser<V>): Parser<V[]> {
 		return new Parser(function sepByN$valParser$state(state: any) {
 			if (state.isError) return state;
@@ -66,6 +75,7 @@ const Brackets = {
 	"(": ")",
 	"{": "}",
 	"[": "]",
+	"<": ">",
 } as const;
 
 type Brackets = keyof typeof Brackets;
