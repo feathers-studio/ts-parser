@@ -1,5 +1,5 @@
 import { Parser, choice, many, possibly, sequenceOf, str, takeLeft, char } from "npm:arcsecond";
-import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws } from "./utils.ts";
+import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws, assertParser } from "./utils.ts";
 import { PredefinedType } from "./predefined.ts";
 import { LiteralType } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
@@ -171,9 +171,10 @@ const PropertySeparator = choice([char(";"), char(",")]);
 export const ObjectType: Parser<ObjectType> = lazy(() =>
 	bracketed(
 		seq([
-			sepByN<Member>(PropertySeparator, 0)(wsed(Member)), //
+			wsed(Member),
+			many(seq([PropertySeparator, wsed(Member)]).map(([, member]) => member)), //
 			possibly(wsed(PropertySeparator)),
-		]).map(([members]) => members),
+		]).map(([member, members]) => [member, ...members]),
 		"{",
 	) //
 		.map(members => ({ type: "object", members })),

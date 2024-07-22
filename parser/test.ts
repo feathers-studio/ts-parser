@@ -24,6 +24,18 @@ interface ComputedKeyframe {
 	offset: number | null;
 	[property: string]: string | number | null | undefined;
 	init?: string[][];
+}
+	
+interface KeyboardEventInit extends EventModifierInit {
+	/** @deprecated */
+	charCode?: number;
+	code?: string;
+	isComposing?: boolean;
+	key?: string;
+	/** @deprecated */
+	keyCode?: number;
+	location?: number;
+	repeat?: boolean;
 }`,
 		[
 			{ type: "reference", path: "./iterable.d.ts" },
@@ -42,31 +54,41 @@ interface ComputedKeyframe {
 				type: "interface",
 				doc: null,
 				name: "AddEventListenerOptions",
-				extends: "EventListenerOptions",
+				extends: [
+					{
+						type: "type-reference",
+						name: { type: "identifier", name: "EventListenerOptions" },
+						typeArguments: null,
+					},
+				],
 				members: [
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "once" },
 						optional: true,
-						defn: { primitive: true, type: "boolean", value: null },
+						key: { type: "identifier", name: "once" },
+						value: { primitive: true, type: "boolean", value: null },
 					},
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "passive" },
 						optional: true,
-						defn: { primitive: true, type: "boolean", value: null },
+						key: { type: "identifier", name: "passive" },
+						value: { primitive: true, type: "boolean", value: null },
 					},
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "signal" },
 						optional: true,
-						defn: { type: "identifier", value: "AbortSignal" },
+						key: { type: "identifier", name: "signal" },
+						value: {
+							type: "type-reference",
+							name: { type: "identifier", name: "AbortSignal" },
+							typeArguments: null,
+						},
 					},
 				],
 			},
@@ -80,35 +102,39 @@ interface ComputedKeyframe {
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "composite" },
 						optional: false,
-						defn: { type: "identifier", value: "CompositeOperationOrAuto" },
+						key: { type: "identifier", name: "composite" },
+						value: {
+							type: "type-reference",
+							name: { type: "identifier", name: "CompositeOperationOrAuto" },
+							typeArguments: null,
+						},
 					},
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "computedOffset" },
 						optional: false,
-						defn: { primitive: true, type: "number", value: null },
+						key: { type: "identifier", name: "computedOffset" },
+						value: { primitive: true, type: "number", value: null },
 					},
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "easing" },
 						optional: false,
-						defn: { primitive: true, type: "string", value: null },
+						key: { type: "identifier", name: "easing" },
+						value: { primitive: true, type: "string", value: null },
 					},
 					{
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "offset" },
 						optional: false,
-						defn: {
+						key: { type: "identifier", name: "offset" },
+						value: {
 							type: "union",
-							options: [
+							types: [
 								{ primitive: true, type: "number", value: null },
 								{ primitive: true, type: "null" },
 							],
@@ -117,20 +143,30 @@ interface ComputedKeyframe {
 					{
 						type: "member",
 						doc: null,
+						optional: false,
 						modifier: [],
-						name: {
+						key: {
 							type: "index-key",
-							name: "property",
+							key: "property",
 							indexType: { primitive: true, type: "string", value: null },
 						},
-						optional: false,
-						defn: {
+						value: {
 							type: "union",
-							options: [
+							types: [
 								{ primitive: true, type: "string", value: null },
-								{ primitive: true, type: "number", value: null },
-								{ primitive: true, type: "null" },
-								{ primitive: true, type: "undefined" },
+								{
+									type: "union",
+									types: [
+										{ primitive: true, type: "number", value: null },
+										{
+											type: "union",
+											types: [
+												{ primitive: true, type: "null" },
+												{ primitive: true, type: "undefined" },
+											],
+										},
+									],
+								},
 							],
 						},
 					},
@@ -138,11 +174,143 @@ interface ComputedKeyframe {
 						type: "member",
 						doc: null,
 						modifier: [],
-						name: { type: "identifier", value: "init" },
 						optional: true,
-						defn: {
+						key: { type: "identifier", name: "init" },
+						value: {
 							type: "array",
-							value: { type: "array", value: { primitive: true, type: "string", value: null } },
+							value: {
+								type: "array",
+								value: {
+									primitive: true,
+									type: "string",
+									value: null,
+								},
+							},
+						},
+					},
+				],
+			},
+			{
+				doc: null,
+				type: "interface",
+				name: "KeyboardEventInit",
+				extends: [
+					{
+						type: "type-reference",
+						name: { type: "identifier", name: "EventModifierInit" },
+						typeArguments: null,
+					},
+				],
+				members: [
+					{
+						doc: {
+							doc: " @deprecated ",
+							type: "docString",
+						},
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "charCode",
+						},
+						value: {
+							primitive: true,
+							type: "number",
+							value: null,
+						},
+					},
+					{
+						doc: null,
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "code",
+						},
+						value: {
+							primitive: true,
+							type: "string",
+							value: null,
+						},
+					},
+					{
+						doc: null,
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "isComposing",
+						},
+						value: {
+							primitive: true,
+							type: "boolean",
+							value: null,
+						},
+					},
+					{
+						doc: null,
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "key",
+						},
+						value: {
+							primitive: true,
+							type: "string",
+							value: null,
+						},
+					},
+					{
+						doc: {
+							doc: " @deprecated ",
+							type: "docString",
+						},
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "keyCode",
+						},
+						value: {
+							primitive: true,
+							type: "number",
+							value: null,
+						},
+					},
+					{
+						doc: null,
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "location",
+						},
+						value: {
+							primitive: true,
+							type: "number",
+							value: null,
+						},
+					},
+					{
+						doc: null,
+						modifier: [],
+						optional: true,
+						type: "member",
+						key: {
+							type: "identifier",
+							name: "repeat",
+						},
+						value: {
+							primitive: true,
+							type: "boolean",
+							value: null,
 						},
 					},
 				],

@@ -64,7 +64,7 @@ Deno.test("InterfaceDeclaration: 2", () => {
 		InterfaceDeclaration,
 		`interface Hello {
 		readonly hello ? : World;
-		readonly hello : "World";
+		readonly hello : "World"
 	}`,
 		{
 			type: "interface",

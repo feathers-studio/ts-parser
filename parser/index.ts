@@ -2,13 +2,13 @@ import { choice, many, sequenceOf } from "npm:arcsecond";
 import { reference } from "./reference.ts";
 import { anyComment } from "./comment.ts";
 import { ends, nonNull, ws } from "./utils.ts";
-import { iface } from "./interface/index.ts";
+import { InterfaceDeclaration } from "./interface.ts";
 
-const FileHeader = many(choice([reference, ws, anyComment])) //
+const fileHeader = many(choice([reference, ws, anyComment])) //
 	.map(defs => defs.filter(nonNull));
 
 export const parser = ends(
-	sequenceOf([FileHeader, many(choice([ws, anyComment, iface]))]) //
+	sequenceOf([fileHeader, many(choice([ws, anyComment, InterfaceDeclaration]))]) //
 		.map(stuff => stuff.flat().filter(nonNull)),
 );
 
@@ -16,6 +16,7 @@ export const parser = ends(
 
 Interface type params
 
+[ ] methods
 [ ] declare var
 [ ] declare function
 [ ] type
