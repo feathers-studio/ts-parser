@@ -1,11 +1,23 @@
 import { parser } from "./index.ts";
 import { assertParser } from "./utils.ts";
 
+import { Comment } from "./comment.ts";
+import { Reference } from "./reference.ts";
+import { InterfaceDeclaration } from "./interface.ts";
+import { ArrayType, IndexKey, Member, TypeReference, UnionType } from "./type.ts";
+import { DocString } from "./docString.ts";
+import { Predefined } from "./predefined.ts";
+import { Literal } from "./literal.ts";
+import { Identifier } from "./identifier.ts";
+
 Deno.test("parse", () => {
 	assertParser(
 		parser,
 		`
+/// Extract from lib.dom.d.ts
 /// <reference path="./iterable.d.ts" />
+
+/* Source is from @types/web */
 
 /////////////////////////////
 /// Window APIs
@@ -38,283 +50,73 @@ interface KeyboardEventInit extends EventModifierInit {
 	repeat?: boolean;
 }`,
 		[
-			{ type: "reference", path: "./iterable.d.ts" },
-			{
-				type: "comment",
-				text: "///////////////////////////",
-				multi: false,
-			},
-			{ type: "comment", text: "/ Window APIs", multi: false },
-			{
-				type: "comment",
-				text: "///////////////////////////",
-				multi: false,
-			},
-			{
-				type: "interface",
-				doc: null,
-				name: "AddEventListenerOptions",
-				extends: [
-					{
-						type: "type-reference",
-						name: { type: "identifier", name: "EventListenerOptions" },
-						typeArguments: null,
-					},
+			Comment.single("/ Extract from lib.dom.d.ts"),
+			Reference.from("./iterable.d.ts"),
+			Comment.multi(" Source is from @types/web "),
+			Comment.single("///////////////////////////"),
+			Comment.single("/ Window APIs"),
+			Comment.single("///////////////////////////"),
+
+			InterfaceDeclaration.from(
+				"AddEventListenerOptions",
+				[
+					Member.from(Identifier.from("once"), Predefined.Boolean.from(), { optional: true }),
+					Member.from(Identifier.from("passive"), Predefined.Boolean.from(), { optional: true }),
+					Member.from(Identifier.from("signal"), TypeReference.from(Identifier.from("AbortSignal")), {
+						optional: true,
+					}),
 				],
-				members: [
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
+				{
+					extends: [TypeReference.from(Identifier.from("EventListenerOptions"))],
+				},
+			),
+
+			InterfaceDeclaration.from("ComputedKeyframe", [
+				Member.from(
+					Identifier.from("composite"),
+					TypeReference.from(Identifier.from("CompositeOperationOrAuto"), null),
+				),
+				Member.from(Identifier.from("computedOffset"), Predefined.Number.from()),
+				Member.from(Identifier.from("easing"), Predefined.String.from()),
+				Member.from(Identifier.from("offset"), UnionType.from([Predefined.Number.from(), Literal.Null.from()])),
+				Member.from(
+					IndexKey.from("property", Predefined.String.from()),
+					UnionType.from([
+						Predefined.String.from(),
+						UnionType.from([
+							Predefined.Number.from(),
+							UnionType.from([Literal.Null.from(), Literal.Undefined.from()]),
+						]),
+					]),
+				),
+				Member.from(Identifier.from("init"), ArrayType.from(ArrayType.from(Predefined.String.from())), {
+					optional: true,
+				}),
+			]),
+
+			InterfaceDeclaration.from(
+				"KeyboardEventInit",
+				[
+					Member.from(Identifier.from("charCode"), Predefined.Number.from(), {
 						optional: true,
-						key: { type: "identifier", name: "once" },
-						value: { primitive: true, type: "boolean", value: null },
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
+						doc: DocString.from(" @deprecated "),
+					}),
+					Member.from(Identifier.from("code"), Predefined.String.from(), { optional: true }),
+					Member.from(Identifier.from("isComposing"), Predefined.Boolean.from(), {
 						optional: true,
-						key: { type: "identifier", name: "passive" },
-						value: { primitive: true, type: "boolean", value: null },
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
+					}),
+					Member.from(Identifier.from("key"), Predefined.String.from(), { optional: true }),
+					Member.from(Identifier.from("keyCode"), Predefined.Number.from(), {
 						optional: true,
-						key: { type: "identifier", name: "signal" },
-						value: {
-							type: "type-reference",
-							name: { type: "identifier", name: "AbortSignal" },
-							typeArguments: null,
-						},
-					},
+						doc: DocString.from(" @deprecated "),
+					}),
+					Member.from(Identifier.from("location"), Predefined.Number.from(), { optional: true }),
+					Member.from(Identifier.from("repeat"), Predefined.Boolean.from(), { optional: true }),
 				],
-			},
-			{
-				type: "interface",
-				doc: null,
-				name: "ComputedKeyframe",
-				extends: null,
-				members: [
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
-						optional: false,
-						key: { type: "identifier", name: "composite" },
-						value: {
-							type: "type-reference",
-							name: { type: "identifier", name: "CompositeOperationOrAuto" },
-							typeArguments: null,
-						},
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
-						optional: false,
-						key: { type: "identifier", name: "computedOffset" },
-						value: { primitive: true, type: "number", value: null },
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
-						optional: false,
-						key: { type: "identifier", name: "easing" },
-						value: { primitive: true, type: "string", value: null },
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
-						optional: false,
-						key: { type: "identifier", name: "offset" },
-						value: {
-							type: "union",
-							types: [
-								{ primitive: true, type: "number", value: null },
-								{ primitive: true, type: "null" },
-							],
-						},
-					},
-					{
-						type: "member",
-						doc: null,
-						optional: false,
-						modifier: [],
-						key: {
-							type: "index-key",
-							key: "property",
-							indexType: { primitive: true, type: "string", value: null },
-						},
-						value: {
-							type: "union",
-							types: [
-								{ primitive: true, type: "string", value: null },
-								{
-									type: "union",
-									types: [
-										{ primitive: true, type: "number", value: null },
-										{
-											type: "union",
-											types: [
-												{ primitive: true, type: "null" },
-												{ primitive: true, type: "undefined" },
-											],
-										},
-									],
-								},
-							],
-						},
-					},
-					{
-						type: "member",
-						doc: null,
-						modifier: [],
-						optional: true,
-						key: { type: "identifier", name: "init" },
-						value: {
-							type: "array",
-							value: {
-								type: "array",
-								value: {
-									primitive: true,
-									type: "string",
-									value: null,
-								},
-							},
-						},
-					},
-				],
-			},
-			{
-				doc: null,
-				type: "interface",
-				name: "KeyboardEventInit",
-				extends: [
-					{
-						type: "type-reference",
-						name: { type: "identifier", name: "EventModifierInit" },
-						typeArguments: null,
-					},
-				],
-				members: [
-					{
-						doc: {
-							doc: " @deprecated ",
-							type: "docString",
-						},
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "charCode",
-						},
-						value: {
-							primitive: true,
-							type: "number",
-							value: null,
-						},
-					},
-					{
-						doc: null,
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "code",
-						},
-						value: {
-							primitive: true,
-							type: "string",
-							value: null,
-						},
-					},
-					{
-						doc: null,
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "isComposing",
-						},
-						value: {
-							primitive: true,
-							type: "boolean",
-							value: null,
-						},
-					},
-					{
-						doc: null,
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "key",
-						},
-						value: {
-							primitive: true,
-							type: "string",
-							value: null,
-						},
-					},
-					{
-						doc: {
-							doc: " @deprecated ",
-							type: "docString",
-						},
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "keyCode",
-						},
-						value: {
-							primitive: true,
-							type: "number",
-							value: null,
-						},
-					},
-					{
-						doc: null,
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "location",
-						},
-						value: {
-							primitive: true,
-							type: "number",
-							value: null,
-						},
-					},
-					{
-						doc: null,
-						modifier: [],
-						optional: true,
-						type: "member",
-						key: {
-							type: "identifier",
-							name: "repeat",
-						},
-						value: {
-							primitive: true,
-							type: "boolean",
-							value: null,
-						},
-					},
-				],
-			},
+				{
+					extends: [TypeReference.from(Identifier.from("EventModifierInit"))],
+				},
+			),
 		],
 	);
 });

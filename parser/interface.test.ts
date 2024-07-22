@@ -1,94 +1,61 @@
 import { assertParser } from "./utils.ts";
 import { InterfaceHeader, InterfaceDeclaration } from "./interface.ts";
+import { Member, TypeReference } from "./type.ts";
+import { Identifier } from "./identifier.ts";
+import { Literal } from "./literal.ts";
 
 Deno.test("InterfaceHeader: 1", () => {
-	assertParser(InterfaceHeader, "interface A", { type: "interface-header", name: "A", extends: null });
+	assertParser(InterfaceHeader.parse, "interface A", InterfaceHeader.from("A", null));
 });
 
 Deno.test("InterfaceHeader: 2", () => {
-	assertParser(InterfaceHeader, "interface A extends  B", {
-		type: "interface-header",
-		name: "A",
-		extends: [
-			{
-				type: "type-reference",
-				name: { type: "identifier", name: "B" },
-				typeArguments: null,
-			},
-		],
-	});
+	assertParser(
+		InterfaceHeader.parse,
+		"interface A extends  B",
+		InterfaceHeader.from("A", [TypeReference.from(Identifier.from("B"))]),
+	);
 });
 
 Deno.test("InterfaceDeclaration: 1", () => {
 	assertParser(
-		InterfaceDeclaration,
+		InterfaceDeclaration.parse,
 		`interface Hello extends World {
 		readonly hello ? : World;
 		readonly hello : "World";
 	}`,
-		{
-			type: "interface",
-			doc: null,
-			name: "Hello",
-			extends: [
-				{
-					type: "type-reference",
-					name: { type: "identifier", name: "World" },
-					typeArguments: null,
-				},
-			],
-			members: [
-				{
-					type: "member",
-					doc: null,
+		InterfaceDeclaration.from(
+			"Hello",
+			[
+				Member.from(Identifier.from("hello"), TypeReference.from(Identifier.from("World")), {
 					modifier: ["readonly"],
-					key: { type: "identifier", name: "hello" },
 					optional: true,
-					value: { type: "type-reference", name: { type: "identifier", name: "World" }, typeArguments: null },
-				},
-				{
-					type: "member",
-					doc: null,
+				}),
+				Member.from(Identifier.from("hello"), Literal.String.from("World"), {
 					modifier: ["readonly"],
-					key: { type: "identifier", name: "hello" },
 					optional: false,
-					value: { primitive: true, type: "string", value: "World" },
-				},
+				}),
 			],
-		},
+			{ extends: [TypeReference.from(Identifier.from("World"))] },
+		),
 	);
 });
 
 Deno.test("InterfaceDeclaration: 2", () => {
 	assertParser(
-		InterfaceDeclaration,
+		InterfaceDeclaration.parse,
 		`interface Hello {
 		readonly hello ? : World;
 		readonly hello : "World"
 	}`,
-		{
-			type: "interface",
-			doc: null,
-			name: "Hello",
-			extends: null,
-			members: [
-				{
-					type: "member",
-					doc: null,
-					modifier: ["readonly"],
-					optional: true,
-					key: { type: "identifier", name: "hello" },
-					value: { type: "type-reference", name: { type: "identifier", name: "World" }, typeArguments: null },
-				},
-				{
-					type: "member",
-					doc: null,
-					modifier: ["readonly"],
-					optional: false,
-					key: { type: "identifier", name: "hello" },
-					value: { primitive: true, type: "string", value: "World" },
-				},
-			],
-		},
+		InterfaceDeclaration.from("Hello", [
+			Member.from(Identifier.from("hello"), TypeReference.from(Identifier.from("World")), {
+				modifier: ["readonly"],
+				optional: true,
+			}),
+			Member.from(Identifier.from("hello"), Literal.String.from("World"), {
+				modifier: ["readonly"],
+				optional: false,
+			}),
+		]),
 	);
 });

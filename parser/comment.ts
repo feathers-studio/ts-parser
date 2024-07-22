@@ -1,18 +1,23 @@
 import { choice, Parser, str } from "npm:arcsecond";
 import { bw } from "./utils.ts";
 
-export interface Comment {
-	type: "comment";
-	text: string;
-	multi: boolean;
+const single = bw(str("//"), str("\n"))().map(text => Comment.single(text));
+const multi = bw(str("/*"), str("*/"))().map(text => Comment.multi(text));
+
+export class Comment {
+	type: "comment" = "comment";
+
+	private constructor(public text: string, public multi: boolean) {}
+
+	static single(text: string) {
+		return new Comment(text, false);
+	}
+
+	static multi(text: string) {
+		return new Comment(text, true);
+	}
+
+	static get parse(): Parser<Comment> {
+		return choice([single, multi]);
+	}
 }
-
-export const comment: {
-	single: Parser<Comment>;
-	multi: Parser<Comment>;
-} = {
-	single: bw(str("//"), str("\n"))().map(text => ({ type: "comment", text, multi: false })),
-	multi: bw(str("/*"), str("*/"))().map(text => ({ type: "comment", text, multi: true })),
-};
-
-export const anyComment: Parser<Comment> = choice([comment.single, comment.multi]);

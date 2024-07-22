@@ -1,39 +1,78 @@
 import { optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
-import { type DocString, docString } from "./docString.ts";
+import { DocString } from "./docString.ts";
 import { Member, ObjectType, Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { MaybeExtends } from "./extends.ts";
 
-export interface InterfaceHeader {
-	type: "interface-header";
-	name: string;
+export class InterfaceHeader {
+	type: "interface-header" = "interface-header";
+
 	extends: Type[] | null;
+
+	private constructor(public name: string, ext?: Type[] | null) {
+		this.extends = ext ?? null;
+	}
+
+	static from(name: string, ext?: Type[] | null) {
+		return new InterfaceHeader(name, ext);
+	}
+
+	static get parse(): Parser<InterfaceHeader> {
+		return sequenceOf([str("interface"), whitespace, MaybeExtends(Identifier.parse)]).map(
+			([, , id]) => new InterfaceHeader(id.name, id.extends),
+		);
+	}
+
+	toString() {
+		return `interface ${this.name}${this.extends ? ` extends ${this.extends.join(", ")}` : ""}`;
+	}
 }
 
-export const InterfaceHeader: Parser<InterfaceHeader> = sequenceOf([
-	str("interface"),
-	whitespace,
-	MaybeExtends(Identifier),
-]).map(([, , id]) => ({ ...id, type: "interface-header" }));
+export class InterfaceDeclaration {
+	type: "interface" = "interface";
 
-export interface InterfaceDeclaration {
-	type: "interface";
+	extends: Type[] | null;
 	doc: DocString | null;
-	name: string;
-	extends: Type[] | null;
-	members: Member[];
-}
 
-export const InterfaceDeclaration: Parser<InterfaceDeclaration> = sequenceOf([
-	possibly(docString),
-	optionalWhitespace,
-	InterfaceHeader,
-	optionalWhitespace,
-	ObjectType,
-]).map(([doc, , header, , object]) => ({
-	type: "interface",
-	doc,
-	name: header.name,
-	extends: header.extends,
-	members: object.members,
-}));
+	private constructor(
+		public name: string,
+		public members: Member[],
+		extra?: {
+			extends?: Type[] | null;
+			doc?: DocString | null;
+		},
+	) {
+		this.extends = extra?.extends ?? null;
+		this.doc = extra?.doc ?? null;
+	}
+
+	static from(
+		name: string,
+		members: Member[],
+		extra?: {
+			extends?: Type[] | null;
+			doc?: DocString | null;
+		},
+	) {
+		return new InterfaceDeclaration(name, members, extra);
+	}
+
+	static get parse(): Parser<InterfaceDeclaration> {
+		return sequenceOf([
+			possibly(DocString.parse),
+			optionalWhitespace,
+			InterfaceHeader.parse,
+			optionalWhitespace,
+			ObjectType.parse,
+		]).map(
+			([doc, , header, , object]) =>
+				new InterfaceDeclaration(header.name, object.members, { extends: header.extends, doc }),
+		);
+	}
+
+	toString() {
+		return `${this.doc ? this.doc + "\n" : ""}interface ${this.name}${
+			this.extends ? ` extends ${this.extends.join(", ")}` : ""
+		} { ${this.members.join("\n")} }`;
+	}
+}

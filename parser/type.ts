@@ -1,9 +1,9 @@
 import { Parser, choice, many, possibly, sequenceOf, str, takeLeft, char } from "npm:arcsecond";
 import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws, assertParser } from "./utils.ts";
-import { PredefinedType } from "./predefined.ts";
-import { LiteralType } from "./literal.ts";
+import { Predefined } from "./predefined.ts";
+import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
-import { docString, DocString } from "./docString.ts";
+import { DocString } from "./docString.ts";
 
 const arrayPostfix = bracketed(
 	wss.map(() => "array"),
@@ -12,7 +12,7 @@ const arrayPostfix = bracketed(
 
 export type NonArrayPrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | TupleType | ThisType;
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
-	choice([PredefinedOrLiteralType, TypeReference, ObjectType, TupleType, ThisType]),
+	choice([PredefinedOrLiteralType, TypeReference.parse, ObjectType.parse, TupleType.parse, ThisType.parse]),
 );
 
 export type PrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | ArrayType | TupleType | ThisType;
@@ -21,7 +21,7 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 		.map(([value, , postfixes]): Type => {
 			if (postfixes.length) {
 				const type = postfixes.reduce((value, suffix) => {
-					if (suffix === "array") return { type: "array", value } as const;
+					if (suffix === "array") return ArrayType.from(value);
 					throw new Error(`Unknown suffix: ${suffix}`);
 				}, value as PrimaryType);
 				return type;
@@ -29,35 +29,55 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 		}),
 );
 
-export interface IntersectionType {
-	type: "intersection";
-	types: Type[];
-}
+export class IntersectionType {
+	type: "intersection" = "intersection";
 
-export const IntersectionType: Parser<IntersectionType> = lazy(() =>
-	seq([PrimaryType, wsed(str("&")), IntersectionOrPrimaryType]).map(([left, _, right]) => ({
-		type: "intersection",
-		types: [left, right],
-	})),
-);
+	private constructor(public types: Type[]) {}
+
+	static from(types: Type[]) {
+		return new IntersectionType(types);
+	}
+
+	static get parse(): Parser<IntersectionType> {
+		return lazy(() =>
+			seq([PrimaryType, wsed(str("&")), IntersectionOrPrimaryType]).map(
+				([left, _, right]) => new IntersectionType([left, right]),
+			),
+		);
+	}
+
+	toString() {
+		return this.types.join(" & ");
+	}
+}
 
 export type IntersectionOrPrimaryType = IntersectionType | PrimaryType;
-export const IntersectionOrPrimaryType = choice([IntersectionType, PrimaryType]);
+export const IntersectionOrPrimaryType = choice([IntersectionType.parse, PrimaryType]);
 
-export interface UnionType {
-	type: "union";
-	types: Type[];
+export class UnionType {
+	type: "union" = "union";
+
+	private constructor(public types: Type[]) {}
+
+	static from(types: Type[]) {
+		return new UnionType(types);
+	}
+
+	static get parse(): Parser<UnionType> {
+		return lazy(() =>
+			seq([IntersectionOrPrimaryType, wsed(str("|")), UnionOrIntersectionOrPrimaryType]).map(
+				([left, _, right]) => new UnionType([left, right]),
+			),
+		);
+	}
+
+	toString() {
+		return this.types.join(" | ");
+	}
 }
 
-export const UnionType: Parser<UnionType> = lazy(() =>
-	seq([IntersectionOrPrimaryType, wsed(str("|")), UnionOrIntersectionOrPrimaryType]).map(([left, _, right]) => ({
-		type: "union",
-		types: [left, right],
-	})),
-);
-
 export type UnionOrIntersectionOrPrimaryType = UnionType | IntersectionType | PrimaryType;
-export const UnionOrIntersectionOrPrimaryType = choice([UnionType, IntersectionOrPrimaryType]);
+export const UnionOrIntersectionOrPrimaryType = choice([UnionType.parse, IntersectionOrPrimaryType]);
 
 export type Type = UnionType | IntersectionType | PrimaryType;
 export const Type = lazy(() => choice([UnionOrIntersectionOrPrimaryType]));
@@ -75,8 +95,8 @@ PrimaryType:
  */
 
 export const ParenthesisedType = bracketed(wsed(Type), "(");
-export type PredefinedOrLiteralType = PredefinedType | LiteralType;
-export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([PredefinedType, LiteralType]);
+export type PredefinedOrLiteralType = Predefined.Type | Literal.Type;
+export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([Predefined.parse, Literal.parse]);
 
 export const TypeParameters = bracketed(sepByN<Type>(char(","), 1)(wsed(Type)), "<");
 
@@ -87,27 +107,39 @@ QualifiedName = Name . Identifier
 
 */
 
-export interface QualifiedName {
-	type: "qualified-name";
-	left: TypeName;
-	name: Identifier;
-}
+export class QualifiedName {
+	type: "qualified-name" = "qualified-name";
 
-export const QualifiedName: Parser<QualifiedName> = lazy(() =>
-	sepByN<Identifier>(
-		char("."),
-		2,
-	)(Identifier).map(names => ({
-		type: "qualified-name",
-		// @ts-ignore - left is inherently TypeName, but TS doesn't understand
-		left: init(names).reduce((left, name) => ({ type: "qualified-name", left, name })) as TypeName,
-		name: last(names),
-	})),
-);
+	private constructor(public left: TypeName, public name: Identifier) {}
+
+	static from(left: TypeName, name: Identifier) {
+		return new QualifiedName(left, name);
+	}
+
+	static get parse(): Parser<QualifiedName> {
+		return lazy(() =>
+			sepByN<Identifier>(
+				char("."),
+				2,
+			)(Identifier.parse).map(
+				names =>
+					new QualifiedName(
+						// @ts-ignore - left is inherently TypeName, but TS doesn't understand
+						init(names).reduce((left, name) => new QualifiedName(left, name)),
+						last(names),
+					),
+			),
+		);
+	}
+
+	toString() {
+		return `${this.left}.${this.name}`;
+	}
+}
 
 export type TypeName = QualifiedName | Identifier;
 
-export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName, Identifier]));
+export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName.parse, Identifier.parse]));
 
 export interface TypeReference {
 	type: "type-reference";
@@ -115,19 +147,52 @@ export interface TypeReference {
 	typeArguments: Type[] | null;
 }
 
-export const TypeReference: Parser<TypeReference> = sequenceOf([TypeName, possibly(TypeParameters)]) //
-	.map(([name, typeArguments]) => ({ type: "type-reference", name, typeArguments }));
+export class TypeReference {
+	type: "type-reference" = "type-reference";
 
-export interface IndexKey {
-	type: "index-key";
-	key: string;
-	indexType: Type;
+	typeArguments: Type[] | null;
+
+	private constructor(public name: TypeName, typeArguments?: Type[] | null) {
+		this.typeArguments = typeArguments ?? null;
+	}
+
+	static from(name: TypeName, typeArguments?: Type[] | null) {
+		return new TypeReference(name, typeArguments);
+	}
+
+	static get parse(): Parser<TypeReference> {
+		return lazy(() =>
+			seq([TypeName, possibly(TypeParameters)]).map(
+				([name, typeArguments]) => new TypeReference(name, typeArguments),
+			),
+		);
+	}
+
+	toString() {
+		return `${this.name}${this.typeArguments ? "<" + this.typeArguments.join(", ") + ">" : ""}`;
+	}
 }
 
-export const indexKey: Parser<IndexKey> = lazy(() =>
-	sequenceOf([str("["), wsed(Identifier), str(":"), wsed(Type), str("]")]) //
-		.map(([_, name, __, indexType]) => ({ type: "index-key", key: name.name, indexType })),
-);
+export class IndexKey {
+	type: "index-key" = "index-key";
+
+	private constructor(public key: string, public indexType: Type) {}
+
+	static from(key: string, indexType: Type) {
+		return new IndexKey(key, indexType);
+	}
+
+	static get parse(): Parser<IndexKey> {
+		return lazy(() =>
+			sequenceOf([str("["), wsed(Identifier.parse), str(":"), wsed(Type), str("]")]) //
+				.map(([_, name, __, indexType]) => new IndexKey(name.name, indexType)),
+		);
+	}
+
+	toString() {
+		return `[${this.key}: ${this.indexType}]`;
+	}
+}
 
 export type Modifier = "readonly" | "public" | "private" | "protected";
 export const Modifier: Parser<Modifier> = choice([
@@ -137,67 +202,143 @@ export const Modifier: Parser<Modifier> = choice([
 	str("protected"),
 ]) as Parser<Modifier>;
 
-export interface Member {
-	type: "member";
+export class Member {
+	type: "member" = "member";
+
 	doc: DocString | null;
 	modifier: Modifier[];
 	optional: boolean;
-	key: Identifier | IndexKey;
-	value: Type;
-}
 
-export const Member: Parser<Member> = lazy(() =>
-	sequenceOf([
-		possibly(docString),
-		wsed(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
-		wsed(choice([Identifier, indexKey])),
-		possibly(char("?")).map(c => c != null),
-		wsed(str(":")),
-		wsed(Type),
-	] as const).map(
-		(
-			[doc, modifier, key, optional, , value], //
-		) => ({ type: "member", doc, modifier, key, optional, value }),
-	),
-);
+	private constructor(
+		public key: Identifier | IndexKey,
+		public value: Type,
+		extra?: {
+			doc?: DocString | null;
+			modifier?: Modifier[];
+			optional?: boolean;
+		},
+	) {
+		this.doc = extra?.doc ?? null;
+		this.modifier = extra?.modifier ?? [];
+		this.optional = extra?.optional ?? false;
+	}
 
-export interface ObjectType {
-	type: "object";
-	members: Member[];
+	static from(
+		key: Identifier | IndexKey,
+		value: Type,
+		extra?: {
+			doc?: DocString | null;
+			modifier?: Modifier[];
+			optional?: boolean;
+		},
+	) {
+		return new Member(key, value, extra);
+	}
+
+	static get parse(): Parser<Member> {
+		return lazy(() =>
+			sequenceOf([
+				possibly(DocString.parse),
+				wsed(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
+				wsed(choice([Identifier.parse, IndexKey.parse])),
+				possibly(char("?")).map(c => c != null),
+				wsed(str(":")),
+				wsed(Type),
+			] as const).map(
+				([doc, modifier, key, optional, , value]) => new Member(key, value, { doc, modifier, optional }),
+			),
+		);
+	}
+
+	toString() {
+		return `${this.doc ? this.doc + "\n" : ""}${this.modifier.join(" ")} ${this.key}${this.optional ? "?" : ""}: ${
+			this.value
+		}`;
+	}
 }
 
 const PropertySeparator = choice([char(";"), char(",")]);
 
-export const ObjectType: Parser<ObjectType> = lazy(() =>
-	bracketed(
-		seq([
-			wsed(Member),
-			many(seq([PropertySeparator, wsed(Member)]).map(([, member]) => member)), //
-			possibly(wsed(PropertySeparator)),
-		]).map(([member, members]) => [member, ...members]),
-		"{",
-	) //
-		.map(members => ({ type: "object", members })),
-);
+export class ObjectType {
+	type: "object" = "object";
 
-export interface ArrayType {
-	type: "array";
-	value: Type;
+	doc: DocString | null;
+
+	private constructor(public members: Member[], extra?: { doc?: DocString }) {
+		this.doc = extra?.doc ?? null;
+	}
+
+	static from(members: Member[], extra?: { doc?: DocString }) {
+		return new ObjectType(members, extra);
+	}
+
+	static get parse(): Parser<ObjectType> {
+		return lazy(() =>
+			bracketed(
+				seq([
+					wsed(Member.parse),
+					many(seq([PropertySeparator, wsed(Member.parse)]).map(([, member]) => member)), //
+					possibly(wsed(PropertySeparator)),
+				]).map(([member, members]) => [member, ...members]),
+				"{",
+			) //
+				.map(members => new ObjectType(members)),
+		);
+	}
+
+	toString() {
+		return `{ ${this.members.join("; ")} }`;
+	}
 }
 
-export const ArrayType: Parser<ArrayType> = (takeLeft(wsed(Type))(bracketed(wss, "[")) as Parser<Type>) //
-	.map(value => ({ type: "array", value }));
+export class ArrayType {
+	type: "array" = "array";
 
-export interface TupleType {
-	type: "tuple";
-	values: Type[];
+	private constructor(public value: Type) {}
+
+	static from(value: Type) {
+		return new ArrayType(value);
+	}
+
+	static get parse(): Parser<ArrayType> {
+		return lazy(() => bracketed(wsed(Type), "[").map(value => new ArrayType(value)));
+	}
+
+	toString() {
+		return `${this.value}[]`;
+	}
 }
 
-export const TupleType: Parser<TupleType> = bracketed(sepByN<Type>(char(","), 0)(wsed(Type)), "[") //
-	.map(values => ({ type: "tuple", values }));
+export class TupleType {
+	type: "tuple" = "tuple";
 
-export interface ThisType {
-	type: "this";
+	private constructor(public values: Type[]) {}
+
+	static from(values: Type[]) {
+		return new TupleType(values);
+	}
+
+	static get parse(): Parser<TupleType> {
+		return lazy(() => bracketed(sepByN<Type>(char(","), 0)(wsed(Type)), "[").map(values => new TupleType(values)));
+	}
+
+	toString() {
+		return `[${this.values.join(", ")}]`;
+	}
 }
 
-export const ThisType: Parser<ThisType> = str("this").map(() => ({ type: "this" }));
+export class ThisType {
+	type: "this" = "this";
+
+	static get parse(): Parser<ThisType> {
+		return str("this").map(() => new ThisType());
+	}
+
+	static from() {
+		return new ThisType();
+	}
+
+	toString() {
+		return "this";
+	}
+}

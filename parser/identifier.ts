@@ -4,12 +4,21 @@ import { choice, digit, letter, many, Parser, sequenceOf, str } from "npm:arcsec
 
 const fstChar = choice([str("_"), str("$"), letter]);
 
-export interface Identifier {
-	type: "identifier";
-	name: string;
-}
+export class Identifier {
+	type: "identifier" = "identifier";
+	constructor(public name: string) {}
 
-export const Identifier: Parser<Identifier> = //
-	sequenceOf([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
-		.map(([n, d]) => n + d)
-		.map(name => ({ type: "identifier", name }));
+	static from(name: string) {
+		return new Identifier(name);
+	}
+
+	static get parse(): Parser<Identifier> {
+		return sequenceOf([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
+			.map(([n, d]) => n + d)
+			.map(name => new Identifier(name));
+	}
+
+	toString() {
+		return this.name;
+	}
+}

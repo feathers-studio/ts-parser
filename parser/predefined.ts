@@ -12,83 +12,153 @@ PredefinedType:
 	never
 */
 
-export declare namespace Predefined {
-	interface Any {
-		type: "predefined";
-		value: "any";
+export namespace Predefined {
+	export class Any {
+		type: "predefined" = "predefined";
+		value: "any" = "any";
+
+		private constructor() {}
+
+		static from() {
+			return new Any();
+		}
+
+		static get parse() {
+			return str("any").map(() => Any.from());
+		}
+
+		toString() {
+			return "any";
+		}
 	}
 
-	interface Number {
-		primitive: true;
-		type: "number";
-		value: null;
+	export class Number {
+		primitive: true = true;
+		type: "number" = "number";
+		value: null = null;
+
+		private constructor() {}
+
+		static from() {
+			return new Number();
+		}
+
+		static get parse() {
+			return str("number").map(() => Number.from());
+		}
+
+		toString() {
+			return "number";
+		}
 	}
 
-	interface Boolean {
-		primitive: true;
-		type: "boolean";
-		value: null;
+	export class Boolean {
+		primitive: true = true;
+		type: "boolean" = "boolean";
+		value: null = null;
+
+		private constructor() {}
+
+		static from() {
+			return new Boolean();
+		}
+
+		static get parse() {
+			return str("boolean").map(() => Boolean.from());
+		}
+
+		toString() {
+			return "boolean";
+		}
 	}
 
-	interface BigInt {
-		primitive: true;
-		type: "bigint";
-		value: null;
+	export class BigInt {
+		primitive: true = true;
+		type: "bigint" = "bigint";
+		value: null = null;
+
+		private constructor() {}
+
+		static from() {
+			return new BigInt();
+		}
+
+		static get parse() {
+			return str("bigint").map(() => BigInt.from());
+		}
+
+		toString() {
+			return "bigint";
+		}
 	}
 
-	interface String {
-		primitive: true;
-		type: "string";
-		value: null;
+	export class String {
+		primitive: true = true;
+		type: "string" = "string";
+		value: null = null;
+
+		private constructor() {}
+
+		static from() {
+			return new String();
+		}
+
+		static get parse() {
+			return str("string").map(() => String.from());
+		}
+
+		toString() {
+			return "string";
+		}
 	}
 
-	interface Void {
-		type: "predefined";
-		value: "void";
+	export class Void {
+		type: "predefined" = "predefined";
+		value: "void" = "void";
+
+		private constructor() {}
+
+		static from() {
+			return new Void();
+		}
+
+		static get parse() {
+			return str("void").map(() => Void.from());
+		}
+
+		toString() {
+			return "void";
+		}
 	}
 
-	interface Never {
-		type: "predefined";
-		value: "never";
+	export class Never {
+		type: "predefined" = "predefined";
+		value: "never" = "never";
+
+		private constructor() {}
+
+		static from() {
+			return new Never();
+		}
+
+		static get parse() {
+			return str("never").map(() => Never.from());
+		}
+
+		toString() {
+			return "never";
+		}
 	}
+
+	export type Type = Any | Number | Boolean | BigInt | String | Void | Never;
+
+	export const parse: Parser<Type> = choice([
+		Any.parse,
+		Number.parse,
+		Boolean.parse,
+		BigInt.parse,
+		String.parse,
+		Void.parse,
+		Never.parse,
+	]);
 }
-
-export type PredefinedType =
-	| Predefined.Any
-	| Predefined.Number
-	| Predefined.Boolean
-	| Predefined.BigInt
-	| Predefined.String
-	| Predefined.Void
-	| Predefined.Never;
-
-export const anyType: Parser<Predefined.Any> = str("any") //
-	.map(() => ({ type: "predefined", value: "any" }));
-
-export const number: Parser<Predefined.Number> = str("number") //
-	.map(() => ({ primitive: true, type: "number", value: null }));
-
-export const boolean: Parser<Predefined.Boolean> = str("boolean") //
-	.map(() => ({ primitive: true, type: "boolean", value: null }));
-
-export const bigint: Parser<Predefined.BigInt> = str("bigint") //
-	.map(value => ({ primitive: true, type: "bigint", value: null }));
-
-export const string: Parser<Predefined.String> = str("string") //
-	.map(() => ({ primitive: true, type: "string", value: null }));
-
-export const voidType: Parser<Predefined.Void> = str("void") //
-	.map(() => ({ type: "predefined", value: "void" }));
-
-export const never: Parser<Predefined.Never> = str("never") //
-	.map(() => ({ type: "predefined", value: "never" }));
-
-export const PredefinedType: Parser<PredefinedType> = choice([
-	anyType,
-	number,
-	boolean,
-	bigint,
-	string,
-	voidType,
-	never,
-]);
