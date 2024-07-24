@@ -262,9 +262,13 @@ export class Member extends ParserBase {
 	}
 
 	toString() {
-		return `${this.doc ? this.doc + "\n" : ""}${this.modifier.join(" ")} ${this.key}${this.optional ? "?" : ""}: ${
-			this.value
-		}`;
+		let out = "";
+
+		if (this.doc) out += this.doc + "\n\t";
+		if (this.modifier.length) out += this.modifier.join(" ") + " ";
+		out += `${this.key}${this.optional ? "?" : ""}: ${this.value};`;
+
+		return out;
 	}
 }
 
@@ -299,7 +303,7 @@ export class ObjectType extends ParserBase {
 	}
 
 	toString() {
-		return `{ ${this.members.join("; ")} }`;
+		return `{\n${this.members.join("\n")}\n}`;
 	}
 }
 

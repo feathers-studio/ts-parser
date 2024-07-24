@@ -24,6 +24,11 @@ export const assertParser = <T>(parser: Parser<T>, source: string, expected: T) 
 	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
 };
 
+export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {
+	const result = parserFn(source);
+	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
+};
+
 export const assertParserFails = (parser: Parser<unknown>, source: string) => {
 	const result = ends(parser).run(source);
 	assert(result.isError);

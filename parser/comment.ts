@@ -25,6 +25,6 @@ export class Comment extends ParserBase {
 	}
 
 	toString() {
-		return this.text;
+		return this.multi ? `/*${this.text}*/` : `//${this.text}`;
 	}
 }

@@ -5,7 +5,7 @@ import { ParserBase } from "./base.ts";
 export class DocString extends ParserBase {
 	type: "docString" = "docString";
 
-	private constructor(public doc: string) {
+	private constructor(public text: string) {
 		super();
 	}
 
@@ -18,6 +18,6 @@ export class DocString extends ParserBase {
 	}
 
 	toString() {
-		return `/**${this.doc}*/`;
+		return `/**${this.text}*/`;
 	}
 }

@@ -117,6 +117,26 @@ Deno.test("PredefinedType: any", () => {
 	assertParser(Type, "any", Predefined.Any.from());
 });
 
+Deno.test("PredefinedType: number", () => {
+	assertParser(Type, "number", Predefined.Number.from());
+});
+
+Deno.test("PredefinedType: boolean", () => {
+	assertParser(Type, "boolean", Predefined.Boolean.from());
+});
+
+Deno.test("PredefinedType: bigint", () => {
+	assertParser(Type, "bigint", Predefined.BigInt.from());
+});
+
+Deno.test("PredefinedType: void", () => {
+	assertParser(Type, "void", Predefined.Void.from());
+});
+
+Deno.test("PredefinedType: never", () => {
+	assertParser(Type, "never", Predefined.Never.from());
+});
+
 Deno.test("Array of PredefinedType: string", () => {
 	assertParser(Type, "string[]", ArrayType.from(Predefined.String.from()));
 });

@@ -76,6 +76,6 @@ export class InterfaceDeclaration extends ParserBase {
 	toString() {
 		return `${this.doc ? this.doc + "\n" : ""}interface ${this.name}${
 			this.extends ? ` extends ${this.extends.join(", ")}` : ""
-		} { ${this.members.join("\n")} }`;
+		} {\n${this.members.map(member => "\t" + member.toString()).join("\n")}\n}`;
 	}
 }
