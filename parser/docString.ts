@@ -5,17 +5,11 @@ import { ParserBase } from "./base.ts";
 export class DocString extends ParserBase {
 	type: "docString" = "docString";
 
-	private constructor(public text: string) {
+	constructor(public text: string) {
 		super();
 	}
 
-	static from(doc: string) {
-		return new DocString(doc);
-	}
-
-	static get parse(): Parser<DocString> {
-		return bw(str("/**"), str("*/"))().map(doc => new DocString(doc));
-	}
+	static parser: Parser<DocString> = bw(str("/**"), str("*/"))().map(doc => new DocString(doc));
 
 	toString() {
 		return `/**${this.text}*/`;

@@ -11,13 +11,7 @@ export namespace Literal {
 			super();
 		}
 
-		static from(value: string) {
-			return new String(value);
-		}
-
-		static get parse() {
-			return bw(str('"'), str('"'))().map(value => new String(value));
-		}
+		static parse = bw(str('"'), str('"'))().map(value => new String(value));
 
 		toString() {
 			return `"${this.value}"`;
@@ -32,17 +26,11 @@ export namespace Literal {
 			super();
 		}
 
-		static from(value: number) {
-			return new Number(value);
-		}
-
-		static get parse() {
-			return seq([
-				possibly(str("-")), //
-				digits,
-				possibly(seq([str("."), digits])),
-			]).map(([sign, digits]) => new Number(parseInt(`${sign ?? ""}${digits}`)));
-		}
+		static parse = seq([
+			possibly(str("-")), //
+			digits,
+			possibly(seq([str("."), digits])),
+		]).map(([sign, digits]) => new Number(parseInt(`${sign ?? ""}${digits}`)));
 
 		toString() {
 			return `${this.value}`;
@@ -57,13 +45,7 @@ export namespace Literal {
 			super();
 		}
 
-		static from(value: boolean) {
-			return new Boolean(value);
-		}
-
-		static get parse() {
-			return choice([str("true"), str("false")]).map(value => new Boolean(value === "true"));
-		}
+		static parse = choice([str("true"), str("false")]).map(value => new Boolean(value === "true"));
 
 		toString() {
 			return `${this.value}`;
@@ -74,13 +56,7 @@ export namespace Literal {
 		primitive: true = true;
 		type: "null" = "null";
 
-		static from() {
-			return new Null();
-		}
-
-		static get parse() {
-			return str("null").map(() => new Null());
-		}
+		static parse = str("null").map(() => new Null());
 
 		toString() {
 			return "null";
@@ -91,13 +67,7 @@ export namespace Literal {
 		primitive: true = true;
 		type: "undefined" = "undefined";
 
-		static from() {
-			return new Undefined();
-		}
-
-		static get parse() {
-			return str("undefined").map(() => new Undefined());
-		}
+		static parse = str("undefined").map(() => new Undefined());
 
 		toString() {
 			return "undefined";
@@ -112,15 +82,9 @@ export namespace Literal {
 			super();
 		}
 
-		static from(unique: boolean) {
-			return new SymbolType(unique);
-		}
-
-		static get parse() {
-			return sequenceOf([possibly(wsed(str("unique"))), str("symbol")]).map(
-				([unique]) => new SymbolType(unique !== null),
-			);
-		}
+		static parse = sequenceOf([possibly(wsed(str("unique"))), str("symbol")]).map(
+			([unique]) => new SymbolType(unique !== null),
+		);
 
 		toString() {
 			return `symbol${this.unique ? " unique" : ""}`;
@@ -135,15 +99,9 @@ export namespace Literal {
 			super();
 		}
 
-		static from(value: bigint) {
-			return new BigIntType(value);
-		}
-
-		static get parse() {
-			return seq([digits, str("n")])
-				.map(([digits]) => BigInt(digits))
-				.map(value => new BigIntType(value));
-		}
+		static parse = seq([digits, str("n")])
+			.map(([digits]) => BigInt(digits))
+			.map(value => new BigIntType(value));
 
 		toString() {
 			return `${this.value}n`;

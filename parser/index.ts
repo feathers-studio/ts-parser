@@ -1,29 +1,26 @@
-import { choice, many } from "npm:arcsecond";
+import { choice, many, Parser } from "npm:arcsecond";
 import { Reference } from "./reference.ts";
 import { Comment } from "./comment.ts";
 import { ends, nonNull, seq, ws } from "./utils.ts";
 import { InterfaceDeclaration } from "./interface.ts";
 import { ParserBase } from "./base.ts";
 
-const FileHeader = many(choice([Reference.parse, ws, Comment.parse])) //
+const FileHeader = many(choice([Reference.parser, ws, Comment.parser])) //
 	.map(defs => defs.filter(nonNull));
 
 export type Statement = Reference | Comment | InterfaceDeclaration;
 
 export class DeclarationFile extends ParserBase {
-	private constructor(public readonly statements: Statement[]) {
+	constructor(public readonly statements: Statement[]) {
 		super();
 	}
 
-	static from(statements: Statement[]): DeclarationFile {
-		return new DeclarationFile(statements);
-	}
-
-	static get parse() {
-		return seq([FileHeader, many(choice([ws, Comment.parse, InterfaceDeclaration.parse]))]) //
-			.map(stuff => stuff.flat().filter(nonNull))
-			.map(stuff => new DeclarationFile(stuff));
-	}
+	static parser: Parser<DeclarationFile> = seq([
+		FileHeader,
+		many(choice([ws, Comment.parser, InterfaceDeclaration.parser])),
+	])
+		.map(stuff => stuff.flat().filter(nonNull))
+		.map(stuff => new DeclarationFile(stuff));
 
 	toString(): string {
 		let out = "";
@@ -36,7 +33,7 @@ export class DeclarationFile extends ParserBase {
 	}
 }
 
-export const parse = (source: string) => ends(DeclarationFile.parse).run(source);
+export const parse = (source: string) => ends(DeclarationFile.parser).run(source);
 
 /* missing:
 

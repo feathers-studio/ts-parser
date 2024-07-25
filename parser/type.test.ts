@@ -10,14 +10,14 @@ import { Literal } from "./literal.ts";
 import { Predefined } from "./predefined.ts";
 
 Deno.test("Index Key", () => {
-	assertParser(IndexKey.parse, "[key: string]", IndexKey.from("key", Predefined.String.from()));
+	assertParser(IndexKey.parser, "[key: string]", new IndexKey("key", new Predefined.String()));
 });
 
 Deno.test("Member: 1", () => {
 	assertParser(
-		Member.parse,
+		Member.parser,
 		" [ property :   string]  :   string",
-		Member.from(IndexKey.from("property", Predefined.String.from()), Predefined.String.from(), {
+		new Member(new IndexKey("property", new Predefined.String()), new Predefined.String(), {
 			doc: null,
 			modifier: [],
 			optional: false,
@@ -27,9 +27,9 @@ Deno.test("Member: 1", () => {
 
 Deno.test("Member: 2", () => {
 	assertParser(
-		Member.parse,
+		Member.parser,
 		"readonly   hello ? : World",
-		Member.from(Identifier.from("hello"), TypeReference.from(Identifier.from("World")), {
+		new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 			doc: null,
 			modifier: ["readonly"],
 			optional: true,
@@ -39,14 +39,14 @@ Deno.test("Member: 2", () => {
 
 Deno.test("Member: 3", () => {
 	assertParser(
-		Member.parse,
+		Member.parser,
 		"readonly public  hello : World.Rivers.Amazon",
-		Member.from(
-			Identifier.from("hello"),
-			TypeReference.from(
-				QualifiedName.from(
-					QualifiedName.from(Identifier.from("World"), Identifier.from("Rivers")),
-					Identifier.from("Amazon"),
+		new Member(
+			new Identifier("hello"),
+			new TypeReference(
+				new QualifiedName(
+					new QualifiedName(new Identifier("World"), new Identifier("Rivers")),
+					new Identifier("Amazon"),
 				),
 			),
 			{ doc: null, modifier: ["readonly", "public"], optional: false },
@@ -56,9 +56,9 @@ Deno.test("Member: 3", () => {
 
 Deno.test("Member: 4", () => {
 	assertParser(
-		Member.parse,
+		Member.parser,
 		'readonly  protected  [ hello: string ] : "World"',
-		Member.from(IndexKey.from("hello", Predefined.String.from()), Literal.String.from("World"), {
+		new Member(new IndexKey("hello", new Predefined.String()), new Literal.String("World"), {
 			doc: null,
 			modifier: ["readonly", "protected"],
 			optional: false,
@@ -68,13 +68,13 @@ Deno.test("Member: 4", () => {
 
 Deno.test("Member: 5", () => {
 	assertParser(
-		Member.parse,
+		Member.parser,
 		"readonly public  hello ? : World<Rivers, Amazon>",
-		Member.from(
-			Identifier.from("hello"),
-			TypeReference.from(Identifier.from("World"), [
-				TypeReference.from(Identifier.from("Rivers")),
-				TypeReference.from(Identifier.from("Amazon")),
+		new Member(
+			new Identifier("hello"),
+			new TypeReference(new Identifier("World"), [
+				new TypeReference(new Identifier("Rivers")),
+				new TypeReference(new Identifier("Amazon")),
 			]),
 			{ doc: null, modifier: ["readonly", "public"], optional: true },
 		),
@@ -82,102 +82,102 @@ Deno.test("Member: 5", () => {
 });
 
 Deno.test("PrimitiveType: string", () => {
-	assertParser(Type, '"Hello, World!"', Literal.String.from("Hello, World!"));
+	assertParser(Type, '"Hello, World!"', new Literal.String("Hello, World!"));
 });
 
 Deno.test("PrimitiveType: number", () => {
-	assertParser(Type, "123", Literal.Number.from(123));
+	assertParser(Type, "123", new Literal.Number(123));
 });
 
 Deno.test("Primitive: boolean", () => {
-	assertParser(Type, "true", Literal.Boolean.from(true));
+	assertParser(Type, "true", new Literal.Boolean(true));
 });
 
 Deno.test("Primitive: null", () => {
-	assertParser(Type, "null", Literal.Null.from());
+	assertParser(Type, "null", new Literal.Null());
 });
 
 Deno.test("Primitive: undefined", () => {
-	assertParser(Type, "undefined", Literal.Undefined.from());
+	assertParser(Type, "undefined", new Literal.Undefined());
 });
 
 Deno.test("Primitive: symbol", () => {
-	assertParser(Type, "symbol", Literal.SymbolType.from(false));
+	assertParser(Type, "symbol", new Literal.SymbolType(false));
 });
 
 Deno.test("Primitive: bigint", () => {
-	assertParser(Type, "123n", Literal.BigIntType.from(123n));
+	assertParser(Type, "123n", new Literal.BigIntType(123n));
 });
 
 Deno.test("PredefinedType: string", () => {
-	assertParser(Type, "string", Predefined.String.from());
+	assertParser(Type, "string", new Predefined.String());
 });
 
 Deno.test("PredefinedType: any", () => {
-	assertParser(Type, "any", Predefined.Any.from());
+	assertParser(Type, "any", new Predefined.Any());
 });
 
 Deno.test("PredefinedType: number", () => {
-	assertParser(Type, "number", Predefined.Number.from());
+	assertParser(Type, "number", new Predefined.Number());
 });
 
 Deno.test("PredefinedType: boolean", () => {
-	assertParser(Type, "boolean", Predefined.Boolean.from());
+	assertParser(Type, "boolean", new Predefined.Boolean());
 });
 
 Deno.test("PredefinedType: bigint", () => {
-	assertParser(Type, "bigint", Predefined.BigInt.from());
+	assertParser(Type, "bigint", new Predefined.BigInt());
 });
 
 Deno.test("PredefinedType: void", () => {
-	assertParser(Type, "void", Predefined.Void.from());
+	assertParser(Type, "void", new Predefined.Void());
 });
 
 Deno.test("PredefinedType: never", () => {
-	assertParser(Type, "never", Predefined.Never.from());
+	assertParser(Type, "never", new Predefined.Never());
 });
 
 Deno.test("Array of PredefinedType: string", () => {
-	assertParser(Type, "string[]", ArrayType.from(Predefined.String.from()));
+	assertParser(Type, "string[]", new ArrayType(new Predefined.String()));
 });
 
 Deno.test("Array of Array of PredefinedType: string", () => {
-	assertParser(Type, "string[][]", ArrayType.from(ArrayType.from(Predefined.String.from())));
+	assertParser(Type, "string[][]", new ArrayType(new ArrayType(new Predefined.String())));
 });
 
 Deno.test("Parenthesised PredefinedType: null", () => {
-	assertParser(Type, "(null)", Literal.Null.from());
+	assertParser(Type, "(null)", new Literal.Null());
 });
 
 Deno.test("Parenthesised Array of PredefinedType: string", () => {
-	assertParser(Type, "(string[])", ArrayType.from(Predefined.String.from()));
+	assertParser(Type, "(string[])", new ArrayType(new Predefined.String()));
 });
 
 Deno.test("Tuple (empty)", () => {
-	assertParser(Type, "[]", TupleType.from([]));
+	assertParser(Type, "[]", new TupleType([]));
 });
 
 Deno.test("Tuple of PredefinedType: string", () => {
-	assertParser(Type, "[string]", TupleType.from([Predefined.String.from()]));
+	assertParser(Type, "[string]", new TupleType([new Predefined.String()]));
 });
 
 Deno.test("Tuple of two PredefinedTypes: string, number", () => {
-	assertParser(Type, "[string, number]", TupleType.from([Predefined.String.from(), Predefined.Number.from()]));
+	assertParser(Type, "[string, number]", new TupleType([new Predefined.String(), new Predefined.Number()]));
 });
 
 Deno.test("TypeReference (Simple)", () => {
-	assertParser(Type, "String", TypeReference.from(Identifier.from("String")));
+	assertParser(Type, "String", new TypeReference(new Identifier("String")));
 });
 
 Deno.test("TypeReference with a single TypeParameter", () => {
-	assertParser(Type, "String<number>", TypeReference.from(Identifier.from("String"), [Predefined.Number.from()]));
+	assertParser(Type, "String<number>", new TypeReference(new Identifier("String"), [new Predefined.Number()]));
 });
 
 Deno.test("TypeReference with multiple TypeParameters", () => {
 	assertParser(
 		Type,
 		"String<number, string>",
-		TypeReference.from(Identifier.from("String"), [Predefined.Number.from(), Predefined.String.from()]),
+		new TypeReference(new Identifier("String"), [new Predefined.Number(), new Predefined.String()]),
 	);
 });
 
@@ -185,26 +185,23 @@ Deno.test("TypeReference with Namespaces and nested TypeParameters", () => {
 	assertParser(
 		Type,
 		"S.P.Q.R<A.B.C.D, F<string>, string>",
-		TypeReference.from(
-			QualifiedName.from(
-				QualifiedName.from(
-					QualifiedName.from(Identifier.from("S"), Identifier.from("P")),
-					Identifier.from("Q"),
-				),
-				Identifier.from("R"),
+		new TypeReference(
+			new QualifiedName(
+				new QualifiedName(new QualifiedName(new Identifier("S"), new Identifier("P")), new Identifier("Q")),
+				new Identifier("R"),
 			),
 			[
-				TypeReference.from(
-					QualifiedName.from(
-						QualifiedName.from(
-							QualifiedName.from(Identifier.from("A"), Identifier.from("B")),
-							Identifier.from("C"),
+				new TypeReference(
+					new QualifiedName(
+						new QualifiedName(
+							new QualifiedName(new Identifier("A"), new Identifier("B")),
+							new Identifier("C"),
 						),
-						Identifier.from("D"),
+						new Identifier("D"),
 					),
 				),
-				TypeReference.from(Identifier.from("F"), [Predefined.String.from()]),
-				Predefined.String.from(),
+				new TypeReference(new Identifier("F"), [new Predefined.String()]),
+				new Predefined.String(),
 			],
 		),
 	);
@@ -214,19 +211,19 @@ Deno.test("Parenthesised Array of TypeReferences with TypeParameter", () => {
 	assertParser(
 		Type,
 		"(String<number>[])[]",
-		ArrayType.from(ArrayType.from(TypeReference.from(Identifier.from("String"), [Predefined.Number.from()]))),
+		new ArrayType(new ArrayType(new TypeReference(new Identifier("String"), [new Predefined.Number()]))),
 	);
 });
 
 Deno.test("Union of PredefinedTypes: string, number", () => {
-	assertParser(Type, "string | number", UnionType.from([Predefined.String.from(), Predefined.Number.from()]));
+	assertParser(Type, "string | number", new UnionType([new Predefined.String(), new Predefined.Number()]));
 });
 
 Deno.test("Union of string and number[]", () => {
 	assertParser(
 		Type,
 		"(string | number)[]",
-		ArrayType.from(UnionType.from([Predefined.String.from(), Predefined.Number.from()])),
+		new ArrayType(new UnionType([new Predefined.String(), new Predefined.Number()])),
 	);
 });
 
@@ -234,7 +231,7 @@ Deno.test("Array of Array of Union of string and number", () => {
 	assertParser(
 		Type,
 		"(string | number)[][]",
-		ArrayType.from(ArrayType.from(UnionType.from([Predefined.String.from(), Predefined.Number.from()]))),
+		new ArrayType(new ArrayType(new UnionType([new Predefined.String(), new Predefined.Number()]))),
 	);
 });
 
@@ -242,7 +239,7 @@ Deno.test("Union of string, number and null", () => {
 	assertParser(
 		Type,
 		"string | number | null",
-		UnionType.from([Predefined.String.from(), UnionType.from([Predefined.Number.from(), Literal.Null.from()])]),
+		new UnionType([new Predefined.String(), new UnionType([new Predefined.Number(), new Literal.Null()])]),
 	);
 });
 
@@ -250,9 +247,9 @@ Deno.test("Object with Parenthesis and Arrays", () => {
 	assertParser(
 		Type,
 		"({ key: string; key2: number[] })",
-		ObjectType.from([
-			Member.from(Identifier.from("key"), Predefined.String.from(), { doc: null, modifier: [], optional: false }),
-			Member.from(Identifier.from("key2"), ArrayType.from(Predefined.Number.from()), {
+		new ObjectType([
+			new Member(new Identifier("key"), new Predefined.String(), { doc: null, modifier: [], optional: false }),
+			new Member(new Identifier("key2"), new ArrayType(new Predefined.Number()), {
 				doc: null,
 				modifier: [],
 				optional: false,
@@ -265,9 +262,9 @@ Deno.test("Intersection of TypeReferences", () => {
 	assertParser(
 		Type,
 		"A & B & C",
-		IntersectionType.from([
-			TypeReference.from(Identifier.from("A")),
-			IntersectionType.from([TypeReference.from(Identifier.from("B")), TypeReference.from(Identifier.from("C"))]),
+		new IntersectionType([
+			new TypeReference(new Identifier("A")),
+			new IntersectionType([new TypeReference(new Identifier("B")), new TypeReference(new Identifier("C"))]),
 		]),
 	);
 });
@@ -276,9 +273,9 @@ Deno.test("Union of Intersection of TypeReferences", () => {
 	assertParser(
 		Type,
 		"A & B | C & D",
-		UnionType.from([
-			IntersectionType.from([TypeReference.from(Identifier.from("A")), TypeReference.from(Identifier.from("B"))]),
-			IntersectionType.from([TypeReference.from(Identifier.from("C")), TypeReference.from(Identifier.from("D"))]),
+		new UnionType([
+			new IntersectionType([new TypeReference(new Identifier("A")), new TypeReference(new Identifier("B"))]),
+			new IntersectionType([new TypeReference(new Identifier("C")), new TypeReference(new Identifier("D"))]),
 		]),
 	);
 });
@@ -287,11 +284,11 @@ Deno.test("Union of Intersection of TypeReferences (Parenthesised)", () => {
 	assertParser(
 		Type,
 		"A & (B | C) & D",
-		IntersectionType.from([
-			TypeReference.from(Identifier.from("A")),
-			IntersectionType.from([
-				UnionType.from([TypeReference.from(Identifier.from("B")), TypeReference.from(Identifier.from("C"))]),
-				TypeReference.from(Identifier.from("D")),
+		new IntersectionType([
+			new TypeReference(new Identifier("A")),
+			new IntersectionType([
+				new UnionType([new TypeReference(new Identifier("B")), new TypeReference(new Identifier("C"))]),
+				new TypeReference(new Identifier("D")),
 			]),
 		]),
 	);
@@ -301,10 +298,10 @@ Deno.test("Object with Parenthesis and Arrays (2)", () => {
 	assertParser(
 		Type,
 		"({ foo: (string[])[] })[][]",
-		ArrayType.from(
-			ArrayType.from(
-				ObjectType.from([
-					Member.from(Identifier.from("foo"), ArrayType.from(ArrayType.from(Predefined.String.from())), {
+		new ArrayType(
+			new ArrayType(
+				new ObjectType([
+					new Member(new Identifier("foo"), new ArrayType(new ArrayType(new Predefined.String())), {
 						doc: null,
 						modifier: [],
 						optional: false,
@@ -319,33 +316,33 @@ Deno.test("Object (complex)", () => {
 	assertParser(
 		Type,
 		'{ key: "value"; key2: { nestedKey: S.P.Q.R<X> }, [rest: string]: string }',
-		ObjectType.from([
-			Member.from(Identifier.from("key"), Literal.String.from("value"), {
+		new ObjectType([
+			new Member(new Identifier("key"), new Literal.String("value"), {
 				doc: null,
 				modifier: [],
 				optional: false,
 			}),
-			Member.from(
-				Identifier.from("key2"),
-				ObjectType.from([
-					Member.from(
-						Identifier.from("nestedKey"),
-						TypeReference.from(
-							QualifiedName.from(
-								QualifiedName.from(
-									QualifiedName.from(Identifier.from("S"), Identifier.from("P")),
-									Identifier.from("Q"),
+			new Member(
+				new Identifier("key2"),
+				new ObjectType([
+					new Member(
+						new Identifier("nestedKey"),
+						new TypeReference(
+							new QualifiedName(
+								new QualifiedName(
+									new QualifiedName(new Identifier("S"), new Identifier("P")),
+									new Identifier("Q"),
 								),
-								Identifier.from("R"),
+								new Identifier("R"),
 							),
-							[TypeReference.from(Identifier.from("X"))],
+							[new TypeReference(new Identifier("X"))],
 						),
 						{ doc: null, modifier: [], optional: false },
 					),
 				]),
 				{ doc: null, modifier: [], optional: false },
 			),
-			Member.from(IndexKey.from("rest", Predefined.String.from()), Predefined.String.from(), {
+			new Member(new IndexKey("rest", new Predefined.String()), new Predefined.String(), {
 				doc: null,
 				modifier: [],
 				optional: false,

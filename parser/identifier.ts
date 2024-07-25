@@ -11,15 +11,10 @@ export class Identifier extends ParserBase {
 		super();
 	}
 
-	static from(name: string) {
-		return new Identifier(name);
-	}
-
-	static get parse(): Parser<Identifier> {
-		return sequenceOf([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
+	static parser: Parser<Identifier> = //
+		sequenceOf([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
 			.map(([n, d]) => n + d)
 			.map(name => new Identifier(name));
-	}
 
 	toString() {
 		return this.name;

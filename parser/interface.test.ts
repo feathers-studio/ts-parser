@@ -3,59 +3,89 @@ import { InterfaceHeader, InterfaceDeclaration } from "./interface.ts";
 import { Member, TypeReference } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
+import { DocString } from "./docString.ts";
 
 Deno.test("InterfaceHeader: 1", () => {
-	assertParser(InterfaceHeader.parse, "interface A", InterfaceHeader.from("A", null));
+	assertParser(InterfaceHeader.parser, "interface A", new InterfaceHeader("A"));
 });
 
 Deno.test("InterfaceHeader: 2", () => {
 	assertParser(
-		InterfaceHeader.parse,
+		InterfaceHeader.parser,
 		"interface A extends  B",
-		InterfaceHeader.from("A", [TypeReference.from(Identifier.from("B"))]),
+		new InterfaceHeader("A", { extends: [new TypeReference(new Identifier("B"))] }),
 	);
 });
 
 Deno.test("InterfaceDeclaration: 1", () => {
 	assertParser(
-		InterfaceDeclaration.parse,
+		InterfaceDeclaration.parser,
 		`interface Hello extends World {
 		readonly hello ? : World;
 		readonly hello : "World";
 	}`,
-		InterfaceDeclaration.from(
+		new InterfaceDeclaration(
 			"Hello",
 			[
-				Member.from(Identifier.from("hello"), TypeReference.from(Identifier.from("World")), {
+				new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 					modifier: ["readonly"],
 					optional: true,
 				}),
-				Member.from(Identifier.from("hello"), Literal.String.from("World"), {
+				new Member(new Identifier("hello"), new Literal.String("World"), {
 					modifier: ["readonly"],
 					optional: false,
 				}),
 			],
-			{ extends: [TypeReference.from(Identifier.from("World"))] },
+			{ extends: [new TypeReference(new Identifier("World"))] },
 		),
 	);
 });
 
 Deno.test("InterfaceDeclaration: 2", () => {
 	assertParser(
-		InterfaceDeclaration.parse,
+		InterfaceDeclaration.parser,
 		`interface Hello {
 		readonly hello ? : World;
 		readonly hello : "World"
 	}`,
-		InterfaceDeclaration.from("Hello", [
-			Member.from(Identifier.from("hello"), TypeReference.from(Identifier.from("World")), {
+		new InterfaceDeclaration("Hello", [
+			new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 				modifier: ["readonly"],
 				optional: true,
 			}),
-			Member.from(Identifier.from("hello"), Literal.String.from("World"), {
+			new Member(new Identifier("hello"), new Literal.String("World"), {
 				modifier: ["readonly"],
 				optional: false,
 			}),
 		]),
+	);
+});
+
+Deno.test("InterfaceDeclaration: Exported and Documented", () => {
+	assertParser(
+		InterfaceDeclaration.parser,
+		`/** doc
+*/
+		export    interface Hello {
+		readonly hello ? : World;
+		readonly hello : "World"
+	}`,
+		new InterfaceDeclaration(
+			"Hello",
+			[
+				new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+					modifier: ["readonly"],
+					optional: true,
+				}),
+				new Member(new Identifier("hello"), new Literal.String("World"), {
+					modifier: ["readonly"],
+					optional: false,
+				}),
+			],
+			{
+				doc: new DocString(" doc\n"),
+				exported: true,
+			},
+		),
 	);
 });

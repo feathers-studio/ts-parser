@@ -2,27 +2,20 @@ import { choice, Parser, str } from "npm:arcsecond";
 import { bw } from "./utils.ts";
 import { ParserBase } from "./base.ts";
 
-const single = bw(str("//"), str("\n"))().map(text => Comment.single(text));
-const multi = bw(str("/*"), str("*/"))().map(text => Comment.multi(text));
+const single = bw(str("//"), str("\n"))().map(text => new Comment(text, false));
+const multi = bw(str("/*"), str("*/"))().map(text => new Comment(text, true));
 
 export class Comment extends ParserBase {
 	type: "comment" = "comment";
 
-	private constructor(public text: string, public multi: boolean) {
+	multi: boolean;
+
+	constructor(public text: string, multi?: boolean) {
 		super();
+		this.multi = multi ?? false;
 	}
 
-	static single(text: string) {
-		return new Comment(text, false);
-	}
-
-	static multi(text: string) {
-		return new Comment(text, true);
-	}
-
-	static get parse(): Parser<Comment> {
-		return choice([single, multi]);
-	}
+	static parser: Parser<Comment> = choice([single, multi]);
 
 	toString() {
 		return this.multi ? `/*${this.text}*/` : `//${this.text}`;

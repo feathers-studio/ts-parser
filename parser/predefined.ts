@@ -18,17 +18,11 @@ export namespace Predefined {
 		type: "predefined" = "predefined";
 		value: "any" = "any";
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new Any();
-		}
-
-		static get parse() {
-			return str("any").map(() => Any.from());
-		}
+		static parse = str("any").map(() => new Any());
 
 		toString() {
 			return "any";
@@ -40,17 +34,11 @@ export namespace Predefined {
 		type: "number" = "number";
 		value: null = null;
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new Number();
-		}
-
-		static get parse() {
-			return str("number").map(() => Number.from());
-		}
+		static parse = str("number").map(() => new Number());
 
 		toString() {
 			return "number";
@@ -62,17 +50,11 @@ export namespace Predefined {
 		type: "boolean" = "boolean";
 		value: null = null;
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new Boolean();
-		}
-
-		static get parse() {
-			return str("boolean").map(() => Boolean.from());
-		}
+		static parse = str("boolean").map(() => new Boolean());
 
 		toString() {
 			return "boolean";
@@ -84,17 +66,11 @@ export namespace Predefined {
 		type: "bigint" = "bigint";
 		value: null = null;
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new BigInt();
-		}
-
-		static get parse() {
-			return str("bigint").map(() => BigInt.from());
-		}
+		static parse = str("bigint").map(() => new BigInt());
 
 		toString() {
 			return "bigint";
@@ -106,17 +82,11 @@ export namespace Predefined {
 		type: "string" = "string";
 		value: null = null;
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new String();
-		}
-
-		static get parse() {
-			return str("string").map(() => String.from());
-		}
+		static parse = str("string").map(() => new String());
 
 		toString() {
 			return "string";
@@ -127,17 +97,11 @@ export namespace Predefined {
 		type: "predefined" = "predefined";
 		value: "void" = "void";
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new Void();
-		}
-
-		static get parse() {
-			return str("void").map(() => Void.from());
-		}
+		static parse = str("void").map(() => new Void());
 
 		toString() {
 			return "void";
@@ -148,17 +112,11 @@ export namespace Predefined {
 		type: "predefined" = "predefined";
 		value: "never" = "never";
 
-		private constructor() {
+		constructor() {
 			super();
 		}
 
-		static from() {
-			return new Never();
-		}
-
-		static get parse() {
-			return str("never").map(() => Never.from());
-		}
+		static parse = str("never").map(() => new Never());
 
 		toString() {
 			return "never";

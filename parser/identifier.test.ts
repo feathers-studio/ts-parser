@@ -2,53 +2,53 @@ import { Identifier } from "./identifier.ts";
 import { assertParser, assertParserFails } from "./utils.ts";
 
 Deno.test("identifier: 1", () => {
-	assertParser(Identifier.parse, "helloWorld", Identifier.from("helloWorld"));
+	assertParser(Identifier.parser, "helloWorld", new Identifier("helloWorld"));
 });
 
 Deno.test("identifier: 2", () => {
-	assertParser(Identifier.parse, "_helloWorld", Identifier.from("_helloWorld"));
+	assertParser(Identifier.parser, "_helloWorld", new Identifier("_helloWorld"));
 });
 
 Deno.test("identifier: 3", () => {
-	assertParser(Identifier.parse, "$helloWorld", Identifier.from("$helloWorld"));
+	assertParser(Identifier.parser, "$helloWorld", new Identifier("$helloWorld"));
 });
 
 Deno.test("identifier: 4", () => {
-	assertParser(Identifier.parse, "_$helloWorld", Identifier.from("_$helloWorld"));
+	assertParser(Identifier.parser, "_$helloWorld", new Identifier("_$helloWorld"));
 });
 
 Deno.test("identifier: 5", () => {
-	assertParser(Identifier.parse, "helloWorld_", Identifier.from("helloWorld_"));
+	assertParser(Identifier.parser, "helloWorld_", new Identifier("helloWorld_"));
 });
 
 Deno.test("identifier: 6", () => {
-	assertParser(Identifier.parse, "helloWorld$", Identifier.from("helloWorld$"));
+	assertParser(Identifier.parser, "helloWorld$", new Identifier("helloWorld$"));
 });
 
 Deno.test("identifier: 7", () => {
-	assertParser(Identifier.parse, "helloWorld0", Identifier.from("helloWorld0"));
+	assertParser(Identifier.parser, "helloWorld0", new Identifier("helloWorld0"));
 });
 
 Deno.test("identifier: 8", () => {
-	assertParser(Identifier.parse, "helloWorld_0", Identifier.from("helloWorld_0"));
+	assertParser(Identifier.parser, "helloWorld_0", new Identifier("helloWorld_0"));
 });
 
 Deno.test("identifier: 9", () => {
-	assertParser(Identifier.parse, "helloWorld$0", Identifier.from("helloWorld$0"));
+	assertParser(Identifier.parser, "helloWorld$0", new Identifier("helloWorld$0"));
 });
 
 Deno.test("identifier: 10", () => {
-	assertParser(Identifier.parse, "helloWorld_0$", Identifier.from("helloWorld_0$"));
+	assertParser(Identifier.parser, "helloWorld_0$", new Identifier("helloWorld_0$"));
 });
 
 Deno.test("identifier: 11", () => {
-	assertParser(Identifier.parse, "helloWorld$0_", Identifier.from("helloWorld$0_"));
+	assertParser(Identifier.parser, "helloWorld$0_", new Identifier("helloWorld$0_"));
 });
 
 Deno.test("identifier: 12", () => {
-	assertParserFails(Identifier.parse, "0helloWorld");
+	assertParserFails(Identifier.parser, "0helloWorld");
 });
 
 Deno.test("identifier: 13", () => {
-	assertParserFails(Identifier.parse, "hello-World");
+	assertParserFails(Identifier.parser, "hello-World");
 });

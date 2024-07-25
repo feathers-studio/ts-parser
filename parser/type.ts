@@ -13,7 +13,7 @@ const arrayPostfix = bracketed(
 
 export type NonArrayPrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | TupleType | ThisType;
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
-	choice([PredefinedOrLiteralType, TypeReference.parse, ObjectType.parse, TupleType.parse, ThisType.parse]),
+	choice([PredefinedOrLiteralType, TypeReference.parser, ObjectType.parser, TupleType.parser, ThisType.parser]),
 );
 
 export type PrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | ArrayType | TupleType | ThisType;
@@ -22,7 +22,7 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 		.map(([value, , postfixes]): Type => {
 			if (postfixes.length) {
 				const type = postfixes.reduce((value, suffix) => {
-					if (suffix === "array") return ArrayType.from(value);
+					if (suffix === "array") return new ArrayType(value);
 					throw new Error(`Unknown suffix: ${suffix}`);
 				}, value as PrimaryType);
 				return type;
@@ -33,21 +33,15 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 export class IntersectionType extends ParserBase {
 	type: "intersection" = "intersection";
 
-	private constructor(public types: Type[]) {
+	constructor(public types: Type[]) {
 		super();
 	}
 
-	static from(types: Type[]) {
-		return new IntersectionType(types);
-	}
-
-	static get parse(): Parser<IntersectionType> {
-		return lazy(() =>
-			seq([PrimaryType, wsed(str("&")), IntersectionOrPrimaryType]).map(
-				([left, _, right]) => new IntersectionType([left, right]),
-			),
-		);
-	}
+	static parser: Parser<IntersectionType> = lazy(() =>
+		seq([PrimaryType, wsed(str("&")), IntersectionOrPrimaryType]).map(
+			([left, _, right]) => new IntersectionType([left, right]),
+		),
+	);
 
 	toString() {
 		return this.types.join(" & ");
@@ -55,26 +49,20 @@ export class IntersectionType extends ParserBase {
 }
 
 export type IntersectionOrPrimaryType = IntersectionType | PrimaryType;
-export const IntersectionOrPrimaryType = choice([IntersectionType.parse, PrimaryType]);
+export const IntersectionOrPrimaryType = choice([IntersectionType.parser, PrimaryType]);
 
 export class UnionType extends ParserBase {
 	type: "union" = "union";
 
-	private constructor(public types: Type[]) {
+	constructor(public types: Type[]) {
 		super();
 	}
 
-	static from(types: Type[]) {
-		return new UnionType(types);
-	}
-
-	static get parse(): Parser<UnionType> {
-		return lazy(() =>
-			seq([IntersectionOrPrimaryType, wsed(str("|")), UnionOrIntersectionOrPrimaryType]).map(
-				([left, _, right]) => new UnionType([left, right]),
-			),
-		);
-	}
+	static parser: Parser<UnionType> = lazy(() =>
+		seq([IntersectionOrPrimaryType, wsed(str("|")), UnionOrIntersectionOrPrimaryType]).map(
+			([left, _, right]) => new UnionType([left, right]),
+		),
+	);
 
 	toString() {
 		return this.types.join(" | ");
@@ -82,7 +70,7 @@ export class UnionType extends ParserBase {
 }
 
 export type UnionOrIntersectionOrPrimaryType = UnionType | IntersectionType | PrimaryType;
-export const UnionOrIntersectionOrPrimaryType = choice([UnionType.parse, IntersectionOrPrimaryType]);
+export const UnionOrIntersectionOrPrimaryType = choice([UnionType.parser, IntersectionOrPrimaryType]);
 
 export type Type = UnionType | IntersectionType | PrimaryType;
 export const Type = lazy(() => choice([UnionOrIntersectionOrPrimaryType]));
@@ -115,29 +103,23 @@ QualifiedName = Name . Identifier
 export class QualifiedName extends ParserBase {
 	type: "qualified-name" = "qualified-name";
 
-	private constructor(public left: TypeName, public name: Identifier) {
+	constructor(public left: TypeName, public name: Identifier) {
 		super();
 	}
 
-	static from(left: TypeName, name: Identifier) {
-		return new QualifiedName(left, name);
-	}
-
-	static get parse(): Parser<QualifiedName> {
-		return lazy(() =>
-			sepByN<Identifier>(
-				char("."),
-				2,
-			)(Identifier.parse).map(
-				names =>
-					new QualifiedName(
-						// @ts-ignore - left is inherently TypeName, but TS doesn't understand
-						init(names).reduce((left, name) => new QualifiedName(left, name)),
-						last(names),
-					),
-			),
-		);
-	}
+	static parser: Parser<QualifiedName> = lazy(() =>
+		sepByN<Identifier>(
+			char("."),
+			2,
+		)(Identifier.parser).map(
+			names =>
+				new QualifiedName(
+					// @ts-ignore - left is inherently TypeName, but TS doesn't understand
+					init(names).reduce((left, name) => new QualifiedName(left, name)),
+					last(names),
+				),
+		),
+	);
 
 	toString() {
 		return `${this.left}.${this.name}`;
@@ -146,7 +128,7 @@ export class QualifiedName extends ParserBase {
 
 export type TypeName = QualifiedName | Identifier;
 
-export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName.parse, Identifier.parse]));
+export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName.parser, Identifier.parser]));
 
 export interface TypeReference {
 	type: "type-reference";
@@ -159,22 +141,16 @@ export class TypeReference extends ParserBase {
 
 	typeArguments: Type[] | null;
 
-	private constructor(public name: TypeName, typeArguments?: Type[] | null) {
+	constructor(public name: TypeName, typeArguments?: Type[] | null) {
 		super();
 		this.typeArguments = typeArguments ?? null;
 	}
 
-	static from(name: TypeName, typeArguments?: Type[] | null) {
-		return new TypeReference(name, typeArguments);
-	}
-
-	static get parse(): Parser<TypeReference> {
-		return lazy(() =>
-			seq([TypeName, possibly(TypeParameters)]).map(
-				([name, typeArguments]) => new TypeReference(name, typeArguments),
-			),
-		);
-	}
+	static parser: Parser<TypeReference> = lazy(() =>
+		seq([TypeName, possibly(TypeParameters)]).map(
+			([name, typeArguments]) => new TypeReference(name, typeArguments),
+		),
+	);
 
 	toString() {
 		return `${this.name}${this.typeArguments ? "<" + this.typeArguments.join(", ") + ">" : ""}`;
@@ -184,20 +160,14 @@ export class TypeReference extends ParserBase {
 export class IndexKey extends ParserBase {
 	type: "index-key" = "index-key";
 
-	private constructor(public key: string, public indexType: Type) {
+	constructor(public key: string, public indexType: Type) {
 		super();
 	}
 
-	static from(key: string, indexType: Type) {
-		return new IndexKey(key, indexType);
-	}
-
-	static get parse(): Parser<IndexKey> {
-		return lazy(() =>
-			sequenceOf([str("["), wsed(Identifier.parse), str(":"), wsed(Type), str("]")]) //
-				.map(([_, name, __, indexType]) => new IndexKey(name.name, indexType)),
-		);
-	}
+	static parser: Parser<IndexKey> = lazy(() =>
+		sequenceOf([str("["), wsed(Identifier.parser), str(":"), wsed(Type), str("]")]) //
+			.map(([_, name, __, indexType]) => new IndexKey(name.name, indexType)),
+	);
 
 	toString() {
 		return `[${this.key}: ${this.indexType}]`;
@@ -219,7 +189,7 @@ export class Member extends ParserBase {
 	modifier: Modifier[];
 	optional: boolean;
 
-	private constructor(
+	constructor(
 		public key: Identifier | IndexKey,
 		public value: Type,
 		extra?: {
@@ -234,32 +204,18 @@ export class Member extends ParserBase {
 		this.optional = extra?.optional ?? false;
 	}
 
-	static from(
-		key: Identifier | IndexKey,
-		value: Type,
-		extra?: {
-			doc?: DocString | null;
-			modifier?: Modifier[];
-			optional?: boolean;
-		},
-	) {
-		return new Member(key, value, extra);
-	}
-
-	static get parse(): Parser<Member> {
-		return lazy(() =>
-			sequenceOf([
-				possibly(DocString.parse),
-				wsed(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
-				wsed(choice([Identifier.parse, IndexKey.parse])),
-				possibly(char("?")).map(c => c != null),
-				wsed(str(":")),
-				wsed(Type),
-			] as const).map(
-				([doc, modifier, key, optional, , value]) => new Member(key, value, { doc, modifier, optional }),
-			),
-		);
-	}
+	static parser: Parser<Member> = lazy(() =>
+		sequenceOf([
+			possibly(DocString.parser),
+			wsed(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
+			wsed(choice([Identifier.parser, IndexKey.parser])),
+			possibly(char("?")).map(c => c != null),
+			wsed(str(":")),
+			wsed(Type),
+		] as const).map(
+			([doc, modifier, key, optional, , value]) => new Member(key, value, { doc, modifier, optional }),
+		),
+	);
 
 	toString() {
 		let out = "";
@@ -279,28 +235,22 @@ export class ObjectType extends ParserBase {
 
 	doc: DocString | null;
 
-	private constructor(public members: Member[], extra?: { doc?: DocString }) {
+	constructor(public members: Member[], extra?: { doc?: DocString }) {
 		super();
 		this.doc = extra?.doc ?? null;
 	}
 
-	static from(members: Member[], extra?: { doc?: DocString }) {
-		return new ObjectType(members, extra);
-	}
-
-	static get parse(): Parser<ObjectType> {
-		return lazy(() =>
-			bracketed(
-				seq([
-					wsed(Member.parse),
-					many(seq([PropertySeparator, wsed(Member.parse)]).map(([, member]) => member)), //
-					possibly(wsed(PropertySeparator)),
-				]).map(([member, members]) => [member, ...members]),
-				"{",
-			) //
-				.map(members => new ObjectType(members)),
-		);
-	}
+	static parser: Parser<ObjectType> = lazy(() =>
+		bracketed(
+			seq([
+				wsed(Member.parser),
+				many(seq([PropertySeparator, wsed(Member.parser)]).map(([, member]) => member)), //
+				possibly(wsed(PropertySeparator)),
+			]).map(([member, members]) => [member, ...members]),
+			"{",
+		) //
+			.map(members => new ObjectType(members)),
+	);
 
 	toString() {
 		return `{\n${this.members.join("\n")}\n}`;
@@ -310,17 +260,11 @@ export class ObjectType extends ParserBase {
 export class ArrayType extends ParserBase {
 	type: "array" = "array";
 
-	private constructor(public value: Type) {
+	constructor(public value: Type) {
 		super();
 	}
 
-	static from(value: Type) {
-		return new ArrayType(value);
-	}
-
-	static get parse(): Parser<ArrayType> {
-		return lazy(() => bracketed(wsed(Type), "[").map(value => new ArrayType(value)));
-	}
+	static parser: Parser<ArrayType> = lazy(() => bracketed(wsed(Type), "[").map(value => new ArrayType(value)));
 
 	toString() {
 		return `${this.value}[]`;
@@ -330,17 +274,13 @@ export class ArrayType extends ParserBase {
 export class TupleType extends ParserBase {
 	type: "tuple" = "tuple";
 
-	private constructor(public values: Type[]) {
+	constructor(public values: Type[]) {
 		super();
 	}
 
-	static from(values: Type[]) {
-		return new TupleType(values);
-	}
-
-	static get parse(): Parser<TupleType> {
-		return lazy(() => bracketed(sepByN<Type>(char(","), 0)(wsed(Type)), "[").map(values => new TupleType(values)));
-	}
+	static parser: Parser<TupleType> = lazy(() =>
+		bracketed(sepByN<Type>(char(","), 0)(wsed(Type)), "[").map(values => new TupleType(values)),
+	);
 
 	toString() {
 		return `[${this.values.join(", ")}]`;
@@ -350,13 +290,7 @@ export class TupleType extends ParserBase {
 export class ThisType extends ParserBase {
 	type: "this" = "this";
 
-	static get parse(): Parser<ThisType> {
-		return str("this").map(() => new ThisType());
-	}
-
-	static from() {
-		return new ThisType();
-	}
+	static parser: Parser<ThisType> = str("this").map(() => new ThisType());
 
 	toString() {
 		return "this";

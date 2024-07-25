@@ -14,14 +14,10 @@ import { assertThrows } from "jsr:@std/assert@1.0.0/throws";
 import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
 import { assertParserFn } from "./utils.ts";
 
+// For test coverage 🙄
 Deno.test("ParserBase", () => {
-	assertThrows(() => {
-		ParserBase.from();
-	});
-
-	assertThrows(() => {
-		ParserBase.parse.run("test");
-	});
+	// assertThrows(() => new ParserBase());
+	assertThrows(() => ParserBase.parser.run("test"));
 });
 
 const testSource = `
@@ -53,6 +49,11 @@ interface ComputedKeyframe {
 	offset: number | null;
 	[property: string]: string | number | null | undefined;
 }
+
+interface ConstrainDOMStringParameters {
+    exact?: string | string[];
+    ideal?: string | string[];
+}
 	
 interface KeyboardEventInit extends EventModifierInit {
 	/** @deprecated */
@@ -67,130 +68,137 @@ interface KeyboardEventInit extends EventModifierInit {
 }`;
 
 const expectFixture = [
-	Comment.single("/ Extract from lib.dom.d.ts"),
-	Reference.from("./iterable.d.ts"),
-	Comment.multi(" Source is from @types/web "),
-	Comment.single("///////////////////////////"),
-	Comment.single("/ Window APIs"),
-	Comment.single("///////////////////////////"),
+	new Comment("/ Extract from lib.dom.d.ts", false),
+	new Reference("./iterable.d.ts"),
+	new Comment(" Source is from @types/web ", true),
+	new Comment("///////////////////////////", false),
+	new Comment("/ Window APIs", false),
+	new Comment("///////////////////////////", false),
 
-	InterfaceDeclaration.from(
+	new InterfaceDeclaration(
 		"A",
 		[
-			Member.from(Identifier.from("foo"), TypeReference.from(Identifier.from("Bar")), { optional: true }),
-			Member.from(
-				Identifier.from("baz"), //
-				UnionType.from([Predefined.String.from(), Predefined.Number.from()]),
+			new Member(new Identifier("foo"), new TypeReference(new Identifier("Bar")), { optional: true }),
+			new Member(
+				new Identifier("baz"), //
+				new UnionType([new Predefined.String(), new Predefined.Number()]),
 			),
 		],
 		{
 			extends: [
-				TypeReference.from(Identifier.from("B")),
-				TypeReference.from(Identifier.from("C")),
-				TypeReference.from(Identifier.from("D")),
+				new TypeReference(new Identifier("B")),
+				new TypeReference(new Identifier("C")),
+				new TypeReference(new Identifier("D")),
 			],
 		},
 	),
 
-	InterfaceDeclaration.from(
+	new InterfaceDeclaration(
 		"AddEventListenerOptions",
 		[
-			Member.from(Identifier.from("once"), Predefined.Boolean.from(), { optional: true }),
-			Member.from(Identifier.from("passive"), Predefined.Boolean.from(), { optional: true }),
-			Member.from(Identifier.from("signal"), TypeReference.from(Identifier.from("AbortSignal")), {
+			new Member(new Identifier("once"), new Predefined.Boolean(), { optional: true }),
+			new Member(new Identifier("passive"), new Predefined.Boolean(), { optional: true }),
+			new Member(new Identifier("signal"), new TypeReference(new Identifier("AbortSignal")), {
 				optional: true,
 			}),
-			Member.from(
-				Identifier.from("init"), //
-				ArrayType.from(ArrayType.from(Predefined.String.from())),
+			new Member(
+				new Identifier("init"), //
+				new ArrayType(new ArrayType(new Predefined.String())),
 				{ optional: true },
 			),
 		],
 		{
-			extends: [TypeReference.from(Identifier.from("EventListenerOptions"))],
+			extends: [new TypeReference(new Identifier("EventListenerOptions"))],
 		},
 	),
 
-	InterfaceDeclaration.from("ComputedKeyframe", [
-		Member.from(
-			Identifier.from("composite"),
-			TypeReference.from(Identifier.from("CompositeOperationOrAuto"), null),
+	new InterfaceDeclaration("ComputedKeyframe", [
+		new Member(new Identifier("composite"), new TypeReference(new Identifier("CompositeOperationOrAuto"), null)),
+		new Member(
+			new Identifier("computedOffset"), //
+			new Predefined.Number(),
 		),
-		Member.from(
-			Identifier.from("computedOffset"), //
-			Predefined.Number.from(),
+		new Member(
+			new Identifier("easing"), //
+			new Predefined.String(),
 		),
-		Member.from(
-			Identifier.from("easing"), //
-			Predefined.String.from(),
+		new Member(
+			new Identifier("offset"), //
+			new UnionType([new Predefined.Number(), new Literal.Null()]),
 		),
-		Member.from(
-			Identifier.from("offset"), //
-			UnionType.from([Predefined.Number.from(), Literal.Null.from()]),
-		),
-		Member.from(
-			IndexKey.from("property", Predefined.String.from()),
-			UnionType.from([
-				Predefined.String.from(),
-				UnionType.from([
-					Predefined.Number.from(),
-					UnionType.from([Literal.Null.from(), Literal.Undefined.from()]),
-				]),
+		new Member(
+			new IndexKey("property", new Predefined.String()),
+			new UnionType([
+				new Predefined.String(),
+				new UnionType([new Predefined.Number(), new UnionType([new Literal.Null(), new Literal.Undefined()])]),
 			]),
 		),
 	]),
 
-	InterfaceDeclaration.from(
+	new InterfaceDeclaration("ConstrainDOMStringParameters", [
+		new Member(
+			new Identifier("exact"), //
+			new UnionType([new Predefined.String(), new ArrayType(new Predefined.String())]),
+			{ optional: true },
+		),
+		new Member(
+			new Identifier("ideal"), //
+			new UnionType([new Predefined.String(), new ArrayType(new Predefined.String())]),
+			{ optional: true },
+		),
+	]),
+
+	new InterfaceDeclaration(
 		"KeyboardEventInit",
 		[
-			Member.from(
-				Identifier.from("charCode"), //
-				Predefined.Number.from(),
-				{ optional: true, doc: DocString.from(" @deprecated ") },
+			new Member(
+				new Identifier("charCode"), //
+				new Predefined.Number(),
+				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
-			Member.from(
-				Identifier.from("code"), //
-				Predefined.String.from(),
+			new Member(
+				new Identifier("code"), //
+				new Predefined.String(),
 				{ optional: true },
 			),
-			Member.from(
-				Identifier.from("isComposing"), //
-				Predefined.Boolean.from(),
+			new Member(
+				new Identifier("isComposing"), //
+				new Predefined.Boolean(),
 				{ optional: true },
 			),
-			Member.from(
-				Identifier.from("key"), //
-				Predefined.String.from(),
+			new Member(
+				new Identifier("key"), //
+				new Predefined.String(),
 				{ optional: true },
 			),
-			Member.from(
-				Identifier.from("keyCode"), //
-				Predefined.Number.from(),
-				{ optional: true, doc: DocString.from(" @deprecated ") },
+			new Member(
+				new Identifier("keyCode"), //
+				new Predefined.Number(),
+				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
-			Member.from(
-				Identifier.from("location"), //
-				Predefined.Number.from(),
+			new Member(
+				new Identifier("location"), //
+				new Predefined.Number(),
 				{ optional: true },
 			),
-			Member.from(
-				Identifier.from("repeat"), //
-				Predefined.Boolean.from(),
+			new Member(
+				new Identifier("repeat"), //
+				new Predefined.Boolean(),
 				{ optional: true },
 			),
 		],
 		{
-			extends: [TypeReference.from(Identifier.from("EventModifierInit"))],
+			extends: [new TypeReference(new Identifier("EventModifierInit"))],
 		},
 	),
 ];
 
 Deno.test("DeclarationFile", () => {
-	assertParser(DeclarationFile.parse, testSource, DeclarationFile.from(expectFixture));
+	assertParser(DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
 });
 
 Deno.test("parse", () => {
-	assertParserFn(parse, testSource, DeclarationFile.from(expectFixture));
+	assertParserFn(parse, testSource, new DeclarationFile(expectFixture));
 });
 
 Deno.test("roundtrip", () => {
@@ -201,6 +209,6 @@ Deno.test("roundtrip", () => {
 	assert(!reparsed.isError);
 
 	assertEquals(reparsed.result, parsed.result);
-	assertEquals(reparsed.result, DeclarationFile.from(expectFixture));
+	assertEquals(reparsed.result, new DeclarationFile(expectFixture));
 	assertEquals(reparsed.result.toString(), parsed.result.toString());
 });
