@@ -1,5 +1,5 @@
 import { DeclarationFile, parse } from "./index.ts";
-import { testParser } from "./utils.ts";
+import { assertParser } from "./utils.ts";
 import { Comment, Directive } from "./comment.ts";
 import { InterfaceDeclaration } from "./interface.ts";
 import { ArrayType, IndexSignature, PropertySignature, TypeReference, UnionType } from "./type.ts";
@@ -252,7 +252,9 @@ const expectFixture = [
 	),
 ];
 
-testParser("DeclarationFile", DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
+Deno.test("DeclarationFile", () => {
+	assertParser(DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
+});
 
 Deno.test("parse", () => {
 	assertParserFn(parse, testSource, new DeclarationFile(expectFixture));

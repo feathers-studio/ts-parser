@@ -1,16 +1,30 @@
 import { str } from "npm:arcsecond";
-import { maybeBracketed, quoted, testParser } from "./utils.ts";
+import { assertParser, maybeBracketed, quoted, testParser } from "./utils.ts";
 
-testParser("maybeBracketed: 1", maybeBracketed(str("Hello, World!")), "Hello, World!", "Hello, World!");
+Deno.test("maybeBracketed: 1", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "Hello, World!", "Hello, World!");
+});
 
-testParser("maybeBracketed: 2", maybeBracketed(str("Hello, World!")), "(Hello, World!)", "Hello, World!");
+Deno.test("maybeBracketed: 2", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "(Hello, World!)", "Hello, World!");
+});
 
-testParser("maybeBracketed: 3", maybeBracketed(str("Hello, World!")), "( Hello, World!   )", "Hello, World!");
+Deno.test("maybeBracketed: 3", () => {
+	assertParser(maybeBracketed(str("Hello, World!")), "( Hello, World!   )", "Hello, World!");
+});
 
-testParser("maybeBracketed: 4", maybeBracketed(str("Hello, World!"), "["), "[ Hello, World! ]", "Hello, World!");
+Deno.test("maybeBracketed: 4", () => {
+	assertParser(maybeBracketed(str("Hello, World!"), "["), "[ Hello, World! ]", "Hello, World!");
+});
 
-testParser("maybeBracketed: 5", maybeBracketed(str("Hello, World!"), "{"), "{ Hello, World! }", "Hello, World!");
+Deno.test("maybeBracketed: 5", () => {
+	assertParser(maybeBracketed(str("Hello, World!"), "{"), "{ Hello, World! }", "Hello, World!");
+});
 
-testParser("quoted: 1", quoted.any, '"Hello, World!"', "Hello, World!", { skipInverse: true });
+Deno.test("quoted: 1", () => {
+	assertParser(quoted.any, '"Hello, World!"', "Hello, World!", { skipInverse: true });
+});
 
-testParser("quoted: 2", quoted.any, "'Hello, World!'", "Hello, World!", { skipInverse: true });
+Deno.test("quoted: 2", () => {
+	assertParser(quoted.any, "'Hello, World!'", "Hello, World!", { skipInverse: true });
+});

@@ -13,15 +13,13 @@ import {
 	takeLeft,
 	whitespace,
 } from "npm:arcsecond";
-import { ParserBase } from "./base.ts";
 
 export const head = <T>(xs: T[]) => xs[0];
 export const tail = <T>(xs: T[]) => xs.slice(1);
 export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
 export const last = <T>(xs: T[]) => xs[xs.length - 1];
 
-export const testParser = <T>(
-	name: string,
+export const assertParser = <T>(
 	parser: Parser<T>,
 	source: string,
 	expected: T,
@@ -35,27 +33,33 @@ export const testParser = <T>(
 		requireFail?: boolean;
 	} = {},
 ) => {
-	const error = new Error();
-	Error.captureStackTrace(error);
-	const stack = error.stack;
-
 	const ended = ends(parser);
 
-	Deno.test(name + " (Forwards )", () => {
+	{
 		const result = ended.run(source);
-		if (requireFail) return assert(result.isError, stack);
-		else assertEquals(result, { isError: false, result: expected, index: source.length, data: null }, stack);
-	});
+		if (requireFail) return assert(result.isError, " (Forwards)");
+		else
+			assertEquals(
+				result,
+				{ isError: false, result: expected, index: source.length, data: null },
+				" *<Forwards>",
+			);
+	}
 
 	if (skipInverse) return;
 	if (requireFail) return;
 
-	Deno.test(name + " (Backwards)", () => {
+	{
 		const newSource = String(expected);
 		const result2 = ended.run(newSource);
 		if (result2.isError) console.error(newSource, "\n", result2.error);
-		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null }, stack);
-	});
+
+		assertEquals(
+			result2,
+			{ isError: false, result: expected, index: newSource.length, data: null },
+			" *<Backwards>",
+		);
+	}
 };
 
 export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {
