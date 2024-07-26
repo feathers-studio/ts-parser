@@ -2,11 +2,13 @@ import { choice, many, Parser } from "npm:arcsecond";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import { ends, nonNull, ws } from "./utils.ts";
 import { InterfaceDeclaration } from "./interface.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 export type Statement = Directive | Pragma | Comment | InterfaceDeclaration;
 
 export class DeclarationFile extends ParserBase {
+	kind: SyntaxKind.DeclarationFile = SyntaxKind.DeclarationFile;
+
 	constructor(public readonly statements: Statement[]) {
 		super();
 	}
@@ -19,7 +21,7 @@ export class DeclarationFile extends ParserBase {
 		let out = "";
 
 		for (const statement of this.statements)
-			if (statement.type === "interface") out += "\n" + statement.toString() + "\n";
+			if (statement.kind === SyntaxKind.InterfaceDeclaration) out += "\n" + statement.toString() + "\n";
 			else out += statement.toString() + "\n";
 
 		return out;

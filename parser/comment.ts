@@ -1,9 +1,9 @@
 import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str } from "npm:arcsecond";
 import { bw, quoted, seq, wss } from "./utils.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 export class Directive extends ParserBase {
-	type: "directive" = "directive";
+	kind: SyntaxKind.Directive = SyntaxKind.Directive;
 
 	constructor(public name: string, public attr: Record<string, string>) {
 		super();
@@ -37,7 +37,7 @@ const pragma = {
 };
 
 export class Pragma extends ParserBase {
-	type: "pragma" = "pragma";
+	kind: SyntaxKind.Pragma = SyntaxKind.Pragma;
 
 	constructor(public text: string, public multi: boolean = false) {
 		super();
@@ -56,7 +56,7 @@ const single = bw(str("//"), choice([str("\n"), endOfInput]))().map(text => new 
 const multi = bw(str("/*"), str("*/"))().map(text => new Comment(text, true));
 
 export class Comment extends ParserBase {
-	type: "comment" = "comment";
+	kind: SyntaxKind.Comment = SyntaxKind.Comment;
 
 	constructor(public text: string, public multi: boolean = false) {
 		super();

@@ -20,7 +20,7 @@ export const tail = <T>(xs: T[]) => xs.slice(1);
 export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
 export const last = <T>(xs: T[]) => xs[xs.length - 1];
 
-export const testParser = <T extends ParserBase>(
+export const testParser = <T>(
 	name: string,
 	parser: Parser<T>,
 	source: string,
@@ -51,7 +51,7 @@ export const testParser = <T extends ParserBase>(
 	if (requireFail) return;
 
 	Deno.test(name + " (Backwards)", () => {
-		const newSource = expected.toString();
+		const newSource = String(expected);
 		const result2 = ended.run(newSource);
 		if (result2.isError) console.error(newSource, "\n", result2.error);
 		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null }, stack);

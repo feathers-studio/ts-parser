@@ -1,9 +1,9 @@
 import { Parser, str } from "npm:arcsecond";
 import { bw } from "./utils.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 export class DocString extends ParserBase {
-	type: "docString" = "docString";
+	kind: SyntaxKind.DocString = SyntaxKind.DocString;
 
 	constructor(public text: string) {
 		super();

@@ -4,7 +4,7 @@ import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { DocString } from "./docString.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 const arrayPostfix = bracketed(
 	wss.map(() => "array"),
@@ -31,7 +31,7 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 );
 
 export class IntersectionType extends ParserBase {
-	type: "intersection" = "intersection";
+	kind: SyntaxKind.IntersectionType = SyntaxKind.IntersectionType;
 
 	constructor(public types: [left: Type, right: Type]) {
 		super();
@@ -47,12 +47,12 @@ export class IntersectionType extends ParserBase {
 		const [left, right] = this.types;
 		let out = "";
 
-		if (left.type === "union") out += "(" + left + ")";
+		if (left.kind === SyntaxKind.UnionType) out += "(" + left + ")";
 		else out += left;
 
 		out += " & ";
 
-		if (right.type === "intersection") out += "(" + right + ")";
+		if (right.kind === SyntaxKind.UnionType) out += "(" + right + ")";
 		else out += right;
 
 		return out;
@@ -63,7 +63,7 @@ export type IntersectionOrPrimaryType = IntersectionType | PrimaryType;
 export const IntersectionOrPrimaryType = choice([IntersectionType.parser, PrimaryType]);
 
 export class UnionType extends ParserBase {
-	type: "union" = "union";
+	kind: SyntaxKind.UnionType = SyntaxKind.UnionType;
 
 	constructor(public types: [left: Type, right: Type]) {
 		super();
@@ -79,12 +79,12 @@ export class UnionType extends ParserBase {
 		const [left, right] = this.types;
 		let out = "";
 
-		if (left.type === "intersection") out += "(" + left + ")";
+		if (left.kind === SyntaxKind.IntersectionType) out += "(" + left + ")";
 		else out += left;
 
 		out += " | ";
 
-		if (right.type === "union") out += "(" + right + ")";
+		if (right.kind === SyntaxKind.IntersectionType) out += "(" + right + ")";
 		else out += right;
 
 		return out;
@@ -123,7 +123,7 @@ QualifiedName = Name . Identifier
 */
 
 export class QualifiedName extends ParserBase {
-	type: "qualified-name" = "qualified-name";
+	kind: SyntaxKind.QualifiedName = SyntaxKind.QualifiedName;
 
 	constructor(public left: TypeName, public name: Identifier) {
 		super();
@@ -152,14 +152,8 @@ export type TypeName = QualifiedName | Identifier;
 
 export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName.parser, Identifier.parser]));
 
-export interface TypeReference {
-	type: "type-reference";
-	name: TypeName;
-	typeArguments: Type[] | null;
-}
-
 export class TypeReference extends ParserBase {
-	type: "type-reference" = "type-reference";
+	kind: SyntaxKind.TypeReference = SyntaxKind.TypeReference;
 
 	typeArguments: Type[] | null;
 
@@ -179,16 +173,16 @@ export class TypeReference extends ParserBase {
 	}
 }
 
-export class IndexKey extends ParserBase {
-	type: "index-key" = "index-key";
+export class IndexSignature extends ParserBase {
+	kind: SyntaxKind.IndexSignature = SyntaxKind.IndexSignature;
 
 	constructor(public key: string, public indexType: Type) {
 		super();
 	}
 
-	static parser: Parser<IndexKey> = lazy(() =>
+	static parser: Parser<IndexSignature> = lazy(() =>
 		sequenceOf([str("["), surroundWhitespace(Identifier.parser), str(":"), surroundWhitespace(Type), str("]")]) //
-			.map(([_, name, __, indexType]) => new IndexKey(name.name, indexType)),
+			.map(([_, name, __, indexType]) => new IndexSignature(name.name, indexType)),
 	);
 
 	toString() {
@@ -204,15 +198,15 @@ export const Modifier: Parser<Modifier> = choice([
 	str("protected"),
 ]) as Parser<Modifier>;
 
-export class Member extends ParserBase {
-	type: "member" = "member";
+export class PropertySignature extends ParserBase {
+	kind: SyntaxKind.PropertySignature = SyntaxKind.PropertySignature;
 
 	doc: DocString | null;
 	modifiers: Modifier[];
 	optional: boolean;
 
 	constructor(
-		public key: Identifier | IndexKey,
+		public key: Identifier | IndexSignature,
 		public value: Type,
 		extra?: {
 			doc?: DocString | null;
@@ -226,16 +220,17 @@ export class Member extends ParserBase {
 		this.optional = extra?.optional ?? false;
 	}
 
-	static parser: Parser<Member> = lazy(() =>
+	static parser: Parser<PropertySignature> = lazy(() =>
 		sequenceOf([
 			possibly(DocString.parser),
 			surroundWhitespace(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
-			surroundWhitespace(choice([Identifier.parser, IndexKey.parser])),
+			surroundWhitespace(choice([Identifier.parser, IndexSignature.parser])),
 			possibly(char("?")).map(c => c != null),
 			surroundWhitespace(str(":")),
 			surroundWhitespace(Type),
 		] as const).map(
-			([doc, modifiers, key, optional, , value]) => new Member(key, value, { doc, modifiers, optional }),
+			([doc, modifiers, key, optional, , value]) =>
+				new PropertySignature(key, value, { doc, modifiers, optional }),
 		),
 	);
 
@@ -253,11 +248,11 @@ export class Member extends ParserBase {
 const PropertySeparator = choice([char(";"), char(",")]);
 
 export class ObjectType extends ParserBase {
-	type: "object" = "object";
+	kind: SyntaxKind.ObjectType = SyntaxKind.ObjectType;
 
 	doc: DocString | null;
 
-	constructor(public members: Member[], extra?: { doc?: DocString }) {
+	constructor(public members: PropertySignature[], extra?: { doc?: DocString }) {
 		super();
 		this.doc = extra?.doc ?? null;
 	}
@@ -266,8 +261,12 @@ export class ObjectType extends ParserBase {
 		choice([
 			bracketed(
 				seq([
-					surroundWhitespace(Member.parser),
-					many(seq([PropertySeparator, surroundWhitespace(Member.parser)]).map(([, member]) => member)), //
+					surroundWhitespace(PropertySignature.parser),
+					many(
+						seq([PropertySeparator, surroundWhitespace(PropertySignature.parser)]).map(
+							([, member]) => member,
+						),
+					), //
 					possibly(surroundWhitespace(PropertySeparator)),
 				]).map(([member, members]) => [member, ...members]),
 				"{",
@@ -288,7 +287,7 @@ export class ObjectType extends ParserBase {
 }
 
 export class ArrayType extends ParserBase {
-	type: "array" = "array";
+	kind: SyntaxKind.ArrayType = SyntaxKind.ArrayType;
 
 	constructor(public value: Type) {
 		super();
@@ -299,13 +298,14 @@ export class ArrayType extends ParserBase {
 	);
 
 	toString() {
-		if (this.value.type === "union" || this.value.type === "intersection") return "(" + this.value + ")[]";
+		if (this.value.kind === SyntaxKind.UnionType || this.value.kind === SyntaxKind.IntersectionType)
+			return "(" + this.value + ")[]";
 		else return this.value + "[]";
 	}
 }
 
 export class TupleType extends ParserBase {
-	type: "tuple" = "tuple";
+	kind: SyntaxKind.TupleType = SyntaxKind.TupleType;
 
 	constructor(public values: Type[]) {
 		super();
@@ -321,7 +321,7 @@ export class TupleType extends ParserBase {
 }
 
 export class ThisType extends ParserBase {
-	type: "this" = "this";
+	kind: SyntaxKind.ThisType = SyntaxKind.ThisType;
 
 	static parser: Parser<ThisType> = str("this").map(() => new ThisType());
 

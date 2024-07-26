@@ -1,11 +1,11 @@
 import { possibly, choice, digits, Parser, sequenceOf, str } from "npm:arcsecond";
 import { bw, seq, surroundWhitespace } from "./utils.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 export namespace Literal {
 	export class StringType extends ParserBase {
 		primitive: true = true;
-		type: "string" = "string";
+		kind: SyntaxKind.LiteralString = SyntaxKind.LiteralString;
 
 		constructor(public value: string) {
 			super();
@@ -20,7 +20,7 @@ export namespace Literal {
 
 	export class NumberType extends ParserBase {
 		primitive: true = true;
-		type: "number" = "number";
+		kind: SyntaxKind.LiteralNumber = SyntaxKind.LiteralNumber;
 
 		constructor(public value: number) {
 			super();
@@ -43,7 +43,7 @@ export namespace Literal {
 
 	export class BooleanType extends ParserBase {
 		primitive: true = true;
-		type: "boolean" = "boolean";
+		kind: SyntaxKind.LiteralBoolean = SyntaxKind.LiteralBoolean;
 
 		constructor(public value: boolean) {
 			super();
@@ -58,7 +58,7 @@ export namespace Literal {
 
 	export class NullType extends ParserBase {
 		primitive: true = true;
-		type: "null" = "null";
+		kind: SyntaxKind.LiteralNull = SyntaxKind.LiteralNull;
 
 		static parse = str("null").map(() => new NullType());
 
@@ -69,7 +69,7 @@ export namespace Literal {
 
 	export class UndefinedType extends ParserBase {
 		primitive: true = true;
-		type: "undefined" = "undefined";
+		kind: SyntaxKind.LiteralUndefined = SyntaxKind.LiteralUndefined;
 
 		static parse = str("undefined").map(() => new UndefinedType());
 
@@ -80,7 +80,7 @@ export namespace Literal {
 
 	export class SymbolType extends ParserBase {
 		primitive: true = true;
-		type: "symbol" = "symbol";
+		kind: SyntaxKind.LiteralSymbol = SyntaxKind.LiteralSymbol;
 
 		constructor(public unique: boolean) {
 			super();
@@ -98,7 +98,7 @@ export namespace Literal {
 
 	export class BigIntType extends ParserBase {
 		primitive: true = true;
-		type: "bigint" = "bigint";
+		kind: SyntaxKind.LiteralBigInt = SyntaxKind.LiteralBigInt;
 
 		constructor(public value: bigint) {
 			super();

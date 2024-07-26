@@ -1,5 +1,5 @@
 import { testParser } from "./utils.ts";
-import { Type, Member, IndexKey, ObjectType, TupleType } from "./type.ts";
+import { Type, PropertySignature, IndexSignature, ObjectType, TupleType } from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
 import { ArrayType } from "./type.ts";
@@ -11,23 +11,23 @@ import { Predefined } from "./predefined.ts";
 
 testParser(
 	"Index Key", //
-	IndexKey.parser,
+	IndexSignature.parser,
 	"[key: string]",
-	new IndexKey("key", new Predefined.StringType()),
+	new IndexSignature("key", new Predefined.StringType()),
 );
 
 testParser(
 	"Index Key (with spaces)",
-	IndexKey.parser,
+	IndexSignature.parser,
 	"[ key : string ]",
-	new IndexKey("key", new Predefined.StringType()),
+	new IndexSignature("key", new Predefined.StringType()),
 );
 
 testParser(
 	"Member: 1",
-	Member.parser,
+	PropertySignature.parser,
 	" [ property :   string]  :   string",
-	new Member(new IndexKey("property", new Predefined.StringType()), new Predefined.StringType(), {
+	new PropertySignature(new IndexSignature("property", new Predefined.StringType()), new Predefined.StringType(), {
 		doc: null,
 		modifiers: [],
 		optional: false,
@@ -36,9 +36,9 @@ testParser(
 
 testParser(
 	"Member: 2",
-	Member.parser,
+	PropertySignature.parser,
 	"readonly   hello ? : World",
-	new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+	new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 		doc: null,
 		modifiers: ["readonly"],
 		optional: true,
@@ -47,9 +47,9 @@ testParser(
 
 testParser(
 	"Member: 3",
-	Member.parser,
+	PropertySignature.parser,
 	"readonly public  hello : World.Rivers.Amazon",
-	new Member(
+	new PropertySignature(
 		new Identifier("hello"),
 		new TypeReference(
 			new QualifiedName(
@@ -63,9 +63,9 @@ testParser(
 
 testParser(
 	"Member: 4",
-	Member.parser,
+	PropertySignature.parser,
 	'readonly  protected  [ hello: string ] : "World"',
-	new Member(new IndexKey("hello", new Predefined.StringType()), new Literal.StringType("World"), {
+	new PropertySignature(new IndexSignature("hello", new Predefined.StringType()), new Literal.StringType("World"), {
 		doc: null,
 		modifiers: ["readonly", "protected"],
 		optional: false,
@@ -74,9 +74,9 @@ testParser(
 
 testParser(
 	"Member: 5",
-	Member.parser,
+	PropertySignature.parser,
 	"readonly public  hello ? : World<Rivers, Amazon>",
-	new Member(
+	new PropertySignature(
 		new Identifier("hello"),
 		new TypeReference(new Identifier("World"), [
 			new TypeReference(new Identifier("Rivers")),
@@ -88,9 +88,9 @@ testParser(
 
 testParser(
 	"Member: 6",
-	Member.parser,
+	PropertySignature.parser,
 	"readonly public  hello ? : World<Rivers, Amazon>[][]",
-	new Member(
+	new PropertySignature(
 		new Identifier("hello"),
 		new ArrayType(
 			new ArrayType(
@@ -335,12 +335,12 @@ testParser(
 	Type,
 	"({ key: string; key2: number[] })",
 	new ObjectType([
-		new Member(new Identifier("key"), new Predefined.StringType(), {
+		new PropertySignature(new Identifier("key"), new Predefined.StringType(), {
 			doc: null,
 			modifiers: [],
 			optional: false,
 		}),
-		new Member(new Identifier("key2"), new ArrayType(new Predefined.NumberType()), {
+		new PropertySignature(new Identifier("key2"), new ArrayType(new Predefined.NumberType()), {
 			doc: null,
 			modifiers: [],
 			optional: false,
@@ -353,7 +353,7 @@ testParser(
 	Type,
 	"({ foo: (string[])[] })",
 	new ObjectType([
-		new Member(new Identifier("foo"), new ArrayType(new ArrayType(new Predefined.StringType())), {
+		new PropertySignature(new Identifier("foo"), new ArrayType(new ArrayType(new Predefined.StringType())), {
 			doc: null,
 			modifiers: [],
 			optional: false,
@@ -368,11 +368,15 @@ testParser(
 	new ArrayType(
 		new ArrayType(
 			new ObjectType([
-				new Member(new Identifier("foo"), new ArrayType(new ArrayType(new Predefined.StringType())), {
-					doc: null,
-					modifiers: [],
-					optional: false,
-				}),
+				new PropertySignature(
+					new Identifier("foo"),
+					new ArrayType(new ArrayType(new Predefined.StringType())),
+					{
+						doc: null,
+						modifiers: [],
+						optional: false,
+					},
+				),
 			]),
 		),
 	),
@@ -383,15 +387,15 @@ testParser(
 	Type,
 	'{ key: "value"; key2: { nestedKey: S.P.Q.R<X> }, [rest: string]: string }',
 	new ObjectType([
-		new Member(new Identifier("key"), new Literal.StringType("value"), {
+		new PropertySignature(new Identifier("key"), new Literal.StringType("value"), {
 			doc: null,
 			modifiers: [],
 			optional: false,
 		}),
-		new Member(
+		new PropertySignature(
 			new Identifier("key2"),
 			new ObjectType([
-				new Member(
+				new PropertySignature(
 					new Identifier("nestedKey"),
 					new TypeReference(
 						new QualifiedName(
@@ -408,7 +412,7 @@ testParser(
 			]),
 			{ doc: null, modifiers: [], optional: false },
 		),
-		new Member(new IndexKey("rest", new Predefined.StringType()), new Predefined.StringType(), {
+		new PropertySignature(new IndexSignature("rest", new Predefined.StringType()), new Predefined.StringType(), {
 			doc: null,
 			modifiers: [],
 			optional: false,
@@ -421,15 +425,15 @@ testParser(
 	Type,
 	'{ key?: "value"; key2?: { nestedKey: S.P.Q.R<X> }, [rest: string]?: string }',
 	new ObjectType([
-		new Member(new Identifier("key"), new Literal.StringType("value"), {
+		new PropertySignature(new Identifier("key"), new Literal.StringType("value"), {
 			doc: null,
 			modifiers: [],
 			optional: true,
 		}),
-		new Member(
+		new PropertySignature(
 			new Identifier("key2"),
 			new ObjectType([
-				new Member(
+				new PropertySignature(
 					new Identifier("nestedKey"),
 					new TypeReference(
 						new QualifiedName(
@@ -446,7 +450,7 @@ testParser(
 			]),
 			{ doc: null, modifiers: [], optional: true },
 		),
-		new Member(new IndexKey("rest", new Predefined.StringType()), new Predefined.StringType(), {
+		new PropertySignature(new IndexSignature("rest", new Predefined.StringType()), new Predefined.StringType(), {
 			doc: null,
 			modifiers: [],
 			optional: true,

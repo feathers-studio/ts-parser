@@ -1,32 +1,9 @@
 import { testParser } from "./utils.ts";
-import { InterfaceHeader, InterfaceDeclaration } from "./interface.ts";
-import { Member, TypeReference } from "./type.ts";
+import { InterfaceDeclaration } from "./interface.ts";
+import { PropertySignature, TypeReference } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { DocString } from "./docString.ts";
-
-testParser(
-	"InterfaceHeader: 1", //
-	InterfaceHeader.parser,
-	"interface A",
-	new InterfaceHeader("A"),
-);
-
-testParser(
-	"InterfaceHeader: 2",
-	InterfaceHeader.parser,
-	"interface A extends  B",
-	new InterfaceHeader("A", { extends: [new TypeReference(new Identifier("B"))] }),
-);
-
-testParser(
-	"InterfaceHeader: 3",
-	InterfaceHeader.parser,
-	"interface A extends  B, C",
-	new InterfaceHeader("A", {
-		extends: [new TypeReference(new Identifier("B")), new TypeReference(new Identifier("C"))],
-	}),
-);
 
 testParser(
 	"InterfaceDeclaration: 1",
@@ -38,11 +15,11 @@ testParser(
 	new InterfaceDeclaration(
 		"Hello",
 		[
-			new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+			new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 				modifiers: ["readonly"],
 				optional: true,
 			}),
-			new Member(new Identifier("hello"), new Literal.StringType("World"), {
+			new PropertySignature(new Identifier("hello"), new Literal.StringType("World"), {
 				modifiers: ["readonly"],
 				optional: false,
 			}),
@@ -59,11 +36,11 @@ testParser(
 		readonly hello : "World"
 	}`,
 	new InterfaceDeclaration("Hello", [
-		new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+		new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 			modifiers: ["readonly"],
 			optional: true,
 		}),
-		new Member(new Identifier("hello"), new Literal.StringType("World"), {
+		new PropertySignature(new Identifier("hello"), new Literal.StringType("World"), {
 			modifiers: ["readonly"],
 			optional: false,
 		}),
@@ -82,11 +59,11 @@ testParser(
 	new InterfaceDeclaration(
 		"Hello",
 		[
-			new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+			new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 				modifiers: ["readonly"],
 				optional: true,
 			}),
-			new Member(new Identifier("hello"), new Literal.StringType("World"), {
+			new PropertySignature(new Identifier("hello"), new Literal.StringType("World"), {
 				modifiers: ["readonly"],
 				optional: false,
 			}),

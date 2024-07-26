@@ -2,7 +2,7 @@ import { DeclarationFile, parse } from "./index.ts";
 import { testParser } from "./utils.ts";
 import { Comment, Directive } from "./comment.ts";
 import { InterfaceDeclaration } from "./interface.ts";
-import { ArrayType, IndexKey, Member, TypeReference, UnionType } from "./type.ts";
+import { ArrayType, IndexSignature, PropertySignature, TypeReference, UnionType } from "./type.ts";
 import { DocString } from "./docString.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
@@ -88,8 +88,8 @@ const expectFixture = [
 	new InterfaceDeclaration(
 		"A",
 		[
-			new Member(new Identifier("foo"), new TypeReference(new Identifier("Bar")), { optional: true }),
-			new Member(
+			new PropertySignature(new Identifier("foo"), new TypeReference(new Identifier("Bar")), { optional: true }),
+			new PropertySignature(
 				new Identifier("baz"), //
 				new UnionType([new Predefined.StringType(), new Predefined.NumberType()]),
 			),
@@ -107,12 +107,12 @@ const expectFixture = [
 	new InterfaceDeclaration(
 		"AddEventListenerOptions",
 		[
-			new Member(new Identifier("once"), new Predefined.BooleanType(), { optional: true }),
-			new Member(new Identifier("passive"), new Predefined.BooleanType(), { optional: true }),
-			new Member(new Identifier("signal"), new TypeReference(new Identifier("AbortSignal")), {
+			new PropertySignature(new Identifier("once"), new Predefined.BooleanType(), { optional: true }),
+			new PropertySignature(new Identifier("passive"), new Predefined.BooleanType(), { optional: true }),
+			new PropertySignature(new Identifier("signal"), new TypeReference(new Identifier("AbortSignal")), {
 				optional: true,
 			}),
-			new Member(
+			new PropertySignature(
 				new Identifier("init"), //
 				new ArrayType(new ArrayType(new Predefined.StringType())),
 				{ optional: true },
@@ -124,21 +124,24 @@ const expectFixture = [
 	),
 
 	new InterfaceDeclaration("ComputedKeyframe", [
-		new Member(new Identifier("composite"), new TypeReference(new Identifier("CompositeOperationOrAuto"), null)),
-		new Member(
+		new PropertySignature(
+			new Identifier("composite"),
+			new TypeReference(new Identifier("CompositeOperationOrAuto"), null),
+		),
+		new PropertySignature(
 			new Identifier("computedOffset"), //
 			new Predefined.NumberType(),
 		),
-		new Member(
+		new PropertySignature(
 			new Identifier("easing"), //
 			new Predefined.StringType(),
 		),
-		new Member(
+		new PropertySignature(
 			new Identifier("offset"), //
 			new UnionType([new Predefined.NumberType(), new Literal.NullType()]),
 		),
-		new Member(
-			new IndexKey("property", new Predefined.StringType()),
+		new PropertySignature(
+			new IndexSignature("property", new Predefined.StringType()),
 			new UnionType([
 				new Predefined.StringType(),
 				new UnionType([
@@ -150,12 +153,12 @@ const expectFixture = [
 	]),
 
 	new InterfaceDeclaration("ConstrainDOMStringParameters", [
-		new Member(
+		new PropertySignature(
 			new Identifier("exact"), //
 			new UnionType([new Predefined.StringType(), new ArrayType(new Predefined.StringType())]),
 			{ optional: true },
 		),
-		new Member(
+		new PropertySignature(
 			new Identifier("ideal"), //
 			new UnionType([new Predefined.StringType(), new ArrayType(new Predefined.StringType())]),
 			{ optional: true },
@@ -165,37 +168,37 @@ const expectFixture = [
 	new InterfaceDeclaration(
 		"KeyboardEventInit",
 		[
-			new Member(
+			new PropertySignature(
 				new Identifier("charCode"), //
 				new Predefined.NumberType(),
 				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("code"), //
 				new Predefined.StringType(),
 				{ optional: true },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("isComposing"), //
 				new Predefined.BooleanType(),
 				{ optional: true },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("key"), //
 				new Predefined.StringType(),
 				{ optional: true },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("keyCode"), //
 				new Predefined.NumberType(),
 				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("location"), //
 				new Predefined.NumberType(),
 				{ optional: true },
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("repeat"), //
 				new Predefined.BooleanType(),
 				{ optional: true },
@@ -209,7 +212,7 @@ const expectFixture = [
 	new InterfaceDeclaration(
 		"ByteLengthQueuingStrategy",
 		[
-			new Member(
+			new PropertySignature(
 				new Identifier("highWaterMark"), //
 				new Predefined.NumberType(),
 				{
@@ -219,7 +222,7 @@ const expectFixture = [
 					),
 				},
 			),
-			new Member(
+			new PropertySignature(
 				new Identifier("size"), //
 				new TypeReference(new Identifier("QueuingStrategySize"), [
 					new TypeReference(new Identifier("ArrayBufferView")),

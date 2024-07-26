@@ -1,5 +1,5 @@
 import { choice, Parser, str } from "npm:arcsecond";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 
 /*
 PredefinedType:
@@ -15,8 +15,7 @@ PredefinedType:
 
 export namespace Predefined {
 	export class AnyType extends ParserBase {
-		type: "predefined" = "predefined";
-		value: "any" = "any";
+		kind: SyntaxKind.PredefinedAny = SyntaxKind.PredefinedAny;
 
 		constructor() {
 			super();
@@ -31,7 +30,7 @@ export namespace Predefined {
 
 	export class NumberType extends ParserBase {
 		primitive: true = true;
-		type: "number" = "number";
+		kind: SyntaxKind.LiteralNumber = SyntaxKind.LiteralNumber;
 		value: null = null;
 
 		constructor() {
@@ -47,7 +46,7 @@ export namespace Predefined {
 
 	export class BooleanType extends ParserBase {
 		primitive: true = true;
-		type: "boolean" = "boolean";
+		kind: SyntaxKind.LiteralBoolean = SyntaxKind.LiteralBoolean;
 		value: null = null;
 
 		constructor() {
@@ -63,7 +62,7 @@ export namespace Predefined {
 
 	export class BigIntType extends ParserBase {
 		primitive: true = true;
-		type: "bigint" = "bigint";
+		kind: SyntaxKind.LiteralBigInt = SyntaxKind.LiteralBigInt;
 		value: null = null;
 
 		constructor() {
@@ -79,7 +78,7 @@ export namespace Predefined {
 
 	export class StringType extends ParserBase {
 		primitive: true = true;
-		type: "string" = "string";
+		kind: SyntaxKind.LiteralString = SyntaxKind.LiteralString;
 		value: null = null;
 
 		constructor() {
@@ -94,8 +93,7 @@ export namespace Predefined {
 	}
 
 	export class VoidType extends ParserBase {
-		type: "predefined" = "predefined";
-		value: "void" = "void";
+		kind: SyntaxKind.PredefinedVoid = SyntaxKind.PredefinedVoid;
 
 		constructor() {
 			super();
@@ -109,8 +107,7 @@ export namespace Predefined {
 	}
 
 	export class NeverType extends ParserBase {
-		type: "predefined" = "predefined";
-		value: "never" = "never";
+		kind: SyntaxKind.PredefinedNever = SyntaxKind.PredefinedNever;
 
 		constructor() {
 			super();

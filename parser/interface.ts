@@ -1,12 +1,12 @@
 import { char, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
 import { DocString } from "./docString.ts";
-import { Member, ObjectType, Type } from "./type.ts";
+import { PropertySignature, ObjectType, Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";
-import { ParserBase } from "./base.ts";
+import { ParserBase, SyntaxKind } from "./base.ts";
 import { sepByN, seq, surroundWhitespace } from "./utils.ts";
 
 export class ExportKeyword extends ParserBase {
-	type: "export-keyword" = "export-keyword";
+	kind: SyntaxKind.ExportKeyword = SyntaxKind.ExportKeyword;
 
 	constructor() {
 		super();
@@ -31,42 +31,16 @@ export const MaybeExtends = (parser: Parser<Identifier>): Parser<Identifier & { 
 	sequenceOf([parser, possibly(Extends)]) //
 		.map(([value, exts]) => ({ ...value, extends: exts ? exts.extends : null }));
 
-export class InterfaceHeader extends ParserBase {
-	type: "interface-header" = "interface-header";
-
-	extends: Type[] | null;
-	exported: boolean;
-	declared: boolean;
-
-	constructor(public name: string, extra?: { extends?: Type[] | null; exported?: boolean; declared?: boolean }) {
-		super();
-		this.extends = extra?.extends ?? null;
-		this.exported = extra?.exported ?? false;
-		this.declared = extra?.declared ?? false;
-	}
-
-	static parser: Parser<InterfaceHeader> = sequenceOf([
+const interfaceHeader = sequenceOf([
 		possibly(seq([str("export"), whitespace])).map(x => !!x),
 		possibly(seq([str("declare"), whitespace])).map(x => !!x),
 		str("interface"),
 		whitespace,
 		MaybeExtends(Identifier.parser),
-	]).map(([exported, declared, , , id]) => new InterfaceHeader(id.name, { extends: id.extends, exported, declared }));
-
-	toString() {
-		let out = "";
-
-		if (this.exported) out += "export ";
-		if (this.declared) out += "declare ";
-		out += `interface ${this.name}`;
-		if (this.extends) out += ` extends ${this.extends.join(", ")}`;
-
-		return out;
-	}
-}
+]).map(([exported, declared, , , id]) => ({ name: id.name, extends: id.extends, exported, declared }));
 
 export class InterfaceDeclaration extends ParserBase {
-	type: "interface" = "interface";
+	kind: SyntaxKind.InterfaceDeclaration = SyntaxKind.InterfaceDeclaration;
 
 	exported: boolean;
 	extends: Type[] | null;
@@ -74,7 +48,7 @@ export class InterfaceDeclaration extends ParserBase {
 
 	constructor(
 		public name: string,
-		public members: Member[],
+		public members: PropertySignature[],
 		extra?: {
 			exported?: boolean;
 			extends?: Type[] | null;
@@ -90,7 +64,7 @@ export class InterfaceDeclaration extends ParserBase {
 	static parser: Parser<InterfaceDeclaration> = sequenceOf([
 		possibly(DocString.parser),
 		optionalWhitespace,
-		InterfaceHeader.parser,
+		interfaceHeader,
 		optionalWhitespace,
 		ObjectType.parser,
 	]).map(
