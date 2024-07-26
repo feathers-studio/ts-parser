@@ -263,22 +263,25 @@ export class ObjectType extends ParserBase {
 	}
 
 	static parser: Parser<ObjectType> = lazy(() =>
-		bracketed(
-			seq([
-				surroundWhitespace(Member.parser),
-				many(seq([PropertySeparator, surroundWhitespace(Member.parser)]).map(([, member]) => member)), //
-				possibly(surroundWhitespace(PropertySeparator)),
-			]).map(([member, members]) => [member, ...members]),
-			"{",
-		) //
-			.map(members => new ObjectType(members)),
+		choice([
+			bracketed(
+				seq([
+					surroundWhitespace(Member.parser),
+					many(seq([PropertySeparator, surroundWhitespace(Member.parser)]).map(([, member]) => member)), //
+					possibly(surroundWhitespace(PropertySeparator)),
+				]).map(([member, members]) => [member, ...members]),
+				"{",
+			) //
+				.map(members => new ObjectType(members ?? [])),
+			bracketed(wss, "{").map(() => new ObjectType([])),
+		]),
 	);
 
 	toString() {
 		let out = "{\n";
 
 		if (this.doc) out += this.doc + "\n";
-		out += this.members.join(";\n") + ";";
+		if (this.members.length) out += this.members.join(";\n") + ";";
 
 		return out + "\n}";
 	}

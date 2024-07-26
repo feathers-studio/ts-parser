@@ -7,6 +7,7 @@ import {
 	optionalWhitespace,
 	Parser,
 	recursiveParser,
+	ResultType,
 	sepBy,
 	sequenceOf,
 	str,
@@ -41,6 +42,43 @@ export const assertParser = <T extends ParserBase>(parser: Parser<T>, source: st
 		const result2 = ended.run(newSource);
 		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null });
 	}
+};
+
+export const testParser = <T extends ParserBase>(
+	name: string,
+	parser: Parser<T>,
+	source: string,
+	expected: T,
+	{ skipReturn = false, requireFail = false } = {},
+) => {
+	const error = new Error();
+	Error.captureStackTrace(error);
+	const stack = error.stack;
+
+	const ended = ends(parser);
+	let result: ResultType<T, string, any>;
+
+	Deno.test(name + " (Forwards )", () => {
+		result = ended.run(source);
+		if (requireFail) {
+			assert(result.isError, stack);
+			return;
+		} else assertEquals(result, { isError: false, result: expected, index: source.length, data: null }, stack);
+	});
+
+	if (skipReturn) return;
+	if (requireFail) return;
+
+	Deno.test(name + " (Backwards)", () => {
+		assert(result.isError === false);
+		const newSource = result.result.toString();
+		const result2 = ended.run(newSource);
+		if (result2.isError) {
+			console.error(newSource);
+			console.error(result2.error);
+		}
+		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null }, stack);
+	});
 };
 
 export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {

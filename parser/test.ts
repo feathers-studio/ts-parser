@@ -1,5 +1,5 @@
 import { DeclarationFile, parse } from "./index.ts";
-import { assertParser } from "./utils.ts";
+import { testParser } from "./utils.ts";
 import { Comment, Directive } from "./comment.ts";
 import { InterfaceDeclaration } from "./interface.ts";
 import { ArrayType, IndexKey, Member, TypeReference, UnionType } from "./type.ts";
@@ -9,7 +9,6 @@ import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase } from "./base.ts";
 import { assertThrows } from "jsr:@std/assert@1.0.0/throws";
-import { assert, assertEquals } from "jsr:@std/assert@1.0.0";
 import { assertParserFn } from "./utils.ts";
 
 // For test coverage 🙄
@@ -250,22 +249,8 @@ const expectFixture = [
 	),
 ];
 
-Deno.test("DeclarationFile", () => {
-	assertParser(DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
-});
+testParser("DeclarationFile", DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
 
 Deno.test("parse", () => {
 	assertParserFn(parse, testSource, new DeclarationFile(expectFixture));
-});
-
-Deno.test("roundtrip", () => {
-	const parsed = parse(testSource);
-	assert(!parsed.isError);
-	const printed = parsed.result.toString();
-	const reparsed = parse(printed);
-	assert(!reparsed.isError);
-
-	assertEquals(reparsed.result, parsed.result);
-	assertEquals(reparsed.result, new DeclarationFile(expectFixture));
-	assertEquals(reparsed.result.toString(), parsed.result.toString());
 });

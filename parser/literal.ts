@@ -30,7 +30,11 @@ export namespace Literal {
 			possibly(str("-")), //
 			digits,
 			possibly(seq([str("."), digits]).map(([dot, digits]) => dot + digits)),
-		]).map(([sign, digits, rest]) => new NumberType(parseFloat((sign ?? "") + digits + (rest ?? ""))));
+			possibly(seq([str("e"), possibly(str("-")), digits]).map(([e, sign, digits]) => e + (sign ?? "") + digits)),
+		]).map(
+			([sign, digits, rest, exponent]) =>
+				new NumberType(parseFloat((sign ?? "") + digits + (rest ?? "") + (exponent ?? ""))),
+		);
 
 		toString() {
 			return `${this.value}`;
@@ -87,7 +91,8 @@ export namespace Literal {
 		);
 
 		toString() {
-			return `symbol${this.unique ? " unique" : ""}`;
+			if (this.unique) return "unique symbol";
+			return "symbol";
 		}
 	}
 
