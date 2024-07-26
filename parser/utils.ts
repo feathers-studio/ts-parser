@@ -7,7 +7,6 @@ import {
 	optionalWhitespace,
 	Parser,
 	recursiveParser,
-	ResultType,
 	sepBy,
 	sequenceOf,
 	str,
@@ -21,62 +20,40 @@ export const tail = <T>(xs: T[]) => xs.slice(1);
 export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
 export const last = <T>(xs: T[]) => xs[xs.length - 1];
 
-// export const assertParser = <T>(parser: Parser<T>, source: string, expected: T) => {
-// 	const result = ends(parser).run(source);
-// 	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
-// };
-
-export const assertParser = <T extends ParserBase>(parser: Parser<T>, source: string, expected: T, round = true) => {
-	const ended = ends(parser);
-	const result = ended.run(source);
-
-	{
-		assert(result.isError === false);
-		assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
-	}
-
-	if (!round) return;
-
-	{
-		const newSource = result.result.toString();
-		const result2 = ended.run(newSource);
-		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null });
-	}
-};
-
 export const testParser = <T extends ParserBase>(
 	name: string,
 	parser: Parser<T>,
 	source: string,
 	expected: T,
-	{ skipReturn = false, requireFail = false } = {},
+	{
+		skipInverse = false,
+		requireFail = false,
+	}: {
+		/** Set to true to disable the inverse (AST -> source) test */
+		skipInverse?: boolean;
+		/** Set to true to require the parser to fail */
+		requireFail?: boolean;
+	} = {},
 ) => {
 	const error = new Error();
 	Error.captureStackTrace(error);
 	const stack = error.stack;
 
 	const ended = ends(parser);
-	let result: ResultType<T, string, any>;
 
 	Deno.test(name + " (Forwards )", () => {
-		result = ended.run(source);
-		if (requireFail) {
-			assert(result.isError, stack);
-			return;
-		} else assertEquals(result, { isError: false, result: expected, index: source.length, data: null }, stack);
+		const result = ended.run(source);
+		if (requireFail) return assert(result.isError, stack);
+		else assertEquals(result, { isError: false, result: expected, index: source.length, data: null }, stack);
 	});
 
-	if (skipReturn) return;
+	if (skipInverse) return;
 	if (requireFail) return;
 
 	Deno.test(name + " (Backwards)", () => {
-		assert(result.isError === false);
-		const newSource = result.result.toString();
+		const newSource = expected.toString();
 		const result2 = ended.run(newSource);
-		if (result2.isError) {
-			console.error(newSource);
-			console.error(result2.error);
-		}
+		if (result2.isError) console.error(newSource, "\n", result2.error);
 		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null }, stack);
 	});
 };
@@ -84,11 +61,6 @@ export const testParser = <T extends ParserBase>(
 export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {
 	const result = parserFn(source);
 	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
-};
-
-export const assertParserFails = (parser: Parser<unknown>, source: string) => {
-	const result = ends(parser).run(source);
-	assert(result.isError);
 };
 
 export const seq = sequenceOf;

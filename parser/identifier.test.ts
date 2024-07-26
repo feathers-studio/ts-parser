@@ -1,5 +1,5 @@
 import { Identifier } from "./identifier.ts";
-import { assertParser, assertParserFails, testParser } from "./utils.ts";
+import { testParser } from "./utils.ts";
 
 testParser("identifier: 1", Identifier.parser, "helloWorld", new Identifier("helloWorld"));
 

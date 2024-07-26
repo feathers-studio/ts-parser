@@ -1,4 +1,4 @@
-import { assertParser, assertParserFails, testParser } from "./utils.ts";
+import { testParser } from "./utils.ts";
 import { Type, Member, IndexKey, ObjectType, TupleType } from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
@@ -8,7 +8,6 @@ import { UnionType } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { Predefined } from "./predefined.ts";
-import { assertEquals } from "jsr:@std/assert@1.0.0/equals";
 
 testParser(
 	"Index Key", //

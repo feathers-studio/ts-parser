@@ -1,5 +1,5 @@
 import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str } from "npm:arcsecond";
-import { assertParser, bw, quoted, seq, wss } from "./utils.ts";
+import { bw, quoted, seq, wss } from "./utils.ts";
 import { ParserBase } from "./base.ts";
 
 export class Directive extends ParserBase {
@@ -82,5 +82,3 @@ export class Comment extends ParserBase {
 		return this.multi ? `/*${this.text}*/` : `//${this.text}`;
 	}
 }
-
-assertParser(Comment.parser, '/// <reference path="./types.ts" />', new Directive("reference", { path: "./types.ts" }));
