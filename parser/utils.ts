@@ -72,9 +72,31 @@ export const bw =
 	<C extends Parser<unknown> = Parser<string>>(consume?: C) =>
 		between(a)(b ?? a)(consume ?? everyCharUntil(b ?? a)) as C;
 
-export const quoted: Parser<string> = choice([bw(str('"'))(), bw(str("'"))()]);
+const q = {
+	single: bw(str("'"))(),
+	double: bw(str('"'))(),
+};
 
-export const wsed = <T>(parser: Parser<T>) => bw(wss, wss)(parser);
+export const quoted = {
+	single: q.single,
+	double: q.double,
+	any: choice([q.single, q.double]),
+};
+
+export const surroundWhitespace = <T>(parser: Parser<T>) => bw(wss)(parser);
+
+export const interleaveWhitespace = <Ps extends Parser<unknown>[]>(...parsers: Ps) => {
+	return seq(
+		parsers.reduce((acc, parser) => {
+			if (acc.length === 0) return [parser];
+			return [...acc, whitespace, parser];
+		}, [] as Parser<unknown>[]),
+	).map(result => {
+		const out = [];
+		for (let i = 0; i < result.length; i += 2) out.push(result[i]);
+		return out;
+	}) as unknown as Ps;
+};
 
 const Brackets = {
 	"(": ")",
@@ -86,6 +108,6 @@ const Brackets = {
 type Brackets = keyof typeof Brackets;
 
 export const bracketed = <T>(parser: Parser<T>, type: Brackets = "(") =>
-	bw(str(type), str(Brackets[type]))(wsed(parser));
+	bw(str(type), str(Brackets[type]))(surroundWhitespace(parser));
 
 export const maybeBracketed = <T>(parser: Parser<T>, type: Brackets = "(") => choice([bracketed(parser, type), parser]);

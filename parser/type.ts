@@ -1,5 +1,5 @@
 import { Parser, choice, many, possibly, sequenceOf, str, takeLeft, char } from "npm:arcsecond";
-import { lazy, bracketed, wsed, wss, sepByN, init, last, seq, ws } from "./utils.ts";
+import { lazy, bracketed, surroundWhitespace, wss, sepByN, init, last, seq, ws } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
@@ -38,7 +38,7 @@ export class IntersectionType extends ParserBase {
 	}
 
 	static parser: Parser<IntersectionType> = lazy(() =>
-		seq([PrimaryType, wsed(str("&")), IntersectionOrPrimaryType]).map(
+		seq([PrimaryType, surroundWhitespace(str("&")), IntersectionOrPrimaryType]).map(
 			([left, _, right]) => new IntersectionType([left, right]),
 		),
 	);
@@ -59,7 +59,7 @@ export class UnionType extends ParserBase {
 	}
 
 	static parser: Parser<UnionType> = lazy(() =>
-		seq([IntersectionOrPrimaryType, wsed(str("|")), UnionOrIntersectionOrPrimaryType]).map(
+		seq([IntersectionOrPrimaryType, surroundWhitespace(str("|")), UnionOrIntersectionOrPrimaryType]).map(
 			([left, _, right]) => new UnionType([left, right]),
 		),
 	);
@@ -87,11 +87,11 @@ PrimaryType:
    ThisType
  */
 
-export const ParenthesisedType = bracketed(wsed(Type), "(");
+export const ParenthesisedType = bracketed(surroundWhitespace(Type), "(");
 export type PredefinedOrLiteralType = Predefined.Type | Literal.Type;
 export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([Predefined.parse, Literal.parse]);
 
-export const TypeParameters = bracketed(sepByN<Type>(char(","), 1)(wsed(Type)), "<");
+export const TypeParameters = bracketed(sepByN<Type>(char(","), 1)(surroundWhitespace(Type)), "<");
 
 /*
 
@@ -165,7 +165,7 @@ export class IndexKey extends ParserBase {
 	}
 
 	static parser: Parser<IndexKey> = lazy(() =>
-		sequenceOf([str("["), wsed(Identifier.parser), str(":"), wsed(Type), str("]")]) //
+		sequenceOf([str("["), surroundWhitespace(Identifier.parser), str(":"), surroundWhitespace(Type), str("]")]) //
 			.map(([_, name, __, indexType]) => new IndexKey(name.name, indexType)),
 	);
 
@@ -207,11 +207,11 @@ export class Member extends ParserBase {
 	static parser: Parser<Member> = lazy(() =>
 		sequenceOf([
 			possibly(DocString.parser),
-			wsed(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
-			wsed(choice([Identifier.parser, IndexKey.parser])),
+			surroundWhitespace(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
+			surroundWhitespace(choice([Identifier.parser, IndexKey.parser])),
 			possibly(char("?")).map(c => c != null),
-			wsed(str(":")),
-			wsed(Type),
+			surroundWhitespace(str(":")),
+			surroundWhitespace(Type),
 		] as const).map(
 			([doc, modifier, key, optional, , value]) => new Member(key, value, { doc, modifier, optional }),
 		),
@@ -243,9 +243,9 @@ export class ObjectType extends ParserBase {
 	static parser: Parser<ObjectType> = lazy(() =>
 		bracketed(
 			seq([
-				wsed(Member.parser),
-				many(seq([PropertySeparator, wsed(Member.parser)]).map(([, member]) => member)), //
-				possibly(wsed(PropertySeparator)),
+				surroundWhitespace(Member.parser),
+				many(seq([PropertySeparator, surroundWhitespace(Member.parser)]).map(([, member]) => member)), //
+				possibly(surroundWhitespace(PropertySeparator)),
 			]).map(([member, members]) => [member, ...members]),
 			"{",
 		) //
@@ -264,7 +264,9 @@ export class ArrayType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<ArrayType> = lazy(() => bracketed(wsed(Type), "[").map(value => new ArrayType(value)));
+	static parser: Parser<ArrayType> = lazy(() =>
+		bracketed(surroundWhitespace(Type), "[").map(value => new ArrayType(value)),
+	);
 
 	toString() {
 		return `${this.value}[]`;
@@ -279,7 +281,7 @@ export class TupleType extends ParserBase {
 	}
 
 	static parser: Parser<TupleType> = lazy(() =>
-		bracketed(sepByN<Type>(char(","), 0)(wsed(Type)), "[").map(values => new TupleType(values)),
+		bracketed(sepByN<Type>(char(","), 0)(surroundWhitespace(Type)), "[").map(values => new TupleType(values)),
 	);
 
 	toString() {

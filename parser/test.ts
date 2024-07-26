@@ -1,8 +1,6 @@
 import { DeclarationFile, parse } from "./index.ts";
 import { assertParser } from "./utils.ts";
-
-import { Comment } from "./comment.ts";
-import { Reference } from "./reference.ts";
+import { Comment, Directive } from "./comment.ts";
 import { InterfaceDeclaration } from "./interface.ts";
 import { ArrayType, IndexKey, Member, TypeReference, UnionType } from "./type.ts";
 import { DocString } from "./docString.ts";
@@ -16,7 +14,6 @@ import { assertParserFn } from "./utils.ts";
 
 // For test coverage 🙄
 Deno.test("ParserBase", () => {
-	// assertThrows(() => new ParserBase());
 	assertThrows(() => ParserBase.parser.run("test"));
 });
 
@@ -30,6 +27,7 @@ const testSource = `
 /// Window APIs
 /////////////////////////////
 
+/** This should be parsed as doc, not comment! */
 interface A extends B, C, D {
 	foo?: Bar;
 	baz: string | number;
@@ -65,11 +63,24 @@ interface KeyboardEventInit extends EventModifierInit {
 	keyCode?: number;
 	location?: number;
 	repeat?: boolean;
+}
+	
+/**
+ * This Streams API interface provides a built-in byte length queuing strategy that can be used when constructing streams.
+ *
+ * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy)
+ */
+interface ByteLengthQueuingStrategy extends QueuingStrategy<ArrayBufferView> {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/highWaterMark) */
+    readonly highWaterMark: number;
+
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/size) */
+    readonly size: QueuingStrategySize<ArrayBufferView>;
 }`;
 
 const expectFixture = [
 	new Comment("/ Extract from lib.dom.d.ts", false),
-	new Reference("./iterable.d.ts"),
+	new Directive("reference", { path: "./iterable.d.ts" }),
 	new Comment(" Source is from @types/web ", true),
 	new Comment("///////////////////////////", false),
 	new Comment("/ Window APIs", false),
@@ -90,6 +101,7 @@ const expectFixture = [
 				new TypeReference(new Identifier("C")),
 				new TypeReference(new Identifier("D")),
 			],
+			doc: new DocString(" This should be parsed as doc, not comment! "),
 		},
 	),
 
@@ -189,6 +201,48 @@ const expectFixture = [
 		],
 		{
 			extends: [new TypeReference(new Identifier("EventModifierInit"))],
+		},
+	),
+
+	new InterfaceDeclaration(
+		"ByteLengthQueuingStrategy",
+		[
+			new Member(
+				new Identifier("highWaterMark"), //
+				new Predefined.Number(),
+				{
+					modifier: ["readonly"],
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/highWaterMark) ",
+					),
+				},
+			),
+			new Member(
+				new Identifier("size"), //
+				new TypeReference(new Identifier("QueuingStrategySize"), [
+					new TypeReference(new Identifier("ArrayBufferView")),
+				]),
+				{
+					modifier: ["readonly"],
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/size) ",
+					),
+				},
+			),
+		],
+		{
+			extends: [
+				new TypeReference(new Identifier("QueuingStrategy"), [
+					new TypeReference(new Identifier("ArrayBufferView")),
+				]),
+			],
+			doc: new DocString(
+				"\n" +
+					" * This Streams API interface provides a built-in byte length queuing strategy that can be used when constructing streams.\n" +
+					" *\n" +
+					" * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy)\n" +
+					" ",
+			),
 		},
 	),
 ];

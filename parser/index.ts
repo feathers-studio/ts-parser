@@ -1,24 +1,17 @@
 import { choice, many, Parser } from "npm:arcsecond";
-import { Reference } from "./reference.ts";
-import { Comment } from "./comment.ts";
-import { ends, nonNull, seq, ws } from "./utils.ts";
+import { Comment, Directive, Pragma } from "./comment.ts";
+import { ends, nonNull, ws } from "./utils.ts";
 import { InterfaceDeclaration } from "./interface.ts";
 import { ParserBase } from "./base.ts";
 
-const FileHeader = many(choice([Reference.parser, ws, Comment.parser])) //
-	.map(defs => defs.filter(nonNull));
-
-export type Statement = Reference | Comment | InterfaceDeclaration;
+export type Statement = Directive | Pragma | Comment | InterfaceDeclaration;
 
 export class DeclarationFile extends ParserBase {
 	constructor(public readonly statements: Statement[]) {
 		super();
 	}
 
-	static parser: Parser<DeclarationFile> = seq([
-		FileHeader,
-		many(choice([ws, Comment.parser, InterfaceDeclaration.parser])),
-	])
+	static parser: Parser<DeclarationFile> = many(choice([ws, InterfaceDeclaration.parser, Comment.parser]))
 		.map(stuff => stuff.flat().filter(nonNull))
 		.map(stuff => new DeclarationFile(stuff));
 

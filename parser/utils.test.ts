@@ -22,9 +22,9 @@ Deno.test("maybeBracketed: 5", () => {
 });
 
 Deno.test("quoted: 1", () => {
-	assertParser(quoted, '"Hello, World!"', "Hello, World!");
+	assertParser(quoted.any, '"Hello, World!"', "Hello, World!");
 });
 
 Deno.test("quoted: 2", () => {
-	assertParser(quoted, "'Hello, World!'", "Hello, World!");
+	assertParser(quoted.any, "'Hello, World!'", "Hello, World!");
 });

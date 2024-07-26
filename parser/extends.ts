@@ -1,9 +1,14 @@
 import { char, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
 import { Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";
-import { sepByN, wsed } from "./utils.ts";
+import { sepByN, surroundWhitespace } from "./utils.ts";
 
-export const Extends = sequenceOf([whitespace, str("extends"), whitespace, sepByN<Type>(wsed(char(",")), 1)(Type)]) //
+export const Extends = sequenceOf([
+	whitespace,
+	str("extends"),
+	whitespace,
+	sepByN<Type>(surroundWhitespace(char(",")), 1)(Type),
+]) //
 	.map(([, , , value]) => ({ extends: value }));
 
 export const MaybeExtends = (parser: Parser<Identifier>): Parser<Identifier & { extends: Type[] | null }> =>

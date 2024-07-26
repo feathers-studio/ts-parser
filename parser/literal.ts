@@ -1,5 +1,5 @@
 import { possibly, choice, digits, Parser, sequenceOf, str } from "npm:arcsecond";
-import { bw, seq, wsed } from "./utils.ts";
+import { bw, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase } from "./base.ts";
 
 export namespace Literal {
@@ -82,7 +82,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = sequenceOf([possibly(wsed(str("unique"))), str("symbol")]).map(
+		static parse = sequenceOf([possibly(surroundWhitespace(str("unique"))), str("symbol")]).map(
 			([unique]) => new SymbolType(unique !== null),
 		);
 
