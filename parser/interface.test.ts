@@ -28,11 +28,11 @@ Deno.test("InterfaceDeclaration: 1", () => {
 			"Hello",
 			[
 				new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
-					modifier: ["readonly"],
+					modifiers: ["readonly"],
 					optional: true,
 				}),
-				new Member(new Identifier("hello"), new Literal.String("World"), {
-					modifier: ["readonly"],
+				new Member(new Identifier("hello"), new Literal.StringType("World"), {
+					modifiers: ["readonly"],
 					optional: false,
 				}),
 			],
@@ -50,11 +50,11 @@ Deno.test("InterfaceDeclaration: 2", () => {
 	}`,
 		new InterfaceDeclaration("Hello", [
 			new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
-				modifier: ["readonly"],
+				modifiers: ["readonly"],
 				optional: true,
 			}),
-			new Member(new Identifier("hello"), new Literal.String("World"), {
-				modifier: ["readonly"],
+			new Member(new Identifier("hello"), new Literal.StringType("World"), {
+				modifiers: ["readonly"],
 				optional: false,
 			}),
 		]),
@@ -74,11 +74,11 @@ Deno.test("InterfaceDeclaration: Exported and Documented", () => {
 			"Hello",
 			[
 				new Member(new Identifier("hello"), new TypeReference(new Identifier("World")), {
-					modifier: ["readonly"],
+					modifiers: ["readonly"],
 					optional: true,
 				}),
-				new Member(new Identifier("hello"), new Literal.String("World"), {
-					modifier: ["readonly"],
+				new Member(new Identifier("hello"), new Literal.StringType("World"), {
+					modifiers: ["readonly"],
 					optional: false,
 				}),
 			],

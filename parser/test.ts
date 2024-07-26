@@ -92,7 +92,7 @@ const expectFixture = [
 			new Member(new Identifier("foo"), new TypeReference(new Identifier("Bar")), { optional: true }),
 			new Member(
 				new Identifier("baz"), //
-				new UnionType([new Predefined.String(), new Predefined.Number()]),
+				new UnionType([new Predefined.StringType(), new Predefined.NumberType()]),
 			),
 		],
 		{
@@ -108,14 +108,14 @@ const expectFixture = [
 	new InterfaceDeclaration(
 		"AddEventListenerOptions",
 		[
-			new Member(new Identifier("once"), new Predefined.Boolean(), { optional: true }),
-			new Member(new Identifier("passive"), new Predefined.Boolean(), { optional: true }),
+			new Member(new Identifier("once"), new Predefined.BooleanType(), { optional: true }),
+			new Member(new Identifier("passive"), new Predefined.BooleanType(), { optional: true }),
 			new Member(new Identifier("signal"), new TypeReference(new Identifier("AbortSignal")), {
 				optional: true,
 			}),
 			new Member(
 				new Identifier("init"), //
-				new ArrayType(new ArrayType(new Predefined.String())),
+				new ArrayType(new ArrayType(new Predefined.StringType())),
 				{ optional: true },
 			),
 		],
@@ -128,21 +128,24 @@ const expectFixture = [
 		new Member(new Identifier("composite"), new TypeReference(new Identifier("CompositeOperationOrAuto"), null)),
 		new Member(
 			new Identifier("computedOffset"), //
-			new Predefined.Number(),
+			new Predefined.NumberType(),
 		),
 		new Member(
 			new Identifier("easing"), //
-			new Predefined.String(),
+			new Predefined.StringType(),
 		),
 		new Member(
 			new Identifier("offset"), //
-			new UnionType([new Predefined.Number(), new Literal.Null()]),
+			new UnionType([new Predefined.NumberType(), new Literal.NullType()]),
 		),
 		new Member(
-			new IndexKey("property", new Predefined.String()),
+			new IndexKey("property", new Predefined.StringType()),
 			new UnionType([
-				new Predefined.String(),
-				new UnionType([new Predefined.Number(), new UnionType([new Literal.Null(), new Literal.Undefined()])]),
+				new Predefined.StringType(),
+				new UnionType([
+					new Predefined.NumberType(),
+					new UnionType([new Literal.NullType(), new Literal.UndefinedType()]),
+				]),
 			]),
 		),
 	]),
@@ -150,12 +153,12 @@ const expectFixture = [
 	new InterfaceDeclaration("ConstrainDOMStringParameters", [
 		new Member(
 			new Identifier("exact"), //
-			new UnionType([new Predefined.String(), new ArrayType(new Predefined.String())]),
+			new UnionType([new Predefined.StringType(), new ArrayType(new Predefined.StringType())]),
 			{ optional: true },
 		),
 		new Member(
 			new Identifier("ideal"), //
-			new UnionType([new Predefined.String(), new ArrayType(new Predefined.String())]),
+			new UnionType([new Predefined.StringType(), new ArrayType(new Predefined.StringType())]),
 			{ optional: true },
 		),
 	]),
@@ -165,37 +168,37 @@ const expectFixture = [
 		[
 			new Member(
 				new Identifier("charCode"), //
-				new Predefined.Number(),
+				new Predefined.NumberType(),
 				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
 			new Member(
 				new Identifier("code"), //
-				new Predefined.String(),
+				new Predefined.StringType(),
 				{ optional: true },
 			),
 			new Member(
 				new Identifier("isComposing"), //
-				new Predefined.Boolean(),
+				new Predefined.BooleanType(),
 				{ optional: true },
 			),
 			new Member(
 				new Identifier("key"), //
-				new Predefined.String(),
+				new Predefined.StringType(),
 				{ optional: true },
 			),
 			new Member(
 				new Identifier("keyCode"), //
-				new Predefined.Number(),
+				new Predefined.NumberType(),
 				{ optional: true, doc: new DocString(" @deprecated ") },
 			),
 			new Member(
 				new Identifier("location"), //
-				new Predefined.Number(),
+				new Predefined.NumberType(),
 				{ optional: true },
 			),
 			new Member(
 				new Identifier("repeat"), //
-				new Predefined.Boolean(),
+				new Predefined.BooleanType(),
 				{ optional: true },
 			),
 		],
@@ -209,9 +212,9 @@ const expectFixture = [
 		[
 			new Member(
 				new Identifier("highWaterMark"), //
-				new Predefined.Number(),
+				new Predefined.NumberType(),
 				{
-					modifier: ["readonly"],
+					modifiers: ["readonly"],
 					doc: new DocString(
 						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/highWaterMark) ",
 					),
@@ -223,7 +226,7 @@ const expectFixture = [
 					new TypeReference(new Identifier("ArrayBufferView")),
 				]),
 				{
-					modifier: ["readonly"],
+					modifiers: ["readonly"],
 					doc: new DocString(
 						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/size) ",
 					),

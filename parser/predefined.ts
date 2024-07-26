@@ -14,7 +14,7 @@ PredefinedType:
 */
 
 export namespace Predefined {
-	export class Any extends ParserBase {
+	export class AnyType extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "any" = "any";
 
@@ -22,14 +22,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("any").map(() => new Any());
+		static parse = str("any").map(() => new AnyType());
 
 		toString() {
 			return "any";
 		}
 	}
 
-	export class Number extends ParserBase {
+	export class NumberType extends ParserBase {
 		primitive: true = true;
 		type: "number" = "number";
 		value: null = null;
@@ -38,14 +38,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("number").map(() => new Number());
+		static parse = str("number").map(() => new NumberType());
 
 		toString() {
 			return "number";
 		}
 	}
 
-	export class Boolean extends ParserBase {
+	export class BooleanType extends ParserBase {
 		primitive: true = true;
 		type: "boolean" = "boolean";
 		value: null = null;
@@ -54,14 +54,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("boolean").map(() => new Boolean());
+		static parse = str("boolean").map(() => new BooleanType());
 
 		toString() {
 			return "boolean";
 		}
 	}
 
-	export class BigInt extends ParserBase {
+	export class BigIntType extends ParserBase {
 		primitive: true = true;
 		type: "bigint" = "bigint";
 		value: null = null;
@@ -70,14 +70,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("bigint").map(() => new BigInt());
+		static parse = str("bigint").map(() => new BigIntType());
 
 		toString() {
 			return "bigint";
 		}
 	}
 
-	export class String extends ParserBase {
+	export class StringType extends ParserBase {
 		primitive: true = true;
 		type: "string" = "string";
 		value: null = null;
@@ -86,14 +86,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("string").map(() => new String());
+		static parse = str("string").map(() => new StringType());
 
 		toString() {
 			return "string";
 		}
 	}
 
-	export class Void extends ParserBase {
+	export class VoidType extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "void" = "void";
 
@@ -101,14 +101,14 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("void").map(() => new Void());
+		static parse = str("void").map(() => new VoidType());
 
 		toString() {
 			return "void";
 		}
 	}
 
-	export class Never extends ParserBase {
+	export class NeverType extends ParserBase {
 		type: "predefined" = "predefined";
 		value: "never" = "never";
 
@@ -116,22 +116,22 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("never").map(() => new Never());
+		static parse = str("never").map(() => new NeverType());
 
 		toString() {
 			return "never";
 		}
 	}
 
-	export type Type = Any | Number | Boolean | BigInt | String | Void | Never;
+	export type Type = AnyType | NumberType | BooleanType | BigIntType | StringType | VoidType | NeverType;
 
 	export const parse: Parser<Type> = choice([
-		Any.parse,
-		Number.parse,
-		Boolean.parse,
-		BigInt.parse,
-		String.parse,
-		Void.parse,
-		Never.parse,
+		AnyType.parse,
+		NumberType.parse,
+		BooleanType.parse,
+		BigIntType.parse,
+		StringType.parse,
+		VoidType.parse,
+		NeverType.parse,
 	]);
 }

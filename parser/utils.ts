@@ -13,15 +13,34 @@ import {
 	takeLeft,
 	whitespace,
 } from "npm:arcsecond";
+import { ParserBase } from "./base.ts";
 
 export const head = <T>(xs: T[]) => xs[0];
 export const tail = <T>(xs: T[]) => xs.slice(1);
 export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
 export const last = <T>(xs: T[]) => xs[xs.length - 1];
 
-export const assertParser = <T>(parser: Parser<T>, source: string, expected: T) => {
-	const result = ends(parser).run(source);
-	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
+// export const assertParser = <T>(parser: Parser<T>, source: string, expected: T) => {
+// 	const result = ends(parser).run(source);
+// 	assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
+// };
+
+export const assertParser = <T extends ParserBase>(parser: Parser<T>, source: string, expected: T, round = true) => {
+	const ended = ends(parser);
+	const result = ended.run(source);
+
+	{
+		assert(result.isError === false);
+		assertEquals(result, { isError: false, result: expected, index: source.length, data: null });
+	}
+
+	if (!round) return;
+
+	{
+		const newSource = result.result.toString();
+		const result2 = ended.run(newSource);
+		assertEquals(result2, { isError: false, result: expected, index: newSource.length, data: null });
+	}
 };
 
 export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {

@@ -33,7 +33,7 @@ export const PrimaryType: Parser<Type> = lazy(() =>
 export class IntersectionType extends ParserBase {
 	type: "intersection" = "intersection";
 
-	constructor(public types: Type[]) {
+	constructor(public types: [left: Type, right: Type]) {
 		super();
 	}
 
@@ -44,7 +44,18 @@ export class IntersectionType extends ParserBase {
 	);
 
 	toString() {
-		return this.types.join(" & ");
+		const [left, right] = this.types;
+		let out = "";
+
+		if (left.type === "union") out += "(" + left + ")";
+		else out += left;
+
+		out += " & ";
+
+		if (right.type === "intersection") out += "(" + right + ")";
+		else out += right;
+
+		return out;
 	}
 }
 
@@ -54,7 +65,7 @@ export const IntersectionOrPrimaryType = choice([IntersectionType.parser, Primar
 export class UnionType extends ParserBase {
 	type: "union" = "union";
 
-	constructor(public types: Type[]) {
+	constructor(public types: [left: Type, right: Type]) {
 		super();
 	}
 
@@ -65,7 +76,18 @@ export class UnionType extends ParserBase {
 	);
 
 	toString() {
-		return this.types.join(" | ");
+		const [left, right] = this.types;
+		let out = "";
+
+		if (left.type === "intersection") out += "(" + left + ")";
+		else out += left;
+
+		out += " | ";
+
+		if (right.type === "union") out += "(" + right + ")";
+		else out += right;
+
+		return out;
 	}
 }
 
@@ -186,7 +208,7 @@ export class Member extends ParserBase {
 	type: "member" = "member";
 
 	doc: DocString | null;
-	modifier: Modifier[];
+	modifiers: Modifier[];
 	optional: boolean;
 
 	constructor(
@@ -194,13 +216,13 @@ export class Member extends ParserBase {
 		public value: Type,
 		extra?: {
 			doc?: DocString | null;
-			modifier?: Modifier[];
+			modifiers?: Modifier[];
 			optional?: boolean;
 		},
 	) {
 		super();
 		this.doc = extra?.doc ?? null;
-		this.modifier = extra?.modifier ?? [];
+		this.modifiers = extra?.modifiers ?? [];
 		this.optional = extra?.optional ?? false;
 	}
 
@@ -213,7 +235,7 @@ export class Member extends ParserBase {
 			surroundWhitespace(str(":")),
 			surroundWhitespace(Type),
 		] as const).map(
-			([doc, modifier, key, optional, , value]) => new Member(key, value, { doc, modifier, optional }),
+			([doc, modifiers, key, optional, , value]) => new Member(key, value, { doc, modifiers, optional }),
 		),
 	);
 
@@ -221,8 +243,8 @@ export class Member extends ParserBase {
 		let out = "";
 
 		if (this.doc) out += this.doc + "\n\t";
-		if (this.modifier.length) out += this.modifier.join(" ") + " ";
-		out += `${this.key}${this.optional ? "?" : ""}: ${this.value};`;
+		if (this.modifiers.length) out += this.modifiers.join(" ") + " ";
+		out += this.key + (this.optional ? "?" : "") + ": " + this.value;
 
 		return out;
 	}
@@ -253,7 +275,12 @@ export class ObjectType extends ParserBase {
 	);
 
 	toString() {
-		return `{\n${this.members.join("\n")}\n}`;
+		let out = "{\n";
+
+		if (this.doc) out += this.doc + "\n";
+		out += this.members.join(";\n") + ";";
+
+		return out + "\n}";
 	}
 }
 
@@ -269,7 +296,8 @@ export class ArrayType extends ParserBase {
 	);
 
 	toString() {
-		return `${this.value}[]`;
+		if (this.value.type === "union" || this.value.type === "intersection") return "(" + this.value + ")[]";
+		else return this.value + "[]";
 	}
 }
 

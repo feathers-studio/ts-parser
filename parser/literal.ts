@@ -3,7 +3,7 @@ import { bw, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase } from "./base.ts";
 
 export namespace Literal {
-	export class String extends ParserBase {
+	export class StringType extends ParserBase {
 		primitive: true = true;
 		type: "string" = "string";
 
@@ -11,14 +11,14 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = bw(str('"'), str('"'))().map(value => new String(value));
+		static parse = bw(str('"'))().map(value => new StringType(value));
 
 		toString() {
-			return `"${this.value}"`;
+			return `"${this.value.replaceAll('"', '\\"')}"`;
 		}
 	}
 
-	export class Number extends ParserBase {
+	export class NumberType extends ParserBase {
 		primitive: true = true;
 		type: "number" = "number";
 
@@ -29,15 +29,15 @@ export namespace Literal {
 		static parse = seq([
 			possibly(str("-")), //
 			digits,
-			possibly(seq([str("."), digits])),
-		]).map(([sign, digits]) => new Number(parseInt(`${sign ?? ""}${digits}`)));
+			possibly(seq([str("."), digits]).map(([dot, digits]) => dot + digits)),
+		]).map(([sign, digits, rest]) => new NumberType(parseFloat((sign ?? "") + digits + (rest ?? ""))));
 
 		toString() {
 			return `${this.value}`;
 		}
 	}
 
-	export class Boolean extends ParserBase {
+	export class BooleanType extends ParserBase {
 		primitive: true = true;
 		type: "boolean" = "boolean";
 
@@ -45,29 +45,29 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = choice([str("true"), str("false")]).map(value => new Boolean(value === "true"));
+		static parse = choice([str("true"), str("false")]).map(value => new BooleanType(value === "true"));
 
 		toString() {
 			return `${this.value}`;
 		}
 	}
 
-	export class Null extends ParserBase {
+	export class NullType extends ParserBase {
 		primitive: true = true;
 		type: "null" = "null";
 
-		static parse = str("null").map(() => new Null());
+		static parse = str("null").map(() => new NullType());
 
 		toString() {
 			return "null";
 		}
 	}
 
-	export class Undefined extends ParserBase {
+	export class UndefinedType extends ParserBase {
 		primitive: true = true;
 		type: "undefined" = "undefined";
 
-		static parse = str("undefined").map(() => new Undefined());
+		static parse = str("undefined").map(() => new UndefinedType());
 
 		toString() {
 			return "undefined";
@@ -108,15 +108,15 @@ export namespace Literal {
 		}
 	}
 
-	export type Type = String | Number | Boolean | Null | Undefined | SymbolType | BigIntType;
+	export type Type = StringType | NumberType | BooleanType | NullType | UndefinedType | SymbolType | BigIntType;
 
 	export const parse: Parser<Type> = choice([
 		BigIntType.parse,
-		Number.parse,
+		NumberType.parse,
 		SymbolType.parse,
-		Boolean.parse,
-		Null.parse,
-		Undefined.parse,
-		String.parse,
+		BooleanType.parse,
+		NullType.parse,
+		UndefinedType.parse,
+		StringType.parse,
 	]);
 }

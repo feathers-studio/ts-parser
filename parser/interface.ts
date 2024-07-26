@@ -1,10 +1,9 @@
-import { optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
+import { char, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
 import { DocString } from "./docString.ts";
 import { Member, ObjectType, Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";
-import { MaybeExtends } from "./extends.ts";
 import { ParserBase } from "./base.ts";
-import { seq } from "./utils.ts";
+import { sepByN, seq, surroundWhitespace } from "./utils.ts";
 
 export class ExportKeyword extends ParserBase {
 	type: "export-keyword" = "export-keyword";
@@ -19,6 +18,18 @@ export class ExportKeyword extends ParserBase {
 		return "export";
 	}
 }
+
+export const Extends = sequenceOf([
+	whitespace,
+	str("extends"),
+	whitespace,
+	sepByN<Type>(surroundWhitespace(char(",")), 1)(Type),
+]) //
+	.map(([, , , value]) => ({ extends: value }));
+
+export const MaybeExtends = (parser: Parser<Identifier>): Parser<Identifier & { extends: Type[] | null }> =>
+	sequenceOf([parser, possibly(Extends)]) //
+		.map(([value, exts]) => ({ ...value, extends: exts ? exts.extends : null }));
 
 export class InterfaceHeader extends ParserBase {
 	type: "interface-header" = "interface-header";
@@ -43,7 +54,14 @@ export class InterfaceHeader extends ParserBase {
 	]).map(([exported, declared, , , id]) => new InterfaceHeader(id.name, { extends: id.extends, exported, declared }));
 
 	toString() {
-		return `interface ${this.name}${this.extends ? ` extends ${this.extends.join(", ")}` : ""}`;
+		let out = "";
+
+		if (this.exported) out += "export ";
+		if (this.declared) out += "declare ";
+		out += `interface ${this.name}`;
+		if (this.extends) out += ` extends ${this.extends.join(", ")}`;
+
+		return out;
 	}
 }
 
@@ -85,11 +103,16 @@ export class InterfaceDeclaration extends ParserBase {
 	);
 
 	toString() {
-		return (
-			(this.doc ? this.doc + "\n" : "") +
-			`interface ${this.name}${this.extends ? ` extends ${this.extends.join(", ")}` : ""} {\n${this.members
-				.map(member => "\t" + member.toString())
-				.join("\n")}\n}`
-		);
+		let out = "";
+
+		if (this.doc) out += this.doc + "\n";
+		if (this.exported) out += "export ";
+		out += "interface " + this.name;
+		if (this.extends) out += " extends " + this.extends.join(", ");
+		out += " {\n";
+		out += this.members.map(member => "\t" + member.toString() + ";").join("\n");
+		out += "\n}";
+
+		return out;
 	}
 }

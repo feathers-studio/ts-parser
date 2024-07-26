@@ -48,7 +48,7 @@ export class Pragma extends ParserBase {
 	}
 
 	toString() {
-		return this.multi ? `/* @${this.text} */` : `// @${this.text}`;
+		return this.multi ? `/* ${this.text} */` : `// ${this.text}`;
 	}
 }
 
