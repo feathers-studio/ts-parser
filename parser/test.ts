@@ -1,8 +1,8 @@
-import { DeclarationFile, parse } from "./index.ts";
+import { DeclarationFile, parse, Statement } from "./index.ts";
 import { assertParser } from "./utils.ts";
-import { Comment, Directive } from "./comment.ts";
-import { InterfaceDeclaration } from "./interface.ts";
-import { ArrayType, IndexSignature, PropertySignature, TypeReference, UnionType } from "./type.ts";
+import { Comment, Directive, Pragma } from "./comment.ts";
+import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
+import { ArrayType, IndexSignature, ObjectType, PropertySignature, TypeReference, UnionType } from "./type.ts";
 import { DocString } from "./docString.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
@@ -19,6 +19,8 @@ Deno.test("ParserBase", () => {
 const testSource = `
 /// Extract from lib.dom.d.ts
 /// <reference path="./iterable.d.ts" />
+
+// @ts-check
 
 /* Source is from @types/web */
 
@@ -75,11 +77,50 @@ interface ByteLengthQueuingStrategy extends QueuingStrategy<ArrayBufferView> {
 
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/size) */
     readonly size: QueuingStrategySize<ArrayBufferView>;
+}
+	
+
+
+declare var BroadcastChannel: {
+    // new(name: string): BroadcastChannel;
+    prototype: BroadcastChannel;
+    // new(name: string): BroadcastChannel;
+};`;
+`
+
+declare var ByteLengthQueuingStrategy: {
+    prototype: ByteLengthQueuingStrategy;
+    new(init: QueuingStrategyInit): ByteLengthQueuingStrategy;
+};
+
+declare var CDATASection: {
+    prototype: CDATASection;
+    new(): CDATASection;
+};
+
+/** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation) */
+interface CSSAnimation extends Animation {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation/animationName) */
+    readonly animationName: string;
+    addEventListener<K extends keyof AnimationEventMap>(type: K, listener: (this: CSSAnimation, ev: AnimationEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener<K extends keyof AnimationEventMap>(type: K, listener: (this: CSSAnimation, ev: AnimationEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+}
+	
+interface CSSGroupingRule extends CSSRule {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/cssRules) */
+    readonly cssRules: CSSRuleList;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/deleteRule) */
+    deleteRule(index: number): void;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/insertRule) */
+    insertRule(rule: string, index?: number): number;
 }`;
 
-const expectFixture = [
+const expectFixture: Statement[] = [
 	new Comment("/ Extract from lib.dom.d.ts", false),
 	new Directive("reference", { path: "./iterable.d.ts" }),
+	new Pragma("@ts-check"),
 	new Comment(" Source is from @types/web ", true),
 	new Comment("///////////////////////////", false),
 	new Comment("/ Window APIs", false),
@@ -248,6 +289,26 @@ const expectFixture = [
 					" * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy)\n" +
 					" ",
 			),
+		},
+	),
+
+	new VariableStatement(
+		[
+			new VariableDeclaration(
+				new Identifier("BroadcastChannel"),
+				new ObjectType([
+					new Comment(" new(name: string): BroadcastChannel;"),
+					new PropertySignature(
+						new Identifier("prototype"), //
+						new TypeReference(new Identifier("BroadcastChannel")),
+					),
+					new Comment(" new(name: string): BroadcastChannel;"),
+				]),
+			),
+		],
+		{
+			kind: VariableKind.Var,
+			declared: true,
 		},
 	),
 ];

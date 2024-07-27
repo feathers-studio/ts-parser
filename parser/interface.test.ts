@@ -1,5 +1,5 @@
-import { assertParser, testParser } from "./utils.ts";
-import { InterfaceDeclaration } from "./interface.ts";
+import { assertParser } from "./utils.ts";
+import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
 import { PropertySignature, TypeReference } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
@@ -9,17 +9,17 @@ Deno.test("InterfaceDeclaration: 1", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
 		`interface Hello extends World {
-		readonly hello ? : World;
-		readonly hello : "World";
+		readonly foo ? : World;
+		readonly bar : "World";
 	}`,
 		new InterfaceDeclaration(
 			"Hello",
 			[
-				new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+				new PropertySignature(new Identifier("foo"), new TypeReference(new Identifier("World")), {
 					modifiers: ["readonly"],
 					optional: true,
 				}),
-				new PropertySignature(new Identifier("hello"), new Literal.StringType("World"), {
+				new PropertySignature(new Identifier("bar"), new Literal.StringType("World"), {
 					modifiers: ["readonly"],
 					optional: false,
 				}),
@@ -33,16 +33,21 @@ Deno.test("InterfaceDeclaration: 2", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
 		`interface Hello {
-		readonly hello ? : World;
-		readonly hello : "World"
+		readonly foo ? : World;
+		readonly bar : "World"
+		readonly public private protected baz: "wOrLd"
 	}`,
 		new InterfaceDeclaration("Hello", [
-			new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
+			new PropertySignature(new Identifier("foo"), new TypeReference(new Identifier("World")), {
 				modifiers: ["readonly"],
 				optional: true,
 			}),
-			new PropertySignature(new Identifier("hello"), new Literal.StringType("World"), {
+			new PropertySignature(new Identifier("bar"), new Literal.StringType("World"), {
 				modifiers: ["readonly"],
+				optional: false,
+			}),
+			new PropertySignature(new Identifier("baz"), new Literal.StringType("wOrLd"), {
+				modifiers: ["readonly", "public", "private", "protected"],
 				optional: false,
 			}),
 		]),
@@ -74,6 +79,17 @@ Deno.test("InterfaceDeclaration: Exported and Documented", () => {
 				doc: new DocString(" doc\n\t"),
 				exported: true,
 			},
+		),
+	);
+});
+
+Deno.test("VariableStatement: 1", () => {
+	assertParser(
+		VariableStatement.parser,
+		`declare var hello : World;`,
+		new VariableStatement(
+			[new VariableDeclaration(new Identifier("hello"), new TypeReference(new Identifier("World")))],
+			{ declared: true, kind: VariableKind.Var },
 		),
 	);
 });

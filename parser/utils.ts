@@ -7,6 +7,7 @@ import {
 	optionalWhitespace,
 	Parser,
 	recursiveParser,
+	regex,
 	sepBy,
 	sequenceOf,
 	str,
@@ -52,12 +53,21 @@ export const assertParser = <T>(
 	{
 		const newSource = String(expected);
 		const result2 = ended.run(newSource);
-		if (result2.isError) console.error(newSource, "\n", result2.error);
+
+		let errorPos = result2.isError
+			? "\n" +
+			  newSource
+					.slice(result2.index - 60, result2.index + 1)
+					.split("\n")
+					.at(-1)
+			: "";
+
+		errorPos += errorPos ? "\n" + " ".repeat(errorPos.length) + "^" : "";
 
 		assertEquals(
 			result2,
 			{ isError: false, result: expected, index: newSource.length, data: null },
-			" *<Backwards>",
+			" *<Backwards>" + errorPos,
 		);
 	}
 };
@@ -72,6 +82,7 @@ export const lazy = recursiveParser;
 
 export const ws = whitespace.map(() => null);
 export const wss = optionalWhitespace.map(() => null);
+export const spaces = regex(/^( |\t|\r)*/).map(() => null);
 export const ends = <P extends Parser<T>, T>(parser: P): P => takeLeft(parser)(endOfInput) as P;
 
 export function nonNull<T>(value: T | null): value is T {
@@ -83,8 +94,8 @@ export const updateError = (state: { isError: boolean; error: string }, error: s
 	Object.assign(Object.assign({}, state), { isError: true, error });
 
 // sepByN :: (Parser e a s, n) -> Parser e b s -> Parser e [b] s
-export const sepByN = <V, Sep = unknown>(sepParser: Parser<Sep>, n: number) => {
-	return function sepByN$valParser(valueParser: Parser<V>): Parser<V[]> {
+export const sepByN = (sepParser: Parser<unknown>, n: number) => {
+	return function sepByN$valParser<V>(valueParser: Parser<V>): Parser<V[]> {
 		return new Parser(function sepByN$valParser$state(state: any) {
 			if (state.isError) return state;
 			const out = sepBy(sepParser)(valueParser).p(state);

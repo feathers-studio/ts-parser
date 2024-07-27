@@ -1,15 +1,26 @@
-import { Parser, choice, many, possibly, sequenceOf, str, takeLeft, char } from "npm:arcsecond";
-import { lazy, bracketed, surroundWhitespace, wss, sepByN, init, last, seq, ws } from "./utils.ts";
+import {
+	Parser,
+	whitespace,
+	choice,
+	many,
+	possibly,
+	sequenceOf,
+	str,
+	takeLeft,
+	char,
+	optionalWhitespace,
+	lookAhead,
+} from "npm:arcsecond";
+
+import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { DocString } from "./docString.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
+import { Comment } from "./comment.ts";
 
-const arrayPostfix = bracketed(
-	wss.map(() => "array"),
-	"[",
-);
+const arrayPostfix = seq([optionalWhitespace, char("["), optionalWhitespace, char("]")]).map(() => "array" as const);
 
 export type NonArrayPrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | TupleType | ThisType;
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
@@ -18,15 +29,14 @@ export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 
 export type PrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | ArrayType | TupleType | ThisType;
 export const PrimaryType: Parser<Type> = lazy(() =>
-	seq([choice([ParenthesisedType, NonArrayPrimaryType]), wss, many(arrayPostfix)]) //
-		.map(([value, , postfixes]): Type => {
-			if (postfixes.length) {
-				const type = postfixes.reduce((value, suffix) => {
+	seq([choice([ParenthesisedType, NonArrayPrimaryType]), many(arrayPostfix)]) //
+		.map(([value, postfixes]): Type => {
+			if (postfixes.length)
+				return postfixes.reduce((value, suffix) => {
 					if (suffix === "array") return new ArrayType(value);
 					throw new Error(`Unknown suffix: ${suffix}`);
 				}, value as PrimaryType);
-				return type;
-			} else return value;
+			else return value;
 		}),
 );
 
@@ -113,7 +123,7 @@ export const ParenthesisedType = bracketed(surroundWhitespace(Type), "(");
 export type PredefinedOrLiteralType = Predefined.Type | Literal.Type;
 export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([Predefined.parse, Literal.parse]);
 
-export const TypeParameters = bracketed(sepByN<Type>(char(","), 1)(surroundWhitespace(Type)), "<");
+export const TypeParameters = bracketed(sepByN(char(","), 1)(surroundWhitespace(Type)), "<");
 
 /*
 
@@ -130,7 +140,7 @@ export class QualifiedName extends ParserBase {
 	}
 
 	static parser: Parser<QualifiedName> = lazy(() =>
-		sepByN<Identifier>(
+		sepByN(
 			char("."),
 			2,
 		)(Identifier.parser).map(
@@ -191,12 +201,9 @@ export class IndexSignature extends ParserBase {
 }
 
 export type Modifier = "readonly" | "public" | "private" | "protected";
-export const Modifier: Parser<Modifier> = choice([
-	str("readonly"),
-	str("public"),
-	str("private"),
-	str("protected"),
-]) as Parser<Modifier>;
+export const Modifier: Parser<Modifier> = takeLeft(
+	choice([str("readonly"), str("public"), str("private"), str("protected")]),
+)(whitespace) as Parser<Modifier>;
 
 export class PropertySignature extends ParserBase {
 	kind: SyntaxKind.PropertySignature = SyntaxKind.PropertySignature;
@@ -220,18 +227,24 @@ export class PropertySignature extends ParserBase {
 		this.optional = extra?.optional ?? false;
 	}
 
-	static parser: Parser<PropertySignature> = lazy(() =>
-		sequenceOf([
-			possibly(DocString.parser),
-			surroundWhitespace(many(takeLeft(Modifier)(ws) as Parser<Modifier>)),
-			surroundWhitespace(choice([Identifier.parser, IndexSignature.parser])),
-			possibly(char("?")).map(c => c != null),
-			surroundWhitespace(str(":")),
-			surroundWhitespace(Type),
-		] as const).map(
-			([doc, modifiers, key, optional, , value]) =>
-				new PropertySignature(key, value, { doc, modifiers, optional }),
-		),
+	static parser: Parser<PropertySignature> = seq([
+		possibly(DocString.parser),
+		optionalWhitespace,
+		many(Modifier),
+		optionalWhitespace,
+		choice([Identifier.parser, IndexSignature.parser]),
+		optionalWhitespace,
+		possibly(char("?")).map(c => c != null),
+		optionalWhitespace,
+		str(":"),
+		optionalWhitespace,
+		Type,
+		possibly(spaces),
+		// PropertySignatures are separated by semi, comma, newlines, or end of object
+		choice([char(";"), char(","), char("\n"), lookAhead(char("}"))]),
+	]).map(
+		([doc, _1, modifiers, _2, key, _3, optional, _4, _5, _6, type]) =>
+			new PropertySignature(key, type, { doc, modifiers, optional }),
 	);
 
 	toString() {
@@ -239,49 +252,31 @@ export class PropertySignature extends ParserBase {
 
 		if (this.doc) out += this.doc + "\n\t";
 		if (this.modifiers.length) out += this.modifiers.join(" ") + " ";
-		out += this.key + (this.optional ? "?" : "") + ": " + this.value;
+		out += this.key + (this.optional ? "?" : "") + ": " + this.value + ";";
 
 		return out;
 	}
 }
 
-const PropertySeparator = choice([char(";"), char(",")]);
+const ObjectChild = surroundWhitespace(choice([PropertySignature.parser, Comment.parser]));
 
 export class ObjectType extends ParserBase {
 	kind: SyntaxKind.ObjectType = SyntaxKind.ObjectType;
 
 	doc: DocString | null;
 
-	constructor(public members: PropertySignature[], extra?: { doc?: DocString }) {
+	constructor(public members: (PropertySignature | Comment)[], extra?: { doc?: DocString }) {
 		super();
 		this.doc = extra?.doc ?? null;
 	}
 
 	static parser: Parser<ObjectType> = lazy(() =>
-		choice([
-			bracketed(
-				seq([
-					surroundWhitespace(PropertySignature.parser),
-					many(
-						seq([PropertySeparator, surroundWhitespace(PropertySignature.parser)]).map(
-							([, member]) => member,
-						),
-					), //
-					possibly(surroundWhitespace(PropertySeparator)),
-				]).map(([member, members]) => [member, ...members]),
-				"{",
-			) //
-				.map(members => new ObjectType(members ?? [])),
-			bracketed(wss, "{").map(() => new ObjectType([])),
-		]),
+		choice([bracketed(many(ObjectChild), "{").map(members => new ObjectType(members ?? []))]),
 	);
 
 	toString() {
 		let out = "{\n";
-
-		if (this.doc) out += this.doc + "\n";
-		if (this.members.length) out += this.members.join(";\n") + ";";
-
+		out += this.members.map(member => "\t" + member.toString()).join("\n");
 		return out + "\n}";
 	}
 }
@@ -312,7 +307,7 @@ export class TupleType extends ParserBase {
 	}
 
 	static parser: Parser<TupleType> = lazy(() =>
-		bracketed(sepByN<Type>(char(","), 0)(surroundWhitespace(Type)), "[").map(values => new TupleType(values)),
+		bracketed(sepByN(char(","), 0)(surroundWhitespace(Type)), "[").map(values => new TupleType(values)),
 	);
 
 	toString() {

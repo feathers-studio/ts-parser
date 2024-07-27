@@ -14,6 +14,7 @@ export const enum SyntaxKind {
 	ExportKeyword,
 
 	InterfaceDeclaration,
+	VariableDeclaration,
 	VariableStatement,
 
 	LiteralNumber,

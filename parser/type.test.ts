@@ -23,7 +23,7 @@ Deno.test("Index Key (with spaces)", () => {
 Deno.test("Member: 1", () => {
 	assertParser(
 		PropertySignature.parser,
-		" [ property :   string]  :   string",
+		" [ property :   string]  :   string ;",
 		new PropertySignature(
 			new IndexSignature("property", new Predefined.StringType()),
 			new Predefined.StringType(),
@@ -39,7 +39,7 @@ Deno.test("Member: 1", () => {
 Deno.test("Member: 2", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly   hello ? : World",
+		"readonly   hello ? : World;",
 		new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 			doc: null,
 			modifiers: ["readonly"],
@@ -51,7 +51,7 @@ Deno.test("Member: 2", () => {
 Deno.test("Member: 3", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello : World.Rivers.Amazon",
+		"readonly public  hello : World.Rivers.Amazon               	;",
 		new PropertySignature(
 			new Identifier("hello"),
 			new TypeReference(
@@ -68,7 +68,7 @@ Deno.test("Member: 3", () => {
 Deno.test("Member: 4", () => {
 	assertParser(
 		PropertySignature.parser,
-		'readonly  protected  [ hello: string ] : "World"',
+		'readonly  protected  [ hello: string ] : "World" \n',
 		new PropertySignature(
 			new IndexSignature("hello", new Predefined.StringType()),
 			new Literal.StringType("World"),
@@ -84,7 +84,7 @@ Deno.test("Member: 4", () => {
 Deno.test("Member: 5", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello ? : World<Rivers, Amazon>",
+		"readonly public  hello ? : World<Rivers, Amazon>;",
 		new PropertySignature(
 			new Identifier("hello"),
 			new TypeReference(new Identifier("World"), [
@@ -99,7 +99,7 @@ Deno.test("Member: 5", () => {
 Deno.test("Member: 6", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello ? : World<Rivers, Amazon>[][]",
+		"readonly public  hello ? : World<Rivers, Amazon>[][],",
 		new PropertySignature(
 			new Identifier("hello"),
 			new ArrayType(
@@ -410,7 +410,8 @@ Deno.test("Union of Intersection of TypeReferences (Parenthesised 2)", () => {
 Deno.test("Object with Parenthesis and Arrays", () => {
 	assertParser(
 		Type,
-		"({ key: string; key2: number[] })",
+		`({ key: string;
+		key2: number[] })`,
 		new ObjectType([
 			new PropertySignature(new Identifier("key"), new Predefined.StringType(), {
 				doc: null,

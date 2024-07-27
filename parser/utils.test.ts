@@ -1,5 +1,5 @@
 import { str } from "npm:arcsecond";
-import { assertParser, maybeBracketed, quoted, testParser } from "./utils.ts";
+import { assertParser, maybeBracketed, quoted } from "./utils.ts";
 
 Deno.test("maybeBracketed: 1", () => {
 	assertParser(maybeBracketed(str("Hello, World!")), "Hello, World!", "Hello, World!");
