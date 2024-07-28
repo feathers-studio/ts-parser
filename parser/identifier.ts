@@ -1,4 +1,4 @@
-import { choice, digit, letter, many, Parser, sequenceOf, str } from "npm:arcsecond";
+import { choice, digit, letter, many, Parser, sequenceOf, str } from "arcsecond";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 // "(_|$|[a-zA-Z])(_|$|[a-zA-Z0-9])+";

@@ -1,4 +1,5 @@
-import { assertParser } from "./utils.ts";
+import { test } from "bun:test";
+import { assertParser } from "./test-util.ts";
 import { Type, PropertySignature, IndexSignature, ObjectType, TupleType } from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
@@ -9,18 +10,16 @@ import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { Predefined } from "./predefined.ts";
 
-Deno.test(
-	"Index Key", //
-	() => {
-		assertParser(IndexSignature.parser, "[key: string]", new IndexSignature("key", new Predefined.StringType()));
-	},
-);
+test("Index Key", () => {
+	//
+	assertParser(IndexSignature.parser, "[key: string]", new IndexSignature("key", new Predefined.StringType()));
+});
 
-Deno.test("Index Key (with spaces)", () => {
+test("Index Key (with spaces)", () => {
 	assertParser(IndexSignature.parser, "[ key : string ]", new IndexSignature("key", new Predefined.StringType()));
 });
 
-Deno.test("Member: 1", () => {
+test("Member: 1", () => {
 	assertParser(
 		PropertySignature.parser,
 		" [ property :   string]  :   string ;",
@@ -36,7 +35,7 @@ Deno.test("Member: 1", () => {
 	);
 });
 
-Deno.test("Member: 2", () => {
+test("Member: 2", () => {
 	assertParser(
 		PropertySignature.parser,
 		"readonly   hello ? : World;",
@@ -48,7 +47,7 @@ Deno.test("Member: 2", () => {
 	);
 });
 
-Deno.test("Member: 3", () => {
+test("Member: 3", () => {
 	assertParser(
 		PropertySignature.parser,
 		"readonly public  hello : World.Rivers.Amazon               	;",
@@ -65,7 +64,7 @@ Deno.test("Member: 3", () => {
 	);
 });
 
-Deno.test("Member: 4", () => {
+test("Member: 4", () => {
 	assertParser(
 		PropertySignature.parser,
 		'readonly  protected  [ hello: string ] : "World" \n',
@@ -81,7 +80,7 @@ Deno.test("Member: 4", () => {
 	);
 });
 
-Deno.test("Member: 5", () => {
+test("Member: 5", () => {
 	assertParser(
 		PropertySignature.parser,
 		"readonly public  hello ? : World<Rivers, Amazon>;",
@@ -96,7 +95,7 @@ Deno.test("Member: 5", () => {
 	);
 });
 
-Deno.test("Member: 6", () => {
+test("Member: 6", () => {
 	assertParser(
 		PropertySignature.parser,
 		"readonly public  hello ? : World<Rivers, Amazon>[][],",
@@ -115,138 +114,138 @@ Deno.test("Member: 6", () => {
 	);
 });
 
-Deno.test("LiteralType: string", () => {
+test("LiteralType: string", () => {
 	assertParser(Type, '"Hello, World!"', new Literal.StringType("Hello, World!"));
 });
 
-Deno.test("LiteralType: number", () => {
+test("LiteralType: number", () => {
 	assertParser(Type, "123", new Literal.NumberType(123));
 });
 
-Deno.test("LiteralType: number (negative)", () => {
+test("LiteralType: number (negative)", () => {
 	assertParser(Type, "-123", new Literal.NumberType(-123));
 });
 
-Deno.test("LiteralType: number (float)", () => {
+test("LiteralType: number (float)", () => {
 	assertParser(Type, "123.456", new Literal.NumberType(123.456));
 });
 
-Deno.test("LiteralType: number (negative float)", () => {
+test("LiteralType: number (negative float)", () => {
 	assertParser(Type, "-123.456", new Literal.NumberType(-123.456));
 });
 
-Deno.test("LiteralType: number (exponential)", () => {
+test("LiteralType: number (exponential)", () => {
 	assertParser(Type, "123e3", new Literal.NumberType(123e3));
 });
 
-Deno.test("LiteralType: number (negative exponential)", () => {
+test("LiteralType: number (negative exponential)", () => {
 	assertParser(Type, "-123e3", new Literal.NumberType(-123e3));
 });
 
-Deno.test("LiteralType: number (float exponential)", () => {
+test("LiteralType: number (float exponential)", () => {
 	assertParser(Type, "123.456e3", new Literal.NumberType(123.456e3));
 });
 
-Deno.test("LiteralType: number (negative float exponential)", () => {
+test("LiteralType: number (negative float exponential)", () => {
 	assertParser(Type, "-123.456e3", new Literal.NumberType(-123.456e3));
 });
 
-Deno.test("LiteralType: boolean (true)", () => {
+test("LiteralType: boolean (true)", () => {
 	assertParser(Type, "true", new Literal.BooleanType(true));
 });
 
-Deno.test("LiteralType: boolean (false)", () => {
+test("LiteralType: boolean (false)", () => {
 	assertParser(Type, "false", new Literal.BooleanType(false));
 });
 
-Deno.test("LiteralType: null", () => {
+test("LiteralType: null", () => {
 	assertParser(Type, "null", new Literal.NullType());
 });
 
-Deno.test("LiteralType: undefined", () => {
+test("LiteralType: undefined", () => {
 	assertParser(Type, "undefined", new Literal.UndefinedType());
 });
 
-Deno.test("LiteralType: symbol", () => {
+test("LiteralType: symbol", () => {
 	assertParser(Type, "symbol", new Literal.SymbolType(false));
 });
 
-Deno.test("LiteralType: unique symbol", () => {
+test("LiteralType: unique symbol", () => {
 	assertParser(Type, "unique symbol", new Literal.SymbolType(true));
 });
 
-Deno.test("LiteralType: bigint", () => {
+test("LiteralType: bigint", () => {
 	assertParser(Type, "123n", new Literal.BigIntType(123n));
 });
 
-Deno.test("PredefinedType: string", () => {
+test("PredefinedType: string", () => {
 	assertParser(Type, "string", new Predefined.StringType());
 });
 
-Deno.test("PredefinedType: any", () => {
+test("PredefinedType: any", () => {
 	assertParser(Type, "any", new Predefined.AnyType());
 });
 
-Deno.test("PredefinedType: number", () => {
+test("PredefinedType: number", () => {
 	assertParser(Type, "number", new Predefined.NumberType());
 });
 
-Deno.test("PredefinedType: boolean", () => {
+test("PredefinedType: boolean", () => {
 	assertParser(Type, "boolean", new Predefined.BooleanType());
 });
 
-Deno.test("PredefinedType: bigint", () => {
+test("PredefinedType: bigint", () => {
 	assertParser(Type, "bigint", new Predefined.BigIntType());
 });
 
-Deno.test("PredefinedType: void", () => {
+test("PredefinedType: void", () => {
 	assertParser(Type, "void", new Predefined.VoidType());
 });
 
-Deno.test("PredefinedType: never", () => {
+test("PredefinedType: never", () => {
 	assertParser(Type, "never", new Predefined.NeverType());
 });
 
-Deno.test("Array of PredefinedType: string", () => {
+test("Array of PredefinedType: string", () => {
 	assertParser(Type, "string[]", new ArrayType(new Predefined.StringType()));
 });
 
-Deno.test("Array of Array of PredefinedType: string", () => {
+test("Array of Array of PredefinedType: string", () => {
 	assertParser(Type, "string[][]", new ArrayType(new ArrayType(new Predefined.StringType())));
 });
 
-Deno.test("Parenthesised PredefinedType: string", () => {
+test("Parenthesised PredefinedType: string", () => {
 	assertParser(Type, "(string)", new Predefined.StringType());
 });
-Deno.test("Parenthesised PredefinedType: null", () => {
+test("Parenthesised PredefinedType: null", () => {
 	assertParser(Type, "(null)", new Literal.NullType());
 });
 
-Deno.test("Parenthesised Array of PredefinedType: string", () => {
+test("Parenthesised Array of PredefinedType: string", () => {
 	assertParser(Type, "(string[])", new ArrayType(new Predefined.StringType()));
 });
 
-Deno.test("Tuple (empty)", () => {
+test("Tuple (empty)", () => {
 	assertParser(Type, "[]", new TupleType([]));
 });
 
-Deno.test("Tuple of PredefinedType: string", () => {
+test("Tuple of PredefinedType: string", () => {
 	assertParser(Type, "[string]", new TupleType([new Predefined.StringType()]));
 });
 
-Deno.test("Tuple of two PredefinedTypes: string, number", () => {
+test("Tuple of two PredefinedTypes: string, number", () => {
 	assertParser(Type, "[string, number]", new TupleType([new Predefined.StringType(), new Predefined.NumberType()]));
 });
 
-Deno.test("TypeReference (Simple)", () => {
+test("TypeReference (Simple)", () => {
 	assertParser(Type, "String", new TypeReference(new Identifier("String")));
 });
 
-Deno.test("TypeReference with a single TypeParameter", () => {
+test("TypeReference with a single TypeParameter", () => {
 	assertParser(Type, "String<number>", new TypeReference(new Identifier("String"), [new Predefined.NumberType()]));
 });
 
-Deno.test("TypeReference with multiple TypeParameters", () => {
+test("TypeReference with multiple TypeParameters", () => {
 	assertParser(
 		Type,
 		"String<number, string>",
@@ -254,7 +253,7 @@ Deno.test("TypeReference with multiple TypeParameters", () => {
 	);
 });
 
-Deno.test("TypeReference with nested TypeParameters", () => {
+test("TypeReference with nested TypeParameters", () => {
 	assertParser(
 		Type,
 		"String<number, F<string>>",
@@ -265,7 +264,7 @@ Deno.test("TypeReference with nested TypeParameters", () => {
 	);
 });
 
-Deno.test("TypeReference with Namespaces and nested TypeParameters", () => {
+test("TypeReference with Namespaces and nested TypeParameters", () => {
 	assertParser(
 		Type,
 		"S.P.Q.R<A.B.C.D, F<string>, string>",
@@ -291,7 +290,7 @@ Deno.test("TypeReference with Namespaces and nested TypeParameters", () => {
 	);
 });
 
-Deno.test("Parenthesised Array of TypeReference", () => {
+test("Parenthesised Array of TypeReference", () => {
 	assertParser(
 		Type,
 		"(String<number>)[]",
@@ -299,7 +298,7 @@ Deno.test("Parenthesised Array of TypeReference", () => {
 	);
 });
 
-Deno.test("Intersection of PredefinedTypes: string, number", () => {
+test("Intersection of PredefinedTypes: string, number", () => {
 	assertParser(
 		Type,
 		"string & number",
@@ -307,11 +306,11 @@ Deno.test("Intersection of PredefinedTypes: string, number", () => {
 	);
 });
 
-Deno.test("Union of PredefinedTypes: string, number", () => {
+test("Union of PredefinedTypes: string, number", () => {
 	assertParser(Type, "string | number", new UnionType([new Predefined.StringType(), new Predefined.NumberType()]));
 });
 
-Deno.test("Union of string and number[]", () => {
+test("Union of string and number[]", () => {
 	assertParser(
 		Type,
 		"(string | number)[]",
@@ -319,7 +318,7 @@ Deno.test("Union of string and number[]", () => {
 	);
 });
 
-Deno.test("Array of Union of string and number", () => {
+test("Array of Union of string and number", () => {
 	assertParser(
 		Type,
 		"(string | number)[][]",
@@ -327,7 +326,7 @@ Deno.test("Array of Union of string and number", () => {
 	);
 });
 
-Deno.test("Union of string, number and null", () => {
+test("Union of string, number and null", () => {
 	assertParser(
 		Type,
 		"string | number | null",
@@ -338,7 +337,7 @@ Deno.test("Union of string, number and null", () => {
 	);
 });
 
-Deno.test("Union of string, number and null (Parenthesised)", () => {
+test("Union of string, number and null (Parenthesised)", () => {
 	assertParser(
 		Type,
 		"(string | number | null)",
@@ -349,7 +348,7 @@ Deno.test("Union of string, number and null (Parenthesised)", () => {
 	);
 });
 
-Deno.test("Intersection of TypeReferences", () => {
+test("Intersection of TypeReferences", () => {
 	assertParser(
 		Type,
 		"A & B & C",
@@ -360,7 +359,7 @@ Deno.test("Intersection of TypeReferences", () => {
 	);
 });
 
-Deno.test("Intersection of TypeReferences (Parenthesised)", () => {
+test("Intersection of TypeReferences (Parenthesised)", () => {
 	assertParser(
 		Type,
 		"A & (B & C)",
@@ -371,7 +370,7 @@ Deno.test("Intersection of TypeReferences (Parenthesised)", () => {
 	);
 });
 
-Deno.test("Union of Intersection of TypeReferences", () => {
+test("Union of Intersection of TypeReferences", () => {
 	assertParser(
 		Type,
 		"A & B | C & D",
@@ -382,7 +381,7 @@ Deno.test("Union of Intersection of TypeReferences", () => {
 	);
 });
 
-Deno.test("Union of Intersection of TypeReferences (Parenthesised)", () => {
+test("Union of Intersection of TypeReferences (Parenthesised)", () => {
 	assertParser(
 		Type,
 		"A & (B | C) & D",
@@ -396,7 +395,7 @@ Deno.test("Union of Intersection of TypeReferences (Parenthesised)", () => {
 	);
 });
 
-Deno.test("Union of Intersection of TypeReferences (Parenthesised 2)", () => {
+test("Union of Intersection of TypeReferences (Parenthesised 2)", () => {
 	assertParser(
 		Type,
 		"A & B | (C & D)",
@@ -407,7 +406,7 @@ Deno.test("Union of Intersection of TypeReferences (Parenthesised 2)", () => {
 	);
 });
 
-Deno.test("Object with Parenthesis and Arrays", () => {
+test("Object with Parenthesis and Arrays", () => {
 	assertParser(
 		Type,
 		`({ key: string;
@@ -427,7 +426,7 @@ Deno.test("Object with Parenthesis and Arrays", () => {
 	);
 });
 
-Deno.test("Object with Parenthesis and Arrays (2)", () => {
+test("Object with Parenthesis and Arrays (2)", () => {
 	assertParser(
 		Type,
 		"({ foo: (string[])[] })",
@@ -441,7 +440,7 @@ Deno.test("Object with Parenthesis and Arrays (2)", () => {
 	);
 });
 
-Deno.test("Object with Parenthesis and Arrays (3)", () => {
+test("Object with Parenthesis and Arrays (3)", () => {
 	assertParser(
 		Type,
 		"({ foo: (string[])[] })[][]",
@@ -463,7 +462,7 @@ Deno.test("Object with Parenthesis and Arrays (3)", () => {
 	);
 });
 
-Deno.test("Object (complex)", () => {
+test("Object (complex)", () => {
 	assertParser(
 		Type,
 		'{ key: "value"; key2: { nestedKey: S.P.Q.R<X> }, [rest: string]: string }',
@@ -506,7 +505,7 @@ Deno.test("Object (complex)", () => {
 	);
 });
 
-Deno.test("Object (complex) with optional members", () => {
+test("Object (complex) with optional members", () => {
 	assertParser(
 		Type,
 		'{ key?: "value"; key2?: { nestedKey: S.P.Q.R<X> }, [rest: string]?: string }',
@@ -549,18 +548,18 @@ Deno.test("Object (complex) with optional members", () => {
 	);
 });
 
-Deno.test("Object (empty)", () => {
+test("Object (empty)", () => {
 	assertParser(Type, "{}", new ObjectType([]));
 });
 
-Deno.test("Invalid syntax", () => {
+test("Invalid syntax", () => {
 	assertParser(Type, "string | number x[][]", new ObjectType([]), { requireFail: true });
 });
 
-Deno.test("Invalid syntax (2)", () => {
+test("Invalid syntax (2)", () => {
 	assertParser(Type, "string | number[] x", new ObjectType([]), { requireFail: true });
 });
 
-Deno.test("Invalid syntax (3)", () => {
+test("Invalid syntax (3)", () => {
 	assertParser(Type, "string | number[] x[]", new ObjectType([]), { requireFail: true });
 });

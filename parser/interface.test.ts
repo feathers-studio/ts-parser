@@ -1,11 +1,13 @@
-import { assertParser } from "./utils.ts";
+import { test } from "bun:test";
+import { assertParser } from "./test-util.ts";
+
 import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
 import { PropertySignature, TypeReference } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { DocString } from "./docString.ts";
 
-Deno.test("InterfaceDeclaration: 1", () => {
+test("InterfaceDeclaration: 1", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
 		`interface Hello extends World {
@@ -29,7 +31,7 @@ Deno.test("InterfaceDeclaration: 1", () => {
 	);
 });
 
-Deno.test("InterfaceDeclaration: 2", () => {
+test("InterfaceDeclaration: 2", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
 		`interface Hello {
@@ -54,7 +56,7 @@ Deno.test("InterfaceDeclaration: 2", () => {
 	);
 });
 
-Deno.test("InterfaceDeclaration: Exported and Documented", () => {
+test("InterfaceDeclaration: Exported and Documented", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
 		`/** doc
@@ -83,7 +85,7 @@ Deno.test("InterfaceDeclaration: Exported and Documented", () => {
 	);
 });
 
-Deno.test("VariableStatement: 1", () => {
+test("VariableStatement: 1", () => {
 	assertParser(
 		VariableStatement.parser,
 		`declare var hello : World;`,

@@ -1,4 +1,4 @@
-import { Parser } from "npm:arcsecond";
+import { Parser } from "arcsecond";
 
 export const enum SyntaxKind {
 	Unknown,

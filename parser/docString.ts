@@ -1,4 +1,4 @@
-import { Parser, str } from "npm:arcsecond";
+import { Parser, str } from "arcsecond";
 import { bw } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 

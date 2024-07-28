@@ -1,7 +1,8 @@
+import { test } from "bun:test";
+import { assertParser } from "./test-util.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
-import { assertParser } from "./utils.ts";
 
-Deno.test("comment.single", () => {
+test("comment.single", () => {
 	assertParser(
 		Comment.parser, //
 		"// Hello, World!\n",
@@ -9,7 +10,7 @@ Deno.test("comment.single", () => {
 	);
 });
 
-Deno.test("comment.multi", () => {
+test("comment.multi", () => {
 	assertParser(
 		Comment.parser, //
 		"/* Hello, many\n worlds! */",
@@ -17,7 +18,7 @@ Deno.test("comment.multi", () => {
 	);
 });
 
-Deno.test("comment.directive", () => {
+test("comment.directive", () => {
 	assertParser(
 		Comment.parser,
 		'/// <reference path="./types.ts" />',
@@ -25,24 +26,20 @@ Deno.test("comment.directive", () => {
 	);
 });
 
-Deno.test(
-	"comment.pragma", //
-	() => {
-		assertParser(
-			Comment.parser, //
-			"// @ts-check",
-			new Pragma("@ts-check"),
-		);
-	},
-);
+test("comment.pragma", () => {
+	//
+	assertParser(
+		Comment.parser, //
+		"// @ts-check",
+		new Pragma("@ts-check"),
+	);
+});
 
-Deno.test(
-	"comment.pragma.multi", //
-	() => {
-		assertParser(
-			Comment.parser, //
-			"/* @ts-check */",
-			new Pragma("@ts-check", true),
-		);
-	},
-);
+test("comment.pragma.multi", () => {
+	//
+	assertParser(
+		Comment.parser, //
+		"/* @ts-check */",
+		new Pragma("@ts-check", true),
+	);
+});

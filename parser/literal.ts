@@ -1,4 +1,4 @@
-import { possibly, choice, digits, Parser, sequenceOf, str } from "npm:arcsecond";
+import { possibly, choice, digits, Parser, sequenceOf, str } from "arcsecond";
 import { bw, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 

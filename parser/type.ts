@@ -10,7 +10,7 @@ import {
 	char,
 	optionalWhitespace,
 	lookAhead,
-} from "npm:arcsecond";
+} from "arcsecond";
 
 import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces } from "./utils.ts";
 import { Predefined } from "./predefined.ts";

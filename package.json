@@ -1,0 +1,20 @@
+{
+	"name": "ts-parser",
+	"version": "0.0.0-dev",
+	"description": "Mini TypeScript parser",
+	"main": "parser/index.ts",
+	"scripts": {
+		"build": "bun build parser/index.ts > preview/parser.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "Muthu Kumar <@MKRhere> (https://mkr.pw)",
+	"license": "MIT",
+	"dependencies": {
+		"arcsecond": "^5.0.0"
+	},
+	"devDependencies": {
+		"@std/assert": "npm:@jsr/std__assert",
+		"@types/bun": "^1.1.6"
+	}
+}

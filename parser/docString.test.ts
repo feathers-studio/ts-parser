@@ -1,7 +1,8 @@
 import { DocString } from "./docString.ts";
-import { assertParser } from "./utils.ts";
+import { assertParser } from "./test-util.ts";
+import { test } from "bun:test";
 
-Deno.test("docString", () => {
+test("docString", () => {
 	assertParser(
 		DocString.parser, //
 		"/** Hello, World! */",

@@ -1,4 +1,4 @@
-import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str } from "npm:arcsecond";
+import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str } from "arcsecond";
 import { bw, quoted, seq, wss } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 

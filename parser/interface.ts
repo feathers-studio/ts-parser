@@ -1,4 +1,4 @@
-import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "npm:arcsecond";
+import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "arcsecond";
 import { DocString } from "./docString.ts";
 import { PropertySignature, ObjectType, Type } from "./type.ts";
 import { Identifier } from "./identifier.ts";

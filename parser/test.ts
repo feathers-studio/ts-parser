@@ -1,5 +1,6 @@
+import { test } from "bun:test";
 import { DeclarationFile, parse, Statement } from "./index.ts";
-import { assertParser } from "./utils.ts";
+import { assertParser, assertParserFn } from "./test-util.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
 import { ArrayType, IndexSignature, ObjectType, PropertySignature, TypeReference, UnionType } from "./type.ts";
@@ -8,11 +9,10 @@ import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase } from "./base.ts";
-import { assertThrows } from "jsr:@std/assert@1.0.0/throws";
-import { assertParserFn } from "./utils.ts";
+import { assertThrows } from "@std/assert";
 
 // For test coverage 🙄
-Deno.test("ParserBase", () => {
+test("ParserBase", () => {
 	assertThrows(() => ParserBase.parser.run("test"));
 });
 
@@ -313,10 +313,10 @@ const expectFixture: Statement[] = [
 	),
 ];
 
-Deno.test("DeclarationFile", () => {
+test("DeclarationFile", () => {
 	assertParser(DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
 });
 
-Deno.test("parse", () => {
+test("parse", () => {
 	assertParserFn(parse, testSource, new DeclarationFile(expectFixture));
 });

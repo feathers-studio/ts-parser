@@ -1,4 +1,4 @@
-import { choice, Parser, str } from "npm:arcsecond";
+import { choice, Parser, str } from "arcsecond";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 /*
