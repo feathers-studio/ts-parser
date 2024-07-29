@@ -1,0 +1,85 @@
+:root {
+	font-size: 16px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+#app {
+	display: flex;
+	height: 100%;
+	width: 100%;
+	padding: 1rem 1rem 1rem 0;
+	gap: 1rem;
+}
+
+main,
+aside {
+	height: 100%;
+	width: 50%;
+}
+
+aside {
+	overflow-y: auto;
+}
+
+#controls {
+	position: fixed;
+	top: 0;
+	right: 0;
+	padding: 1.2rem;
+	display: flex;
+	gap: 1ch;
+}
+
+.ast-viewer {
+	font-family: Inconsolata, monospace;
+	font-weight: 500;
+	line-height: 1.5rem;
+}
+
+details,
+.ast-viewer__node__property,
+.ast-viewer__node__property__item {
+	margin-left: 2ch;
+}
+
+summary {
+	cursor: pointer;
+}
+
+summary:hover {
+	color: #0078d4;
+}
+
+.ast-viewer > .ast-viewer__node__name {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ast-viewer__node__property__length {
+	color: #666;
+	margin-left: 1ch;
+}
+
+.ast-viewer__node__property {
+	display: flex;
+	gap: 1ch;
+}
+
+.ast-viewer__node__property:has(> .ast-viewer__node__property__content > .ast-viewer) {
+	flex-direction: column;
+	gap: 0;
+}
+
+.ast-viewer__node__property:has(> .ast-viewer__node__property__content > .ast-viewer)
+	> .ast-viewer__node__property__content {
+	margin-left: 1ch;
+}

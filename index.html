@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>ts-parser AST viewer</title>
+
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs/editor/editor.main.css" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="./style.css" />
+	</head>
+	<body>
+		<div id="app">
+			<main></main>
+			<aside></aside>
+			<div id="controls">
+				<button id="open" title="Expand all">+</button>
+				<button id="close" title="Collapse all">-</button>
+			</div>
+		</div>
+
+		<script type="module" src="./parser/renderer/index.ts"></script>
+	</body>
+</html>
