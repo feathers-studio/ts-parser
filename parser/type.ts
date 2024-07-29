@@ -24,7 +24,7 @@ const arrayPostfix = seq([optionalWhitespace, char("["), optionalWhitespace, cha
 
 export type NonArrayPrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | TupleType | ThisType;
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
-	choice([PredefinedOrLiteralType, TypeReference.parser, ObjectType.parser, TupleType.parser, ThisType.parser]),
+	choice([ThisType.parser, PredefinedOrLiteralType, TypeReference.parser, ObjectType.parser, TupleType.parser]),
 );
 
 export type PrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | ArrayType | TupleType | ThisType;
