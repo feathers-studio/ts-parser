@@ -2,3 +2,4 @@ node_modules
 cov
 out.d.ts
 out.ts
+dist/

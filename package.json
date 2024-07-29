@@ -4,7 +4,7 @@
 	"description": "Mini TypeScript parser",
 	"main": "parser/index.ts",
 	"scripts": {
-		"build": "bun build parser/index.ts > preview/parser.js",
+		"build": "vite build",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],
@@ -16,6 +16,7 @@
 	},
 	"devDependencies": {
 		"@std/assert": "npm:@jsr/std__assert",
-		"@types/bun": "^1.1.6"
+		"@types/bun": "^1.1.6",
+		"vite": "^5.3.5"
 	}
 }
