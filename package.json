@@ -5,7 +5,8 @@
 	"main": "parser/index.ts",
 	"scripts": {
 		"build": "vite build",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"deploy": "scp -r dist/* prod:parsers.thefeathers.in/",
+		"test": "bun test --coverage"
 	},
 	"keywords": [],
 	"author": "Muthu Kumar <@MKRhere> (https://mkr.pw)",
