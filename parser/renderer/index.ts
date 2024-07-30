@@ -38,13 +38,11 @@ const editor = Monaco.editor.create(editorContainer, {
 const model = editor.getModel()!;
 Monaco.editor.setModelLanguage(model, "typescript");
 
-let showAll = true;
-
 const update = () => {
 	const value = editor.getValue();
 	const res = parse(value);
 	if (res.isError) return (astViewer.textContent = res.error);
-	const start = ASTViewer(astViewer, res.result, showAll);
+	const start = ASTViewer(astViewer, res.result);
 	start.removeAttribute("hidden");
 };
 

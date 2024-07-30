@@ -7,18 +7,30 @@ const span = h("span");
 const details = h("details");
 const summary = h("summary");
 
-export function ASTViewer(root: HTMLElement, ast: ParserBase, showAll = false) {
+const isObj = (val: unknown): val is Record<string, unknown> => typeof val === "object" && val !== null;
+
+export function ASTViewer(root: HTMLElement, ast: ParserBase, { prop }: { prop?: string } = {}) {
 	const astNode = details({ class: "ast-viewer" });
-	const astSummary = summary({ class: "ast-viewer__node__name" }, ast.constructor.name);
+	const astSummary = summary(
+		{ class: "ast-viewer__node__name" },
+		prop && span({ class: "ast-viewer__node_meta" }, prop + ": "),
+		ast.constructor.name,
+	);
 	const node = div({ class: "ast-viewer__node" });
 
-	const entries = Object.entries(ast);
+	const entries = [...Object.entries(ast)];
 
-	for (let [key, prop] of entries) {
+	// move primitives to the top
+	const sortedEntries = entries.sort(([, a], [, b]) => {
+		if (isObj(a) && !isObj(b)) return 1;
+		if (!isObj(a) && isObj(b)) return -1;
+		return 0;
+	});
+
+	for (let [key, prop] of sortedEntries) {
 		if (key === "kind") continue;
-		if (!showAll && prop == null) continue;
 		if (prop instanceof ParserBase) {
-			node.append(ASTViewer(root, prop));
+			node.append(ASTViewer(root, prop, { prop: key }));
 		} else if (Array.isArray(prop)) {
 			if (prop.length === 0) continue;
 
@@ -29,10 +41,18 @@ export function ASTViewer(root: HTMLElement, ast: ParserBase, showAll = false) {
 				span({ class: "ast-viewer__node__property__length" }, `(${prop.length})`),
 			);
 
-			for (let node of prop)
-				if (!showAll && node == null) continue;
-				else if (node instanceof ParserBase) property.append(ASTViewer(root, node));
+			// move primitives to the top
+			const sortedProps = prop.sort((a, b) => {
+				if (isObj(a) && !isObj(b)) return 1;
+				if (!isObj(a) && isObj(b)) return -1;
+				return 0;
+			});
+
+			for (let i = 0; i < sortedProps.length; i++) {
+				const node = sortedProps[i];
+				if (node instanceof ParserBase) property.append(ASTViewer(root, node, { prop: String(i) }));
 				else property.append(div({ class: "ast-viewer__node__property__item" }, String(node)));
+			}
 
 			property.append(propertyName);
 			node.append(property);
