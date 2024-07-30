@@ -23,8 +23,20 @@ const astViewer = document.getElementsByTagName("aside")[0]!;
 const open = document.querySelector("button#open");
 const close = document.querySelector("button#close");
 
-open?.addEventListener("click", () => astViewer.querySelectorAll("details").forEach(d => (d.open = true)));
-close?.addEventListener("click", () => astViewer.querySelectorAll("details").forEach(d => (d.open = false)));
+let show: boolean | null = null;
+
+const showAll = () => {
+	show = true;
+	astViewer.querySelectorAll("details").forEach(d => (d.open = true));
+};
+
+const hideAll = () => {
+	show = false;
+	astViewer.querySelectorAll("details").forEach(d => (d.open = false));
+};
+
+open?.addEventListener("click", showAll);
+close?.addEventListener("click", hideAll);
 
 const editor = Monaco.editor.create(editorContainer, {
 	value,
@@ -44,6 +56,11 @@ const update = () => {
 	if (res.isError) return (astViewer.textContent = res.error);
 	const start = ASTViewer(astViewer, res.result);
 	start.removeAttribute("hidden");
+
+	if (show !== null) {
+		if (show) showAll();
+		else hideAll();
+	}
 };
 
 update();
