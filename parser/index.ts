@@ -41,11 +41,9 @@ export class DeclarationFile extends ParserBase {
 
 export const parse = (source: string) => ends(DeclarationFile.parser).run(source);
 
-/* missing:
+/* TODO:
 
-Interface type params
-
-[ ] methods
+[ ] Interface type params
 [ ] declare var
 [ ] declare function
 [ ] type

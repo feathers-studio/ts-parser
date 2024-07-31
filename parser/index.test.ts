@@ -1,19 +1,27 @@
-import { test } from "bun:test";
+import { test, expect } from "bun:test";
 import { DeclarationFile, parse, Statement } from "./index.ts";
 import { assertParser, assertParserFn } from "./test-util.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
-import { ArrayType, IndexSignature, ObjectType, PropertySignature, TypeReference, UnionType } from "./type.ts";
+import {
+	ArrayType,
+	ConstructSignature,
+	IndexSignature,
+	ObjectType,
+	Parameter,
+	PropertySignature,
+	TypeReference,
+	UnionType,
+} from "./type.ts";
 import { DocString } from "./docString.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase } from "./base.ts";
-import { assertThrows } from "@std/assert";
 
 // For test coverage 🙄
 test("ParserBase", () => {
-	assertThrows(() => ParserBase.parser.run("test"));
+	expect(() => ParserBase.parser.run("test")).toThrow();
 });
 
 const testSource = `
@@ -84,7 +92,7 @@ interface ByteLengthQueuingStrategy extends QueuingStrategy<ArrayBufferView> {
 declare var BroadcastChannel: {
     // new(name: string): BroadcastChannel;
     prototype: BroadcastChannel;
-    // new(name: string): BroadcastChannel;
+    new(name: string): BroadcastChannel;
 };`;
 `
 
@@ -302,7 +310,10 @@ const expectFixture: Statement[] = [
 						new Identifier("prototype"), //
 						new TypeReference(new Identifier("BroadcastChannel")),
 					),
-					new Comment(" new(name: string): BroadcastChannel;"),
+					new ConstructSignature(
+						[new Parameter(new Identifier("name"), new Predefined.StringType())],
+						new TypeReference(new Identifier("BroadcastChannel")),
+					),
 				]),
 			),
 		],

@@ -205,6 +205,20 @@ export const Modifier: Parser<Modifier> = takeLeft(
 	choice([str("readonly"), str("public"), str("private"), str("protected")]),
 )(whitespace) as Parser<Modifier>;
 
+const Ender = choice([char(";"), char(","), char("\n"), lookAhead(char("}"))]);
+
+const PropertyWrap = <T>(parser: Parser<T>) =>
+	surroundWhitespace(
+		seq([
+			//
+			possibly(DocString.parser),
+			optionalWhitespace,
+			parser,
+			possibly(spaces),
+			Ender,
+		]),
+	).map(([doc, _1, value]) => [doc, value] as const);
+
 export class PropertySignature extends ParserBase {
 	kind: SyntaxKind.PropertySignature = SyntaxKind.PropertySignature;
 
@@ -227,23 +241,20 @@ export class PropertySignature extends ParserBase {
 		this.optional = extra?.optional ?? false;
 	}
 
-	static parser: Parser<PropertySignature> = seq([
-		possibly(DocString.parser),
-		optionalWhitespace,
-		many(Modifier),
-		optionalWhitespace,
-		choice([Identifier.parser, IndexSignature.parser]),
-		optionalWhitespace,
-		possibly(char("?")).map(c => c != null),
-		optionalWhitespace,
-		str(":"),
-		optionalWhitespace,
-		Type,
-		possibly(spaces),
-		// PropertySignatures are separated by semi, comma, newlines, or end of object
-		choice([char(";"), char(","), char("\n"), lookAhead(char("}"))]),
-	]).map(
-		([doc, _1, modifiers, _2, key, _3, optional, _4, _5, _6, type]) =>
+	static parser: Parser<PropertySignature> = PropertyWrap(
+		seq([
+			surroundWhitespace(many(Modifier)),
+			choice([Identifier.parser, IndexSignature.parser]),
+			optionalWhitespace,
+			possibly(char("?")).map(c => c != null),
+			optionalWhitespace,
+			str(":"),
+			optionalWhitespace,
+			Type,
+			possibly(spaces),
+		]),
+	).map(
+		([doc, [modifiers, key, _1, optional, _2, _3, _4, type]]) =>
 			new PropertySignature(key, type, { doc, modifiers, optional }),
 	);
 
@@ -258,14 +269,171 @@ export class PropertySignature extends ParserBase {
 	}
 }
 
-const ObjectChild = surroundWhitespace(choice([PropertySignature.parser, Comment.parser]));
+export class Parameter {
+	kind: SyntaxKind.Parameter = SyntaxKind.Parameter;
+
+	doc: DocString | null;
+	optional: boolean;
+
+	constructor(
+		public name: Identifier,
+		public type?: Type,
+		extra?: {
+			doc?: DocString | null;
+			modifiers?: Modifier[];
+			optional?: boolean;
+		},
+	) {
+		this.doc = extra?.doc ?? null;
+		this.optional = extra?.optional ?? false;
+	}
+
+	static parser: Parser<Parameter> = seq([
+		possibly(surroundWhitespace(DocString.parser)),
+		Identifier.parser,
+		possibly(
+			seq([optionalWhitespace, possibly(str("?")).map(c => c != null), surroundWhitespace(str(":")), Type]).map(
+				([_, optional, __, type]) => ({ optional, type }),
+			),
+		),
+	]).map(([doc, name, type]) => new Parameter(name, type?.type, { doc, optional: type?.optional }));
+
+	toString() {
+		let out = this.name.toString();
+		if (this.optional) out += "?";
+		out += ": " + this.type;
+		return out;
+	}
+}
+
+export class Generic {
+	kind: SyntaxKind.Generic = SyntaxKind.Generic;
+
+	constructor(public name: Identifier, public extendsType: Type | null = null) {}
+
+	static parser: Parser<Generic> = seq([
+		Identifier.parser,
+		possibly(
+			seq([optionalWhitespace, str("extends"), optionalWhitespace, Type]).map(([_, __, ___, types]) => types),
+		),
+	]).map(([name, extendsType]) => new Generic(name, extendsType));
+
+	toString() {
+		let out = this.name.toString();
+		if (this.extendsType) out += " extends " + this.extendsType;
+		return out;
+	}
+}
+
+function stringifyMethodLike(
+	name: string,
+	{
+		doc,
+		generics,
+		parameters,
+		returnType,
+	}: {
+		doc: DocString | null;
+		generics: Generic[];
+		parameters: Parameter[];
+		returnType: Type | null;
+	},
+) {
+	let out = "";
+
+	if (doc) out += doc + "\n\t";
+	out += name;
+	if (generics.length) out += "<" + generics.join(", ") + ">";
+	out += " (";
+	out += parameters.join(", ") + ")";
+	if (returnType) out += ": " + returnType;
+	return out + ";";
+}
+
+export class MethodSignature extends ParserBase {
+	kind: SyntaxKind.MethodSignature = SyntaxKind.MethodSignature;
+
+	doc: DocString | null;
+	generics: Generic[];
+
+	constructor(
+		public name: Identifier,
+		public parameters: Parameter[],
+		public returnType: Type | null,
+		extra?: {
+			doc?: DocString | null;
+			generics?: Generic[] | null;
+		},
+	) {
+		super();
+
+		this.doc = extra?.doc ?? null;
+		this.generics = extra?.generics ?? [];
+	}
+
+	// TODO: Implement rest params, conditional return types
+	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
+		PropertyWrap(
+			seq([
+				choice([str("new") as Parser<"new">, Identifier.parser]),
+				optionalWhitespace,
+				possibly(bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<")),
+				optionalWhitespace,
+				bracketed(sepByN(char(","), 0)(surroundWhitespace(Parameter.parser)), "("),
+				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
+			]),
+		).map(([doc, [name, _1, generics, _2, parameters, returnType]]) => {
+			if (name === "new") return new ConstructSignature(parameters, returnType ?? null, { doc, generics });
+			else return new MethodSignature(name, parameters, returnType ?? null, { doc, generics });
+		}),
+	);
+
+	toString() {
+		return stringifyMethodLike(this.name.toString(), this);
+	}
+}
+
+export class ConstructSignature extends ParserBase {
+	kind: SyntaxKind.ConstructSignature = SyntaxKind.ConstructSignature;
+
+	doc: DocString | null;
+	generics: Generic[];
+
+	constructor(
+		public parameters: Parameter[],
+		public returnType: Type | null,
+		extra?: {
+			doc?: DocString | null;
+			generics?: Generic[] | null;
+		},
+	) {
+		super();
+
+		this.doc = extra?.doc ?? null;
+		this.generics = extra?.generics ?? [];
+	}
+
+	static parser: Parser<MethodSignature | ConstructSignature> = MethodSignature.parser;
+
+	toString() {
+		return stringifyMethodLike("new", this);
+	}
+}
+
+// ConstructSignature is not necessary here because MethodSignature already handles that case
+export const ObjectChild = surroundWhitespace(
+	choice([PropertySignature.parser, MethodSignature.parser, Comment.parser]),
+);
 
 export class ObjectType extends ParserBase {
 	kind: SyntaxKind.ObjectType = SyntaxKind.ObjectType;
 
 	doc: DocString | null;
 
-	constructor(public members: (PropertySignature | Comment)[], extra?: { doc?: DocString }) {
+	constructor(
+		public members: (MethodSignature | ConstructSignature | PropertySignature | Comment)[],
+		extra?: { doc?: DocString },
+	) {
 		super();
 		this.doc = extra?.doc ?? null;
 	}
@@ -299,6 +467,7 @@ export class ArrayType extends ParserBase {
 	}
 }
 
+// TODO - Implement named tuple members and rest
 export class TupleType extends ParserBase {
 	kind: SyntaxKind.TupleType = SyntaxKind.TupleType;
 

@@ -9,6 +9,8 @@ export const enum SyntaxKind {
 	DocString,
 
 	Identifier,
+	Parameter,
+	Generic,
 
 	DeclareKeyword,
 	ExportKeyword,

@@ -26,6 +26,7 @@ export const ws = whitespace.map(() => null);
 export const wss = optionalWhitespace.map(() => null);
 export const spaces = regex(/^( |\t|\r)*/).map(() => null);
 export const ends = <P extends Parser<T>, T>(parser: P): P => takeLeft(parser)(endOfInput) as P;
+export const lit = <T extends string>(value: T) => str(value).map(() => value);
 
 export function nonNull<T>(value: T | null): value is T {
 	return value != null;
@@ -70,19 +71,6 @@ export const quoted = {
 };
 
 export const surroundWhitespace = <T>(parser: Parser<T>) => bw(wss)(parser);
-
-export const interleaveWhitespace = <Ps extends Parser<unknown>[]>(...parsers: Ps) => {
-	return seq(
-		parsers.reduce((acc, parser) => {
-			if (acc.length === 0) return [parser];
-			return [...acc, whitespace, parser];
-		}, [] as Parser<unknown>[]),
-	).map(result => {
-		const out = [];
-		for (let i = 0; i < result.length; i += 2) out.push(result[i]);
-		return out;
-	}) as unknown as Ps;
-};
 
 const Brackets = {
 	"(": ")",

@@ -1,6 +1,16 @@
 import { test } from "bun:test";
 import { assertParser } from "./test-util.ts";
-import { Type, PropertySignature, IndexSignature, ObjectType, TupleType } from "./type.ts";
+import {
+	Type,
+	Generic,
+	Parameter,
+	PropertySignature,
+	IndexSignature,
+	ObjectType,
+	TupleType,
+	MethodSignature,
+	ConstructSignature,
+} from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
 import { ArrayType } from "./type.ts";
@@ -9,6 +19,7 @@ import { UnionType } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { Predefined } from "./predefined.ts";
+import { DocString } from "./docString.ts";
 
 test("Index Key", () => {
 	//
@@ -19,7 +30,7 @@ test("Index Key (with spaces)", () => {
 	assertParser(IndexSignature.parser, "[ key : string ]", new IndexSignature("key", new Predefined.StringType()));
 });
 
-test("Member: 1", () => {
+test("PropertySignature: 1", () => {
 	assertParser(
 		PropertySignature.parser,
 		" [ property :   string]  :   string ;",
@@ -35,10 +46,10 @@ test("Member: 1", () => {
 	);
 });
 
-test("Member: 2", () => {
+test("PropertySignature: 2", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly   hello ? : World;",
+		"readonly   hello ? : World,",
 		new PropertySignature(new Identifier("hello"), new TypeReference(new Identifier("World")), {
 			doc: null,
 			modifiers: ["readonly"],
@@ -47,10 +58,10 @@ test("Member: 2", () => {
 	);
 });
 
-test("Member: 3", () => {
+test("PropertySignature: 3", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello : World.Rivers.Amazon               	;",
+		"readonly public  hello : World.Rivers.Amazon;",
 		new PropertySignature(
 			new Identifier("hello"),
 			new TypeReference(
@@ -64,10 +75,10 @@ test("Member: 3", () => {
 	);
 });
 
-test("Member: 4", () => {
+test("PropertySignature: 4", () => {
 	assertParser(
 		PropertySignature.parser,
-		'readonly  protected  [ hello: string ] : "World" \n',
+		'readonly  protected  [ hello: string ] : "World"			  ,',
 		new PropertySignature(
 			new IndexSignature("hello", new Predefined.StringType()),
 			new Literal.StringType("World"),
@@ -80,10 +91,10 @@ test("Member: 4", () => {
 	);
 });
 
-test("Member: 5", () => {
+test("PropertySignature: 5", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello ? : World<Rivers, Amazon>;",
+		"readonly public  hello ? : World<Rivers, Amazon> \n",
 		new PropertySignature(
 			new Identifier("hello"),
 			new TypeReference(new Identifier("World"), [
@@ -95,10 +106,10 @@ test("Member: 5", () => {
 	);
 });
 
-test("Member: 6", () => {
+test("PropertySignature: 6", () => {
 	assertParser(
 		PropertySignature.parser,
-		"readonly public  hello ? : World<Rivers, Amazon>[][],",
+		"readonly public  hello ? : World<Rivers, Amazon>[][]	,",
 		new PropertySignature(
 			new Identifier("hello"),
 			new ArrayType(
@@ -110,6 +121,176 @@ test("Member: 6", () => {
 				),
 			),
 			{ doc: null, modifiers: ["readonly", "public"], optional: true },
+		),
+	);
+});
+
+test("MethodSignature: 1", () => {
+	assertParser(
+		MethodSignature.parser,
+		"foo(  hello ? : World<Rivers, Amazon>);",
+		new MethodSignature(
+			new Identifier("foo"),
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("Rivers")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: true,
+					},
+				),
+			],
+			null,
+		),
+	);
+});
+
+test("MethodSignature: 2", () => {
+	assertParser(
+		MethodSignature.parser,
+		"foo(  hello ? : World<Rivers, Amazon>): number  ,",
+		new MethodSignature(
+			new Identifier("foo"),
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("Rivers")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: true,
+					},
+				),
+			],
+			new Predefined.NumberType(),
+		),
+	);
+});
+
+test("MethodSignature: 3", () => {
+	assertParser(
+		MethodSignature.parser,
+		`/**
+		* This is a method
+		* @param hello - The hello parameter
+		* @returns The return value
+		*/foo<T extends A>(  hello  : World<T, Amazon>, world: T): World<T>	  \n`,
+		new MethodSignature(
+			new Identifier("foo"),
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("T")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: false,
+					},
+				),
+				new Parameter(new Identifier("world"), new TypeReference(new Identifier("T")), {
+					doc: null,
+					modifiers: [],
+					optional: false,
+				}),
+			],
+			new TypeReference(new Identifier("World"), [new TypeReference(new Identifier("T"))]),
+			{
+				doc: new DocString(
+					"\n\t\t* This is a method\n\t\t* @param hello - The hello parameter\n\t\t* @returns The return value\n\t\t",
+				),
+				generics: [new Generic(new Identifier("T"), new TypeReference(new Identifier("A")))],
+			},
+		),
+	);
+});
+
+test("ConstructSignature: 1", () => {
+	assertParser(
+		ConstructSignature.parser,
+		"new(  hello ? : World<Rivers, Amazon>): T;",
+		new ConstructSignature(
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("Rivers")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: true,
+					},
+				),
+			],
+			new TypeReference(new Identifier("T")),
+		),
+	);
+});
+
+test("ConstructSignature: 2", () => {
+	assertParser(
+		ConstructSignature.parser,
+		"new<T extends A>(  hello ? : World<T, Amazon>),",
+		new ConstructSignature(
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("T")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: true,
+					},
+				),
+			],
+			null,
+			{
+				generics: [new Generic(new Identifier("T"), new TypeReference(new Identifier("A")))],
+			},
+		),
+	);
+});
+
+test("ConstructSignature: 3", () => {
+	assertParser(
+		ConstructSignature.parser,
+		`/** Constructor! */
+		new<T extends A>(  hello ? : World<T, Amazon>): World<T>;`,
+		new ConstructSignature(
+			[
+				new Parameter(
+					new Identifier("hello"),
+					new TypeReference(new Identifier("World"), [
+						new TypeReference(new Identifier("T")),
+						new TypeReference(new Identifier("Amazon")),
+					]),
+					{
+						doc: null,
+						modifiers: [],
+						optional: true,
+					},
+				),
+			],
+			new TypeReference(new Identifier("World"), [new TypeReference(new Identifier("T"))]),
+			{
+				doc: new DocString(" Constructor! "),
+				generics: [new Generic(new Identifier("T"), new TypeReference(new Identifier("A")))],
+			},
 		),
 	);
 });

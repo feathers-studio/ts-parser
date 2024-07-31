@@ -1,6 +1,6 @@
 import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "arcsecond";
 import { DocString } from "./docString.ts";
-import { PropertySignature, ObjectType, Type } from "./type.ts";
+import { PropertySignature, ObjectType, Type, MethodSignature, ConstructSignature } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { sepByN, seq, surroundWhitespace } from "./utils.ts";
@@ -63,7 +63,7 @@ export class InterfaceDeclaration extends ParserBase {
 
 	constructor(
 		public name: string,
-		public members: (PropertySignature | Comment)[],
+		public members: (PropertySignature | MethodSignature | ConstructSignature | Comment)[],
 		extra?: {
 			exported?: boolean;
 			extends?: Type[] | null;

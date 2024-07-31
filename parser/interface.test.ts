@@ -59,12 +59,14 @@ test("InterfaceDeclaration: 2", () => {
 test("InterfaceDeclaration: Exported and Documented", () => {
 	assertParser(
 		InterfaceDeclaration.parser,
-		`/** doc
-	*/
+		`
+/**
+	doc
+*/
 		export    interface Hello {
 		readonly hello ? : World;
 		readonly hello : "World"
-	}`,
+	}`.trim(),
 		new InterfaceDeclaration(
 			"Hello",
 			[
@@ -78,7 +80,7 @@ test("InterfaceDeclaration: Exported and Documented", () => {
 				}),
 			],
 			{
-				doc: new DocString(" doc\n\t"),
+				doc: new DocString("\n\tdoc\n"),
 				exported: true,
 			},
 		),
