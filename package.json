@@ -5,7 +5,9 @@
 	"main": "parser/index.ts",
 	"scripts": {
 		"check": "tsc --strict --noEmit --allowImportingTsExtensions --skipLibCheck parser/index.ts",
+		"clean": "git clean -fXd dist/",
 		"build": "vite build",
+		"rebuild": "bun run clean && bun run build",
 		"deploy": "scp -r dist/* prod:parsers.thefeathers.in/",
 		"test": "bun test --coverage"
 	},
