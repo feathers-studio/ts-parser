@@ -4,6 +4,7 @@
 	"description": "Mini TypeScript parser",
 	"main": "parser/index.ts",
 	"scripts": {
+		"check": "tsc --strict --noEmit --allowImportingTsExtensions --skipLibCheck parser/index.ts",
 		"build": "vite build",
 		"deploy": "scp -r dist/* prod:parsers.thefeathers.in/",
 		"test": "bun test --coverage"
@@ -16,8 +17,8 @@
 		"monaco-editor": "^0.50.0"
 	},
 	"devDependencies": {
-		"@std/assert": "npm:@jsr/std__assert",
 		"@types/bun": "^1.1.6",
+		"typescript": "^5.5.4",
 		"vite": "^5.3.5"
 	}
 }
