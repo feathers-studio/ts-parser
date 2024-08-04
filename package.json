@@ -4,7 +4,7 @@
 	"description": "Mini TypeScript parser",
 	"main": "parser/index.ts",
 	"scripts": {
-		"check": "tsc --strict --noEmit --allowImportingTsExtensions --skipLibCheck parser/index.ts",
+		"check": "tsc --project tsconfig.json",
 		"clean": "git clean -fXd dist/",
 		"build": "vite build",
 		"rebuild": "bun run clean && bun run build",
