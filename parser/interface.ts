@@ -4,7 +4,7 @@ import { PropertySignature, ObjectType, Type, MethodSignature, ConstructSignatur
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { sepByN, seq, surroundWhitespace } from "./utils.ts";
-import { Comment } from "./comment.ts";
+import { Comment, Directive, Pragma } from "./comment.ts";
 
 export class ExportKeyword extends ParserBase {
 	kind: SyntaxKind.ExportKeyword = SyntaxKind.ExportKeyword;
@@ -63,7 +63,7 @@ export class InterfaceDeclaration extends ParserBase {
 
 	constructor(
 		public name: string,
-		public members: (PropertySignature | MethodSignature | ConstructSignature | Comment)[],
+		public members: (PropertySignature | MethodSignature | ConstructSignature | Comment | Directive | Pragma)[],
 		extra?: {
 			exported?: boolean;
 			extends?: Type[] | null;
