@@ -10,7 +10,10 @@ export const enum SyntaxKind {
 
 	Identifier,
 	Parameter,
+	RestParameter,
 	Generic,
+	TypeQuery,
+	KeyQuery,
 
 	DeclareKeyword,
 	ExportKeyword,

@@ -6,28 +6,44 @@ import {
 	possibly,
 	sequenceOf,
 	str,
-	takeLeft,
 	char,
 	optionalWhitespace,
 	lookAhead,
+	many1,
 } from "arcsecond";
 
-import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces } from "./utils.ts";
+import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces, left, right } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { DocString } from "./docString.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
-import { Comment } from "./comment.ts";
+import { Comment, Directive, Pragma } from "./comment.ts";
 
 const arrayPostfix = seq([optionalWhitespace, char("["), optionalWhitespace, char("]")]).map(() => "array" as const);
 
-export type NonArrayPrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | TupleType | ThisType;
+export type NonArrayPrimaryType =
+	| PredefinedOrLiteralType
+	| KeyOfOperator
+	| TypeQuery
+	| TypeReference
+	| ObjectType
+	| TupleType
+	| ThisType;
+
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
-	choice([ThisType.parser, PredefinedOrLiteralType, TypeReference.parser, ObjectType.parser, TupleType.parser]),
+	choice([
+		ThisType.parser,
+		KeyOfOperator.parser,
+		TypeQuery.parser,
+		PredefinedOrLiteralType,
+		TypeReference.parser,
+		ObjectType.parser,
+		TupleType.parser,
+	]),
 );
 
-export type PrimaryType = PredefinedOrLiteralType | TypeReference | ObjectType | ArrayType | TupleType | ThisType;
+export type PrimaryType = NonArrayPrimaryType | ArrayType;
 export const PrimaryType: Parser<Type> = lazy(() =>
 	seq([choice([ParenthesisedType, NonArrayPrimaryType]), many(arrayPostfix)]) //
 		.map(([value, postfixes]): Type => {
@@ -105,7 +121,8 @@ export type UnionOrIntersectionOrPrimaryType = UnionType | IntersectionType | Pr
 export const UnionOrIntersectionOrPrimaryType = choice([UnionType.parser, IntersectionOrPrimaryType]);
 
 export type Type = UnionType | IntersectionType | PrimaryType;
-export const Type = lazy(() => choice([UnionOrIntersectionOrPrimaryType]));
+// export const Type = lazy(() => choice([UnionOrIntersectionOrPrimaryType]));
+export const Type = UnionOrIntersectionOrPrimaryType;
 
 /**
 PrimaryType:
@@ -154,7 +171,7 @@ export class QualifiedName extends ParserBase {
 	);
 
 	toString() {
-		return `${this.left}.${this.name}`;
+		return this.left + "." + this.name;
 	}
 }
 
@@ -179,7 +196,39 @@ export class TypeReference extends ParserBase {
 	);
 
 	toString() {
-		return `${this.name}${this.typeArguments ? "<" + this.typeArguments.join(", ") + ">" : ""}`;
+		let out = this.name.toString();
+		if (this.typeArguments) out += "<" + this.typeArguments.join(", ") + ">";
+		return out;
+	}
+}
+
+export class TypeQuery extends ParserBase {
+	kind: SyntaxKind.TypeQuery = SyntaxKind.TypeQuery;
+
+	constructor(public name: TypeReference) {
+		super();
+	}
+
+	static parser: Parser<TypeQuery> = seq([str("typeof"), whitespace, TypeReference.parser]) //
+		.map(([_, __, name]) => new TypeQuery(name));
+
+	toString() {
+		return "typeof " + this.name;
+	}
+}
+
+export class KeyOfOperator extends ParserBase {
+	kind: SyntaxKind.KeyQuery = SyntaxKind.KeyQuery;
+
+	constructor(public type: Type) {
+		super();
+	}
+
+	static parser: Parser<KeyOfOperator> = seq([str("keyof"), whitespace, PrimaryType]) //
+		.map(([_, __, type]) => new KeyOfOperator(type));
+
+	toString() {
+		return "keyof " + this.type;
 	}
 }
 
@@ -201,9 +250,10 @@ export class IndexSignature extends ParserBase {
 }
 
 export type Modifier = "readonly" | "public" | "private" | "protected";
-export const Modifier: Parser<Modifier> = takeLeft(
+export const Modifier: Parser<Modifier> = left(
 	choice([str("readonly"), str("public"), str("private"), str("protected")]),
-)(whitespace) as Parser<Modifier>;
+	whitespace,
+) as Parser<Modifier>;
 
 const Ender = choice([char(";"), char(","), char("\n"), lookAhead(char("}"))]);
 
@@ -260,16 +310,16 @@ export class PropertySignature extends ParserBase {
 
 	toString() {
 		let out = "";
-
 		if (this.doc) out += this.doc + "\n\t";
 		if (this.modifiers.length) out += this.modifiers.join(" ") + " ";
 		out += this.key + (this.optional ? "?" : "") + ": " + this.value + ";";
-
 		return out;
 	}
 }
 
-export class Parameter {
+const dotDotDot = surroundWhitespace(str("..."));
+
+export class Parameter extends ParserBase {
 	kind: SyntaxKind.Parameter = SyntaxKind.Parameter;
 
 	doc: DocString | null;
@@ -280,10 +330,10 @@ export class Parameter {
 		public type?: Type,
 		extra?: {
 			doc?: DocString | null;
-			modifiers?: Modifier[];
 			optional?: boolean;
 		},
 	) {
+		super();
 		this.doc = extra?.doc ?? null;
 		this.optional = extra?.optional ?? false;
 	}
@@ -302,6 +352,34 @@ export class Parameter {
 		let out = this.name.toString();
 		if (this.optional) out += "?";
 		out += ": " + this.type;
+		return out;
+	}
+}
+
+export class RestParameter extends ParserBase {
+	kind: SyntaxKind.RestParameter = SyntaxKind.RestParameter;
+
+	doc: DocString | null;
+
+	constructor(public name: Identifier, public type?: Type, extra?: { doc?: DocString | null }) {
+		super();
+		this.doc = extra?.doc ?? null;
+	}
+
+	static parser: Parser<RestParameter> = seq([
+		possibly(surroundWhitespace(DocString.parser)),
+		dotDotDot,
+		surroundWhitespace(Identifier.parser),
+		possibly(
+			seq([optionalWhitespace, possibly(str("?")).map(c => c != null), surroundWhitespace(str(":")), Type]).map(
+				([_, optional, __, type]) => ({ optional, type }),
+			),
+		),
+	]).map(([doc, _, name, type]) => new RestParameter(name, type?.type, { doc }));
+
+	toString() {
+		let out = "..." + this.name.toString();
+		if (this.type) out += ": " + this.type;
 		return out;
 	}
 }
@@ -340,7 +418,6 @@ function stringifyMethodLike(
 	},
 ) {
 	let out = "";
-
 	if (doc) out += doc + "\n\t";
 	out += name;
 	if (generics.length) out += "<" + generics.join(", ") + ">";
@@ -350,11 +427,22 @@ function stringifyMethodLike(
 	return out + ";";
 }
 
+const generics = bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<");
+
+const params = bracketed(
+	seq([
+		sepByN(char(","), 0)(surroundWhitespace(Parameter.parser)),
+		possibly(seq([char(","), surroundWhitespace(RestParameter.parser)]).map(([_, rest]) => rest)),
+	]),
+	"(",
+);
+
 export class MethodSignature extends ParserBase {
 	kind: SyntaxKind.MethodSignature = SyntaxKind.MethodSignature;
 
 	doc: DocString | null;
 	generics: Generic[];
+	restParameter: RestParameter | null;
 
 	constructor(
 		public name: Identifier,
@@ -363,12 +451,13 @@ export class MethodSignature extends ParserBase {
 		extra?: {
 			doc?: DocString | null;
 			generics?: Generic[] | null;
+			restParameter?: RestParameter | null;
 		},
 	) {
 		super();
-
 		this.doc = extra?.doc ?? null;
 		this.generics = extra?.generics ?? [];
+		this.restParameter = extra?.restParameter ?? null;
 	}
 
 	// TODO: Implement rest params, conditional return types
@@ -377,14 +466,15 @@ export class MethodSignature extends ParserBase {
 			seq([
 				choice([str("new") as Parser<"new">, Identifier.parser]),
 				optionalWhitespace,
-				possibly(bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<")),
+				possibly(generics),
 				optionalWhitespace,
-				bracketed(sepByN(char(","), 0)(surroundWhitespace(Parameter.parser)), "("),
+				params,
 				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
 			]),
-		).map(([doc, [name, _1, generics, _2, parameters, returnType]]) => {
-			if (name === "new") return new ConstructSignature(parameters, returnType ?? null, { doc, generics });
-			else return new MethodSignature(name, parameters, returnType ?? null, { doc, generics });
+		).map(([doc, [name, _1, generics, _2, [params, rest], returnType]]) => {
+			if (name === "new")
+				return new ConstructSignature(params, returnType ?? null, { doc, generics, restParameter: rest });
+			else return new MethodSignature(name, params, returnType ?? null, { doc, generics, restParameter: rest });
 		}),
 	);
 
@@ -398,6 +488,7 @@ export class ConstructSignature extends ParserBase {
 
 	doc: DocString | null;
 	generics: Generic[];
+	restParameter: RestParameter | null;
 
 	constructor(
 		public parameters: Parameter[],
@@ -405,12 +496,13 @@ export class ConstructSignature extends ParserBase {
 		extra?: {
 			doc?: DocString | null;
 			generics?: Generic[] | null;
+			restParameter?: RestParameter | null;
 		},
 	) {
 		super();
-
 		this.doc = extra?.doc ?? null;
 		this.generics = extra?.generics ?? [];
+		this.restParameter = extra?.restParameter ?? null;
 	}
 
 	static parser: Parser<MethodSignature | ConstructSignature> = MethodSignature.parser;
@@ -431,7 +523,7 @@ export class ObjectType extends ParserBase {
 	doc: DocString | null;
 
 	constructor(
-		public members: (MethodSignature | ConstructSignature | PropertySignature | Comment)[],
+		public members: (MethodSignature | ConstructSignature | PropertySignature | Comment | Directive | Pragma)[],
 		extra?: { doc?: DocString },
 	) {
 		super();
@@ -456,9 +548,9 @@ export class ArrayType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<ArrayType> = lazy(() =>
-		bracketed(surroundWhitespace(Type), "[").map(value => new ArrayType(value)),
-	);
+	static get parser(): Parser<ArrayType> {
+		throw new Error("Arrays are parsed by the PrimaryType parser");
+	}
 
 	toString() {
 		if (this.value.kind === SyntaxKind.UnionType || this.value.kind === SyntaxKind.IntersectionType)

@@ -10,6 +10,8 @@ import {
 	TupleType,
 	MethodSignature,
 	ConstructSignature,
+	TypeQuery,
+	KeyOfOperator,
 } from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
@@ -20,6 +22,61 @@ import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { Predefined } from "./predefined.ts";
 import { DocString } from "./docString.ts";
+
+test("typeof", () => {
+	assertParser(Type, "typeof Value", new TypeQuery(new TypeReference(new Identifier("Value"))));
+});
+
+test("typeof with namespaces and generics", () => {
+	assertParser(
+		Type,
+		"typeof  Namespace.Value<A, B>",
+		new TypeQuery(
+			new TypeReference(new QualifiedName(new Identifier("Namespace"), new Identifier("Value")), [
+				new TypeReference(new Identifier("A")),
+				new TypeReference(new Identifier("B")),
+			]),
+		),
+	);
+});
+
+test("keyof", () => {
+	assertParser(Type, "keyof Value", new KeyOfOperator(new TypeReference(new Identifier("Value"))));
+});
+
+test("keyof with namespaces and generics", () => {
+	assertParser(
+		Type,
+		"keyof  Namespace.Value<A, B>",
+		new KeyOfOperator(
+			new TypeReference(new QualifiedName(new Identifier("Namespace"), new Identifier("Value")), [
+				new TypeReference(new Identifier("A")),
+				new TypeReference(new Identifier("B")),
+			]),
+		),
+	);
+});
+
+test("keyof with other types", () => {
+	assertParser(
+		Type,
+		"keyof  Namespace.Value<A, B> | keyof Namespace.Value<C, D>",
+		new UnionType([
+			new KeyOfOperator(
+				new TypeReference(new QualifiedName(new Identifier("Namespace"), new Identifier("Value")), [
+					new TypeReference(new Identifier("A")),
+					new TypeReference(new Identifier("B")),
+				]),
+			),
+			new KeyOfOperator(
+				new TypeReference(new QualifiedName(new Identifier("Namespace"), new Identifier("Value")), [
+					new TypeReference(new Identifier("C")),
+					new TypeReference(new Identifier("D")),
+				]),
+			),
+		]),
+	);
+});
 
 test("Index Key", () => {
 	//
@@ -140,7 +197,6 @@ test("MethodSignature: 1", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: true,
 					},
 				),
@@ -165,7 +221,6 @@ test("MethodSignature: 2", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: true,
 					},
 				),
@@ -194,13 +249,11 @@ test("MethodSignature: 3", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: false,
 					},
 				),
 				new Parameter(new Identifier("world"), new TypeReference(new Identifier("T")), {
 					doc: null,
-					modifiers: [],
 					optional: false,
 				}),
 			],
@@ -229,7 +282,6 @@ test("ConstructSignature: 1", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: true,
 					},
 				),
@@ -253,7 +305,6 @@ test("ConstructSignature: 2", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: true,
 					},
 				),
@@ -281,7 +332,6 @@ test("ConstructSignature: 3", () => {
 					]),
 					{
 						doc: null,
-						modifiers: [],
 						optional: true,
 					},
 				),
