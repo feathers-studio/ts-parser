@@ -29,7 +29,8 @@ export type NonArrayPrimaryType =
 	| TypeReference
 	| ObjectType
 	| TupleType
-	| ThisType;
+	| ThisType
+	| FunctionType;
 
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 	choice([
@@ -40,6 +41,7 @@ export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 		TypeReference.parser,
 		ObjectType.parser,
 		TupleType.parser,
+		FunctionType.parser,
 	]),
 );
 
@@ -573,6 +575,43 @@ export class TupleType extends ParserBase {
 
 	toString() {
 		return `[${this.values.join(", ")}]`;
+	}
+}
+
+export class FunctionType extends ParserBase {
+	kind: SyntaxKind.FunctionType = SyntaxKind.FunctionType;
+
+	generics: Generic[] = [];
+	restParameter: RestParameter | null = null;
+
+	constructor(
+		public parameters: Parameter[],
+		public returnType: Type,
+		extra?: {
+			generics?: Generic[] | null;
+			restParameter?: RestParameter | null;
+		},
+	) {
+		super();
+		this.generics = extra?.generics ?? [];
+		this.restParameter = extra?.restParameter ?? null;
+	}
+
+	static parser: Parser<FunctionType> = lazy(() =>
+		seq([possibly(generics), surroundWhitespace(params), surroundWhitespace(str("=>")), Type]).map(
+			([generics, [params, restParameter], , returnType]) => {
+				return new FunctionType(params, returnType, { generics, restParameter });
+			},
+		),
+	);
+
+	toString() {
+		let out = "";
+		if (this.generics.length) out += "<" + this.generics.join(", ") + ">";
+		out += "(";
+		out += this.parameters.join(", ");
+		out += ") => " + this.returnType;
+		return out;
 	}
 }
 

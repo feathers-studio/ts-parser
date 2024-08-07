@@ -11,6 +11,7 @@ import {
 	sequenceOf,
 	str,
 	takeLeft,
+	takeRight,
 	whitespace,
 } from "arcsecond";
 
@@ -27,6 +28,8 @@ export const wss = optionalWhitespace.map(() => null);
 export const spaces = regex(/^( |\t|\r)*/).map(() => null);
 export const ends = <P extends Parser<T>, T>(parser: P): P => takeLeft(parser)(endOfInput) as P;
 export const lit = <T extends string>(value: T) => str(value).map(() => value);
+export const left = <L, R>(l: Parser<L>, r: Parser<R>) => takeLeft(l)(r) as Parser<L>;
+export const right = <L, R>(l: Parser<L>, r: Parser<R>) => takeRight(l)(r) as Parser<R>;
 
 export function nonNull<T>(value: T | null): value is T {
 	return value != null;

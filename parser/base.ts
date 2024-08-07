@@ -43,6 +43,7 @@ export const enum SyntaxKind {
 	TypeReference,
 	QualifiedName,
 
+	FunctionType,
 	ObjectType,
 	IntersectionType,
 	UnionType,
@@ -55,7 +56,9 @@ export const enum SyntaxKind {
 export abstract class ParserBase {
 	kind: SyntaxKind = SyntaxKind.Unknown;
 
-	static parser: Parser<unknown>;
+	static get parser(): Parser<unknown> {
+		throw new Error("Not implemented");
+	}
 
 	abstract toString(): string;
 }
