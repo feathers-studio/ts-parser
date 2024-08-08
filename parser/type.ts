@@ -9,10 +9,9 @@ import {
 	char,
 	optionalWhitespace,
 	lookAhead,
-	many1,
 } from "arcsecond";
 
-import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces, left, right } from "./utils.ts";
+import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces, left, right, bw } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
@@ -23,13 +22,14 @@ import { Comment, Directive, Pragma } from "./comment.ts";
 const arrayPostfix = seq([optionalWhitespace, char("["), optionalWhitespace, char("]")]).map(() => "array" as const);
 
 export type NonArrayPrimaryType =
-	| PredefinedOrLiteralType
+	| ThisType
 	| KeyOfOperator
 	| TypeQuery
+	| PredefinedOrLiteralType
 	| TypeReference
+	| IndexedAccessType
 	| ObjectType
 	| TupleType
-	| ThisType
 	| FunctionType;
 
 export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
@@ -38,6 +38,7 @@ export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 		KeyOfOperator.parser,
 		TypeQuery.parser,
 		PredefinedOrLiteralType,
+		IndexedAccessType.parser,
 		TypeReference.parser,
 		ObjectType.parser,
 		TupleType.parser,
@@ -319,8 +320,6 @@ export class PropertySignature extends ParserBase {
 	}
 }
 
-const dotDotDot = surroundWhitespace(str("..."));
-
 export class Parameter extends ParserBase {
 	kind: SyntaxKind.Parameter = SyntaxKind.Parameter;
 
@@ -341,8 +340,8 @@ export class Parameter extends ParserBase {
 	}
 
 	static parser: Parser<Parameter> = seq([
-		possibly(surroundWhitespace(DocString.parser)),
-		Identifier.parser,
+		possibly(DocString.parser),
+		surroundWhitespace(Identifier.parser),
 		possibly(
 			seq([optionalWhitespace, possibly(str("?")).map(c => c != null), surroundWhitespace(str(":")), Type]).map(
 				([_, optional, __, type]) => ({ optional, type }),
@@ -363,21 +362,17 @@ export class RestParameter extends ParserBase {
 
 	doc: DocString | null;
 
-	constructor(public name: Identifier, public type?: Type, extra?: { doc?: DocString | null }) {
+	constructor(public name: Identifier, public type?: Type | null, extra?: { doc?: DocString | null }) {
 		super();
 		this.doc = extra?.doc ?? null;
 	}
 
 	static parser: Parser<RestParameter> = seq([
-		possibly(surroundWhitespace(DocString.parser)),
-		dotDotDot,
-		surroundWhitespace(Identifier.parser),
-		possibly(
-			seq([optionalWhitespace, possibly(str("?")).map(c => c != null), surroundWhitespace(str(":")), Type]).map(
-				([_, optional, __, type]) => ({ optional, type }),
-			),
-		),
-	]).map(([doc, _, name, type]) => new RestParameter(name, type?.type, { doc }));
+		possibly(DocString.parser),
+		surroundWhitespace(str("...")),
+		Identifier.parser,
+		possibly(right(surroundWhitespace(str(":")), Type)),
+	]).map(([doc, , name, type]) => new RestParameter(name, type, { doc }));
 
 	toString() {
 		let out = "..." + this.name.toString();
@@ -405,6 +400,25 @@ export class Generic {
 	}
 }
 
+const GenericList = bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<");
+
+const comma = surroundWhitespace(char(","));
+
+const ParameterList = bracketed(
+	surroundWhitespace(
+		choice([
+			seq([
+				//
+				Parameter.parser,
+				many(right(comma, Parameter.parser)),
+				possibly(right(comma, RestParameter.parser)),
+			]).map(([first, rest, restParameter]) => ({ params: [first, ...rest], restParameter })),
+			possibly(RestParameter.parser).map(restParameter => ({ params: [], restParameter })),
+		]),
+	),
+	"(",
+) as Parser<{ params: Parameter[]; restParameter: RestParameter | null }>;
+
 function stringifyMethodLike(
 	name: string,
 	{
@@ -429,16 +443,6 @@ function stringifyMethodLike(
 	return out + ";";
 }
 
-const generics = bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<");
-
-const params = bracketed(
-	seq([
-		sepByN(char(","), 0)(surroundWhitespace(Parameter.parser)),
-		possibly(seq([char(","), surroundWhitespace(RestParameter.parser)]).map(([_, rest]) => rest)),
-	]),
-	"(",
-);
-
 export class MethodSignature extends ParserBase {
 	kind: SyntaxKind.MethodSignature = SyntaxKind.MethodSignature;
 
@@ -462,21 +466,21 @@ export class MethodSignature extends ParserBase {
 		this.restParameter = extra?.restParameter ?? null;
 	}
 
-	// TODO: Implement rest params, conditional return types
+	// TODO: conditional return types
 	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
 		PropertyWrap(
 			seq([
 				choice([str("new") as Parser<"new">, Identifier.parser]),
 				optionalWhitespace,
-				possibly(generics),
+				possibly(GenericList),
 				optionalWhitespace,
-				params,
+				ParameterList,
 				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
 			]),
-		).map(([doc, [name, _1, generics, _2, [params, rest], returnType]]) => {
+		).map(([doc, [name, _1, generics, _2, { params, restParameter }, returnType]]) => {
 			if (name === "new")
-				return new ConstructSignature(params, returnType ?? null, { doc, generics, restParameter: rest });
-			else return new MethodSignature(name, params, returnType ?? null, { doc, generics, restParameter: rest });
+				return new ConstructSignature(params, returnType ?? null, { doc, generics, restParameter });
+			else return new MethodSignature(name, params, returnType ?? null, { doc, generics, restParameter });
 		}),
 	);
 
@@ -598,8 +602,8 @@ export class FunctionType extends ParserBase {
 	}
 
 	static parser: Parser<FunctionType> = lazy(() =>
-		seq([possibly(generics), surroundWhitespace(params), surroundWhitespace(str("=>")), Type]).map(
-			([generics, [params, restParameter], , returnType]) => {
+		seq([possibly(GenericList), surroundWhitespace(ParameterList), surroundWhitespace(str("=>")), Type]).map(
+			([generics, { params, restParameter }, , returnType]) => {
 				return new FunctionType(params, returnType, { generics, restParameter });
 			},
 		),
@@ -610,8 +614,32 @@ export class FunctionType extends ParserBase {
 		if (this.generics.length) out += "<" + this.generics.join(", ") + ">";
 		out += "(";
 		out += this.parameters.join(", ");
+		if (this.restParameter) {
+			if (this.parameters.length) out += ", ";
+			out += this.restParameter;
+		}
 		out += ") => " + this.returnType;
 		return out;
+	}
+}
+
+export class IndexedAccessType extends ParserBase {
+	kind: SyntaxKind.IndexedAccessType = SyntaxKind.IndexedAccessType;
+
+	constructor(public base: TypeName, public index: Type) {
+		super();
+	}
+
+	static parser: Parser<IndexedAccessType> = lazy(() =>
+		seq([
+			// TODO: This is a temporary solution; more complex types will need to be handled differently
+			TypeName,
+			bracketed(surroundWhitespace(Type), "["),
+		]).map(([base, index]) => new IndexedAccessType(base, index)),
+	);
+
+	toString() {
+		return this.base + "[" + this.index + "]";
 	}
 }
 

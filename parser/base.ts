@@ -14,6 +14,7 @@ export const enum SyntaxKind {
 	Generic,
 	TypeQuery,
 	KeyQuery,
+	IndexedAccessType,
 
 	DeclareKeyword,
 	ExportKeyword,

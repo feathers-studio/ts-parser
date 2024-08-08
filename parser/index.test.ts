@@ -6,7 +6,12 @@ import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatem
 import {
 	ArrayType,
 	ConstructSignature,
+	FunctionType,
+	Generic,
+	IndexedAccessType,
 	IndexSignature,
+	KeyOfOperator,
+	MethodSignature,
 	ObjectType,
 	Parameter,
 	PropertySignature,
@@ -93,17 +98,11 @@ declare var BroadcastChannel: {
     // new(name: string): BroadcastChannel;
     prototype: BroadcastChannel;
     new(name: string): BroadcastChannel;
-};`;
-`
+};
 
 declare var ByteLengthQueuingStrategy: {
     prototype: ByteLengthQueuingStrategy;
     new(init: QueuingStrategyInit): ByteLengthQueuingStrategy;
-};
-
-declare var CDATASection: {
-    prototype: CDATASection;
-    new(): CDATASection;
 };
 
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation) */
@@ -115,6 +114,7 @@ interface CSSAnimation extends Animation {
     removeEventListener<K extends keyof AnimationEventMap>(type: K, listener: (this: CSSAnimation, ev: AnimationEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
 }
+
 	
 interface CSSGroupingRule extends CSSRule {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/cssRules) */
@@ -320,6 +320,217 @@ const expectFixture: Statement[] = [
 		{
 			kind: VariableKind.Var,
 			declared: true,
+		},
+	),
+
+	new VariableStatement(
+		[
+			new VariableDeclaration(
+				new Identifier("ByteLengthQueuingStrategy"),
+				new ObjectType([
+					new PropertySignature(
+						new Identifier("prototype"), //
+						new TypeReference(new Identifier("ByteLengthQueuingStrategy")),
+					),
+					new ConstructSignature(
+						[
+							new Parameter(
+								new Identifier("init"),
+								new TypeReference(new Identifier("QueuingStrategyInit")),
+							),
+						],
+						new TypeReference(new Identifier("ByteLengthQueuingStrategy")),
+					),
+				]),
+			),
+		],
+		{
+			kind: VariableKind.Var,
+			declared: true,
+		},
+	),
+
+	new InterfaceDeclaration(
+		"CSSAnimation",
+		[
+			new PropertySignature(
+				new Identifier("animationName"), //
+				new Predefined.StringType(),
+				{
+					modifiers: ["readonly"],
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation/animationName) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("addEventListener"),
+				[
+					new Parameter(new Identifier("type"), new TypeReference(new Identifier("K"))),
+					new Parameter(
+						new Identifier("listener"),
+						new FunctionType(
+							[
+								new Parameter(
+									new Identifier("this"), //
+									new TypeReference(new Identifier("CSSAnimation")),
+								),
+								new Parameter(
+									new Identifier("ev"), //
+									new IndexedAccessType(
+										new Identifier("AnimationEventMap"),
+										new TypeReference(new Identifier("K")),
+									),
+								),
+							],
+							new Predefined.AnyType(),
+						),
+					),
+					new Parameter(
+						new Identifier("options"),
+						new UnionType([
+							new Predefined.BooleanType(),
+							new TypeReference(new Identifier("AddEventListenerOptions")),
+						]),
+						{ optional: true },
+					),
+				],
+				new Predefined.VoidType(),
+				{
+					generics: [
+						new Generic(
+							new Identifier("K"),
+							new KeyOfOperator(new TypeReference(new Identifier("AnimationEventMap"))),
+						),
+					],
+				},
+			),
+			new MethodSignature(
+				new Identifier("addEventListener"),
+				[
+					new Parameter(new Identifier("type"), new Predefined.StringType()),
+					new Parameter(
+						new Identifier("listener"),
+						new TypeReference(new Identifier("EventListenerOrEventListenerObject")),
+					),
+					new Parameter(
+						new Identifier("options"),
+						new UnionType([
+							new Predefined.BooleanType(),
+							new TypeReference(new Identifier("AddEventListenerOptions")),
+						]),
+						{ optional: true },
+					),
+				],
+				new Predefined.VoidType(),
+			),
+			new MethodSignature(
+				new Identifier("removeEventListener"),
+				[
+					new Parameter(new Identifier("type"), new TypeReference(new Identifier("K"))),
+					new Parameter(
+						new Identifier("listener"),
+						new FunctionType(
+							[
+								new Parameter(
+									new Identifier("this"), //
+									new TypeReference(new Identifier("CSSAnimation")),
+								),
+								new Parameter(
+									new Identifier("ev"), //
+									new IndexedAccessType(
+										new Identifier("AnimationEventMap"),
+										new TypeReference(new Identifier("K")),
+									),
+								),
+							],
+							new Predefined.AnyType(),
+						),
+					),
+					new Parameter(
+						new Identifier("options"),
+						new UnionType([
+							new Predefined.BooleanType(),
+							new TypeReference(new Identifier("EventListenerOptions")),
+						]),
+						{ optional: true },
+					),
+				],
+				new Predefined.VoidType(),
+				{
+					generics: [
+						new Generic(
+							new Identifier("K"),
+							new KeyOfOperator(new TypeReference(new Identifier("AnimationEventMap"))),
+						),
+					],
+				},
+			),
+			new MethodSignature(
+				new Identifier("removeEventListener"),
+				[
+					new Parameter(new Identifier("type"), new Predefined.StringType()),
+					new Parameter(
+						new Identifier("listener"),
+						new TypeReference(new Identifier("EventListenerOrEventListenerObject")),
+					),
+					new Parameter(
+						new Identifier("options"),
+						new UnionType([
+							new Predefined.BooleanType(),
+							new TypeReference(new Identifier("EventListenerOptions")),
+						]),
+						{ optional: true },
+					),
+				],
+				new Predefined.VoidType(),
+			),
+		],
+		{
+			extends: [new TypeReference(new Identifier("Animation"))],
+			doc: new DocString(" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation) "),
+		},
+	),
+
+	new InterfaceDeclaration(
+		"CSSGroupingRule",
+		[
+			new PropertySignature(
+				new Identifier("cssRules"), //
+				new TypeReference(new Identifier("CSSRuleList")),
+				{
+					modifiers: ["readonly"],
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/cssRules) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("deleteRule"),
+				[new Parameter(new Identifier("index"), new Predefined.NumberType())],
+				new Predefined.VoidType(),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/deleteRule) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("insertRule"),
+				[
+					new Parameter(new Identifier("rule"), new Predefined.StringType()),
+					new Parameter(new Identifier("index"), new Predefined.NumberType(), { optional: true }),
+				],
+				new Predefined.NumberType(),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/insertRule) ",
+					),
+				},
+			),
+		],
+		{
+			extends: [new TypeReference(new Identifier("CSSRule"))],
 		},
 	),
 ];

@@ -12,6 +12,9 @@ import {
 	ConstructSignature,
 	TypeQuery,
 	KeyOfOperator,
+	FunctionType,
+	RestParameter,
+	IndexedAccessType,
 } from "./type.ts";
 import { TypeReference } from "./type.ts";
 import { QualifiedName } from "./type.ts";
@@ -78,6 +81,14 @@ test("keyof with other types", () => {
 	);
 });
 
+test("IndexedAccessType: 1", () => {
+	assertParser(
+		Type,
+		"Value[Key]",
+		new IndexedAccessType(new Identifier("Value"), new TypeReference(new Identifier("Key"))),
+	);
+});
+
 test("Index Key", () => {
 	//
 	assertParser(IndexSignature.parser, "[key: string]", new IndexSignature("key", new Predefined.StringType()));
@@ -85,6 +96,37 @@ test("Index Key", () => {
 
 test("Index Key (with spaces)", () => {
 	assertParser(IndexSignature.parser, "[ key : string ]", new IndexSignature("key", new Predefined.StringType()));
+});
+
+test("Generic: 1", () => {
+	assertParser(Generic.parser, "T", new Generic(new Identifier("T")));
+});
+
+test("Generic: 2", () => {
+	assertParser(
+		Generic.parser,
+		"T extends A",
+		new Generic(new Identifier("T"), new TypeReference(new Identifier("A"))),
+	);
+});
+
+test("Generic: 3", () => {
+	assertParser(
+		Generic.parser,
+		"T extends A | B",
+		new Generic(
+			new Identifier("T"),
+			new UnionType([new TypeReference(new Identifier("A")), new TypeReference(new Identifier("B"))]),
+		),
+	);
+});
+
+test("Generic: 4", () => {
+	assertParser(
+		Generic.parser,
+		"T extends keyof A",
+		new Generic(new Identifier("T"), new KeyOfOperator(new TypeReference(new Identifier("A")))),
+	);
 });
 
 test("PropertySignature: 1", () => {
@@ -634,6 +676,131 @@ test("Union of Intersection of TypeReferences (Parenthesised 2)", () => {
 			new IntersectionType([new TypeReference(new Identifier("A")), new TypeReference(new Identifier("B"))]),
 			new IntersectionType([new TypeReference(new Identifier("C")), new TypeReference(new Identifier("D"))]),
 		]),
+	);
+});
+
+test("FunctionType (no parameters)", () => {
+	assertParser(Type, "() => string", new FunctionType([], new Predefined.StringType()));
+});
+
+test("FunctionType", () => {
+	assertParser(
+		Type,
+		"(a: string, b: number) => string",
+		new FunctionType(
+			[
+				new Parameter(new Identifier("a"), new Predefined.StringType(), { doc: null, optional: false }),
+				new Parameter(new Identifier("b"), new Predefined.NumberType(), { doc: null, optional: false }),
+			],
+			new Predefined.StringType(),
+		),
+	);
+});
+
+test("FunctionType with optional parameters", () => {
+	assertParser(
+		Type,
+		"(a?: string, b?: number) => string",
+		new FunctionType(
+			[
+				new Parameter(new Identifier("a"), new Predefined.StringType(), { doc: null, optional: true }),
+				new Parameter(new Identifier("b"), new Predefined.NumberType(), { doc: null, optional: true }),
+			],
+			new Predefined.StringType(),
+		),
+	);
+});
+
+test("FunctionType with rest parameter", () => {
+	assertParser(
+		Type,
+		"(a: string, ...b: number[]) => string",
+		new FunctionType(
+			[new Parameter(new Identifier("a"), new Predefined.StringType(), { doc: null, optional: false })],
+			new Predefined.StringType(),
+			{ restParameter: new RestParameter(new Identifier("b"), new ArrayType(new Predefined.NumberType())) },
+		),
+	);
+});
+
+test("FunctionType with optional parameters and rest parameter", () => {
+	assertParser(
+		Type,
+		"(a?: string, ...b: number[]) => string",
+		new FunctionType(
+			[new Parameter(new Identifier("a"), new Predefined.StringType(), { doc: null, optional: true })],
+			new Predefined.StringType(),
+			{ restParameter: new RestParameter(new Identifier("b"), new ArrayType(new Predefined.NumberType())) },
+		),
+	);
+});
+
+test("FunctionType with rest parameter only", () => {
+	assertParser(
+		Type,
+		"( ...b: number[]) => string",
+		new FunctionType([], new Predefined.StringType(), {
+			restParameter: new RestParameter(new Identifier("b"), new ArrayType(new Predefined.NumberType())),
+		}),
+	);
+});
+
+test("FunctionType with generics", () => {
+	assertParser(
+		Type,
+		"<T>( ... rest :   T [] ) => T",
+		new FunctionType([], new TypeReference(new Identifier("T")), {
+			restParameter: new RestParameter(
+				new Identifier("rest"),
+				new ArrayType(new TypeReference(new Identifier("T"))),
+			),
+			generics: [new Generic(new Identifier("T"))],
+		}),
+	);
+});
+
+test("FunctionType with generics and constraints", () => {
+	assertParser(
+		Type,
+		"<T extends A>( ... rest :   T [] ) => T",
+		new FunctionType([], new TypeReference(new Identifier("T")), {
+			restParameter: new RestParameter(
+				new Identifier("rest"),
+				new ArrayType(new TypeReference(new Identifier("T"))),
+			),
+			generics: [new Generic(new Identifier("T"), new TypeReference(new Identifier("A")))],
+		}),
+	);
+});
+
+test("FunctionType with generics and typeof constraints", () => {
+	assertParser(
+		Type,
+		"< T  \n extends  typeof  A >( ... rest :   T [] ) => T",
+		new FunctionType([], new TypeReference(new Identifier("T")), {
+			restParameter: new RestParameter(
+				new Identifier("rest"),
+				new ArrayType(new TypeReference(new Identifier("T"))),
+			),
+			generics: [new Generic(new Identifier("T"), new TypeQuery(new TypeReference(new Identifier("A"))))],
+		}),
+	);
+});
+
+test("FunctionType with multiple generics and keyof constraints", () => {
+	assertParser(
+		Type,
+		"< T  \n extends  keyof  A, U extends keyof B >( ... rest :   T [] ) => U",
+		new FunctionType([], new TypeReference(new Identifier("U")), {
+			restParameter: new RestParameter(
+				new Identifier("rest"),
+				new ArrayType(new TypeReference(new Identifier("T"))),
+			),
+			generics: [
+				new Generic(new Identifier("T"), new KeyOfOperator(new TypeReference(new Identifier("A")))),
+				new Generic(new Identifier("U"), new KeyOfOperator(new TypeReference(new Identifier("B")))),
+			],
+		}),
 	);
 });
 

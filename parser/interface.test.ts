@@ -2,10 +2,21 @@ import { test } from "bun:test";
 import { assertParser } from "./test-util.ts";
 
 import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
-import { PropertySignature, TypeReference } from "./type.ts";
+import {
+	FunctionType,
+	Generic,
+	IndexedAccessType,
+	KeyOfOperator,
+	MethodSignature,
+	Parameter,
+	PropertySignature,
+	TypeReference,
+	UnionType,
+} from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { Literal } from "./literal.ts";
 import { DocString } from "./docString.ts";
+import { Predefined } from "./predefined.ts";
 
 test("InterfaceDeclaration: 1", () => {
 	assertParser(
@@ -82,6 +93,99 @@ test("InterfaceDeclaration: Exported and Documented", () => {
 			{
 				doc: new DocString("\n\tdoc\n"),
 				exported: true,
+			},
+		),
+	);
+});
+
+test("InterfaceDeclaration: Real use", () => {
+	assertParser(
+		InterfaceDeclaration.parser,
+		`/** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation) */
+		interface CSSAnimation extends Animation {
+			/** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation/animationName) */
+			readonly animationName: string;
+			addEventListener<K extends keyof AnimationEventMap>(type: K, listener: (this: CSSAnimation, ev: AnimationEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+			addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+		}`,
+		new InterfaceDeclaration(
+			"CSSAnimation",
+			[
+				new PropertySignature(
+					new Identifier("animationName"), //
+					new Predefined.StringType(),
+					{
+						modifiers: ["readonly"],
+						doc: new DocString(
+							" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation/animationName) ",
+						),
+					},
+				),
+				new MethodSignature(
+					new Identifier("addEventListener"),
+					[
+						new Parameter(new Identifier("type"), new TypeReference(new Identifier("K"))),
+						new Parameter(
+							new Identifier("listener"),
+							new FunctionType(
+								[
+									new Parameter(
+										new Identifier("this"), //
+										new TypeReference(new Identifier("CSSAnimation")),
+									),
+									new Parameter(
+										new Identifier("ev"), //
+										new IndexedAccessType(
+											new Identifier("AnimationEventMap"),
+											new TypeReference(new Identifier("K")),
+										),
+									),
+								],
+								new Predefined.AnyType(),
+							),
+						),
+						new Parameter(
+							new Identifier("options"),
+							new UnionType([
+								new Predefined.BooleanType(),
+								new TypeReference(new Identifier("AddEventListenerOptions")),
+							]),
+							{ optional: true },
+						),
+					],
+					new Predefined.VoidType(),
+					{
+						generics: [
+							new Generic(
+								new Identifier("K"),
+								new KeyOfOperator(new TypeReference(new Identifier("AnimationEventMap"))),
+							),
+						],
+					},
+				),
+				new MethodSignature(
+					new Identifier("addEventListener"),
+					[
+						new Parameter(new Identifier("type"), new Predefined.StringType()),
+						new Parameter(
+							new Identifier("listener"),
+							new TypeReference(new Identifier("EventListenerOrEventListenerObject")),
+						),
+						new Parameter(
+							new Identifier("options"),
+							new UnionType([
+								new Predefined.BooleanType(),
+								new TypeReference(new Identifier("AddEventListenerOptions")),
+							]),
+							{ optional: true },
+						),
+					],
+					new Predefined.VoidType(),
+				),
+			],
+			{
+				extends: [new TypeReference(new Identifier("Animation"))],
+				doc: new DocString(" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSAnimation) "),
 			},
 		),
 	);

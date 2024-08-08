@@ -26,10 +26,18 @@ const printErrorSrc = (
 	console.log("\n");
 	console.error(`-- ${direction} -- Parsing source errored here:\n`);
 	console.error(errorSrc);
-	console.error(result.error);
-	console.log("\n");
+	console.error("\n" + result.error + "\n");
 
-	throw 1;
+	const err = new Error();
+	throw err.stack
+		? "\n" +
+				err.stack
+					.split("\n")
+					.slice(1)
+					.filter(x => !x.includes("test-util"))
+					.join("\n") +
+				"\n"
+		: "";
 };
 
 export const assertParser = <T>(
@@ -51,17 +59,14 @@ export const assertParser = <T>(
 	{
 		const result = ended.run(source);
 		if (requireFail) return expect(result.isError).toBeTrue();
-		else {
-			if (result.isError) printErrorSrc("Forwards", source, result);
-			else {
-				expect(result, "-- Forwards --").toEqual({
-					isError: false,
-					result: expected,
-					index: source.length,
-					data: null,
-				});
-			}
-		}
+		else if (result.isError) printErrorSrc("Forwards", source, result);
+		else
+			expect(result, "-- Forwards --").toEqual({
+				isError: false,
+				result: expected,
+				index: source.length,
+				data: null,
+			});
 	}
 
 	if (skipInverse) return;
@@ -84,5 +89,6 @@ export const assertParser = <T>(
 
 export const assertParserFn = <T>(parserFn: Parser<T>["run"], source: string, expected: T) => {
 	const result = parserFn(source);
-	expect(result).toEqual({ isError: false, result: expected, index: source.length, data: null });
+	if (result.isError) printErrorSrc("Forwards", source, result);
+	else expect(result).toEqual({ isError: false, result: expected, index: source.length, data: null });
 };
