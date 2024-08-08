@@ -123,6 +123,11 @@ interface CSSGroupingRule extends CSSRule {
     deleteRule(index: number): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSSGroupingRule/insertRule) */
     insertRule(rule: string, index?: number): number;
+}
+	
+interface AbstractWorker {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorker/error_event) */
+    onerror: ((this: AbstractWorker, ev: ErrorEvent) => any) | null;
 }`;
 
 const expectFixture: Statement[] = [
@@ -533,6 +538,33 @@ const expectFixture: Statement[] = [
 			extends: [new TypeReference(new Identifier("CSSRule"))],
 		},
 	),
+
+	new InterfaceDeclaration("AbstractWorker", [
+		new PropertySignature(
+			new Identifier("onerror"), //
+			new UnionType([
+				new FunctionType(
+					[
+						new Parameter(
+							new Identifier("this"), //
+							new TypeReference(new Identifier("AbstractWorker")),
+						),
+						new Parameter(
+							new Identifier("ev"), //
+							new TypeReference(new Identifier("ErrorEvent")),
+						),
+					],
+					new Predefined.AnyType(),
+				),
+				new Literal.NullType(),
+			]),
+			{
+				doc: new DocString(
+					" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorker/error_event) ",
+				),
+			},
+		),
+	]),
 ];
 
 test("DeclarationFile", () => {

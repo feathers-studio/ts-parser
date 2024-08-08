@@ -76,12 +76,12 @@ export class IntersectionType extends ParserBase {
 		const [left, right] = this.types;
 		let out = "";
 
-		if (left.kind === SyntaxKind.UnionType) out += "(" + left + ")";
+		if (left.kind === SyntaxKind.UnionType || left.kind === SyntaxKind.FunctionType) out += "(" + left + ")";
 		else out += left;
 
 		out += " & ";
 
-		if (right.kind === SyntaxKind.UnionType) out += "(" + right + ")";
+		if (right.kind === SyntaxKind.UnionType || left.kind === SyntaxKind.FunctionType) out += "(" + right + ")";
 		else out += right;
 
 		return out;
@@ -108,12 +108,13 @@ export class UnionType extends ParserBase {
 		const [left, right] = this.types;
 		let out = "";
 
-		if (left.kind === SyntaxKind.IntersectionType) out += "(" + left + ")";
+		if (left.kind === SyntaxKind.IntersectionType || left.kind === SyntaxKind.FunctionType) out += "(" + left + ")";
 		else out += left;
 
 		out += " | ";
 
-		if (right.kind === SyntaxKind.IntersectionType) out += "(" + right + ")";
+		if (right.kind === SyntaxKind.IntersectionType || left.kind === SyntaxKind.FunctionType)
+			out += "(" + right + ")";
 		else out += right;
 
 		return out;
