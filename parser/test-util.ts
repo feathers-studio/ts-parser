@@ -47,11 +47,14 @@ export const assertParser = <T>(
 	{
 		skipInverse = false,
 		requireFail = false,
+		noIndexCheck = false,
 	}: {
 		/** Set to true to disable the inverse (AST -> source) test */
 		skipInverse?: boolean;
 		/** Set to true to require the parser to fail */
 		requireFail?: boolean;
+		/** Set to true to disable the index check */
+		noIndexCheck?: boolean;
 	} = {},
 ) => {
 	const ended = ends(parser);
@@ -64,7 +67,7 @@ export const assertParser = <T>(
 			expect(result, "-- Forwards --").toEqual({
 				isError: false,
 				result: expected,
-				index: source.length,
+				index: noIndexCheck ? result.index : source.length,
 				data: null,
 			});
 	}
@@ -81,7 +84,7 @@ export const assertParser = <T>(
 			expect(result2, "-- Inverse --").toEqual({
 				isError: false,
 				result: expected,
-				index: newSource.length,
+				index: noIndexCheck ? result2.index : newSource.length,
 				data: null,
 			});
 	}

@@ -407,6 +407,60 @@ test("LiteralType: string (multiline)", () => {
 	assertParser(Type, '"Hello, \nWorld!"', new Literal.StringType("Hello, \nWorld!", Literal.StringMode.Double));
 });
 
+test("LiteralType: string (escapes)", () => {
+	assertParser(
+		Type,
+		'"\\n\\r\\t\\b\\f\\v\\0\
+"',
+		new Literal.StringType("\n\r\t\b\f\v\0"),
+	);
+});
+
+test("LiteralType: string (unicode)", () => {
+	assertParser(
+		Type, //
+		'"\\u1234"',
+		new Literal.StringType("\u1234"),
+		{ noIndexCheck: true },
+	);
+});
+
+test.skip("LiteralType: string (unicode double)", () => {
+	assertParser(
+		Type, //
+		"'\\uD87E\\uDC04'",
+		new Literal.StringType("\uD87E\uDC04", Literal.StringMode.Single),
+		{ noIndexCheck: true },
+	);
+});
+
+test("LiteralType: string (unicode long)", () => {
+	assertParser(
+		Type, //
+		"'\\u{10FFFF}'",
+		new Literal.StringType("\u{10FFFF}", Literal.StringMode.Single),
+		{ noIndexCheck: true },
+	);
+});
+
+test.skip("LiteralType: string (unicode long)", () => {
+	assertParser(
+		Type, //
+		"'\\u{11FFFF}'",
+		new Literal.StringType("\u{10FFFF}", Literal.StringMode.Single),
+		{ noIndexCheck: true, requireFail: true },
+	);
+});
+
+test("LiteralType: string (hex)", () => {
+	assertParser(
+		Type, //
+		'"\\x41"',
+		new Literal.StringType("\x41"),
+		{ noIndexCheck: true },
+	);
+});
+
 test("LiteralType: number", () => {
 	assertParser(Type, "123", new Literal.NumberType(123));
 });

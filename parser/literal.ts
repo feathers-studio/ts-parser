@@ -1,8 +1,61 @@
-import { possibly, choice, digits, Parser, sequenceOf, str, char, many, anyCharExcept, anyChar } from "arcsecond";
-import { bw, join, right, seq, surroundWhitespace } from "./utils.ts";
+import {
+	possibly,
+	choice,
+	digits,
+	Parser,
+	sequenceOf,
+	str,
+	char,
+	many,
+	anyCharExcept,
+	anyOfString,
+	fail,
+	coroutine,
+} from "arcsecond";
+import { bw, join, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
-const EscapedChar = right(char("\\"), anyChar);
+/*
+\0 	null character (U+0000 NULL)
+\' 	single quote (U+0027 APOSTROPHE)
+\" 	double quote (U+0022 QUOTATION MARK)
+\\ 	backslash (U+005C REVERSE SOLIDUS)
+\n 	newline (U+000A LINE FEED; LF)
+\r 	carriage return (U+000D CARRIAGE RETURN; CR)
+\v 	vertical tab (U+000B LINE TABULATION)
+\t 	tab (U+0009 CHARACTER TABULATION)
+\b 	backspace (U+0008 BACKSPACE)
+\f 	form feed (U+000C FORM FEED)
+\ followed by a line terminator 	empty string
+*/
+
+const Hex = anyOfString("0123456789abcdefABCDEF");
+
+const EscapedChar = choice([
+	str("\\0").map(() => "\0"),
+	str("\\'").map(() => "'"),
+	str('\\"').map(() => '"'),
+	str("\\\\").map(() => "\\"),
+	str("\\n").map(() => "\n"),
+	str("\\r").map(() => "\r"),
+	str("\\v").map(() => "\v"),
+	str("\\t").map(() => "\t"),
+	str("\\b").map(() => "\b"),
+	str("\\f").map(() => "\f"),
+	str("\\\n").map(() => ""),
+	// Surrogate pairs not supported atm
+	// seq([str("\\u"), Hex, Hex, Hex, Hex, str("\\u"), Hex, Hex, Hex, Hex]).map(([_1, a, b, c, d, _2, e, f, g, h]) =>
+	// 	String.fromCharCode(parseInt(a + b + c + d, 16) + parseInt(e + f + g + h, 16)),
+	// ),
+	seq([str("\\u"), Hex, Hex, Hex, Hex]).map(([_, a, b, c, d]) => String.fromCharCode(parseInt(a + b + c + d, 16))),
+	seq([str("\\x"), Hex, Hex]).map(([_, a, b]) => String.fromCharCode(parseInt(a + b, 16))),
+	seq([str("\\u{"), join(many(Hex)), str("}")]).chain(match => {
+		if (!match) return fail("Invalid Unicode code point");
+		const codePoint = parseInt(match[1], 16);
+		if (codePoint > 0x10ffff) return fail("Invalid Unicode code point");
+		return Parser.of(String.fromCodePoint(codePoint));
+	}),
+]);
 
 export namespace Literal {
 	export const enum StringMode {
@@ -18,14 +71,13 @@ export namespace Literal {
 			super();
 		}
 
-		static single = bw(str("'"))(
-			join(many(choice([EscapedChar, anyCharExcept(char("'")) as unknown as Parser<string>]))),
-		).map(value => new StringType(value, StringMode.Single));
+		static of = (type: '"' | "'") =>
+			bw(str(type))(
+				join(many(choice([EscapedChar, anyCharExcept(char(type)) as unknown as Parser<string>]))),
+			).map(value => new StringType(value, type === '"' ? StringMode.Double : StringMode.Single));
 
-		static double = bw(str('"'))(
-			join(many(choice([EscapedChar, anyCharExcept(char('"')) as unknown as Parser<string>]))),
-		).map(value => new StringType(value, StringMode.Double));
-
+		static single = StringType.of("'");
+		static double = StringType.of('"');
 		static parser = choice([StringType.single, StringType.double]);
 
 		toString() {
