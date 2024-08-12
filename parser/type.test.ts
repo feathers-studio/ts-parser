@@ -391,6 +391,22 @@ test("LiteralType: string", () => {
 	assertParser(Type, '"Hello, World!"', new Literal.StringType("Hello, World!"));
 });
 
+test("LiteralType: string (escaped)", () => {
+	assertParser(Type, '"Hello, \\"World!\\""', new Literal.StringType('Hello, "World!"', Literal.StringMode.Double));
+});
+
+test("LiteralType: string (single quotes)", () => {
+	assertParser(Type, "'Hello, World!'", new Literal.StringType("Hello, World!", Literal.StringMode.Single));
+});
+
+test("LiteralType: string (escaped single quotes)", () => {
+	assertParser(Type, "'Hello, \\'World!\\''", new Literal.StringType("Hello, 'World!'", Literal.StringMode.Single));
+});
+
+test("LiteralType: string (multiline)", () => {
+	assertParser(Type, '"Hello, \nWorld!"', new Literal.StringType("Hello, \nWorld!", Literal.StringMode.Double));
+});
+
 test("LiteralType: number", () => {
 	assertParser(Type, "123", new Literal.NumberType(123));
 });

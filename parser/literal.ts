@@ -1,20 +1,36 @@
-import { possibly, choice, digits, Parser, sequenceOf, str } from "arcsecond";
-import { bw, seq, surroundWhitespace } from "./utils.ts";
+import { possibly, choice, digits, Parser, sequenceOf, str, char, many, anyCharExcept, anyChar } from "arcsecond";
+import { bw, join, right, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
+const EscapedChar = right(char("\\"), anyChar);
+
 export namespace Literal {
+	export const enum StringMode {
+		Single,
+		Double,
+	}
+
 	export class StringType extends ParserBase {
 		primitive: true = true;
 		kind: SyntaxKind.LiteralString = SyntaxKind.LiteralString;
 
-		constructor(public value: string) {
+		constructor(public value: string, public mode: StringMode = StringMode.Double) {
 			super();
 		}
 
-		static parse = bw(str('"'))().map(value => new StringType(value));
+		static single = bw(str("'"))(
+			join(many(choice([EscapedChar, anyCharExcept(char("'")) as unknown as Parser<string>]))),
+		).map(value => new StringType(value, StringMode.Single));
+
+		static double = bw(str('"'))(
+			join(many(choice([EscapedChar, anyCharExcept(char('"')) as unknown as Parser<string>]))),
+		).map(value => new StringType(value, StringMode.Double));
+
+		static parse = choice([StringType.single, StringType.double]);
 
 		toString() {
-			return `"${this.value.replaceAll('"', '\\"')}"`;
+			if (this.mode === StringMode.Single) return "'" + this.value.replaceAll("'", "\\'") + "'";
+			return '"' + this.value.replaceAll('"', '\\"') + '"';
 		}
 	}
 

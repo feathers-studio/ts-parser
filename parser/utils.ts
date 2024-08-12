@@ -30,6 +30,7 @@ export const ends = <P extends Parser<T>, T>(parser: P): P => takeLeft(parser)(e
 export const lit = <T extends string>(value: T) => str(value).map(() => value);
 export const left = <L, R>(l: Parser<L>, r: Parser<R>) => takeLeft(l)(r) as Parser<L>;
 export const right = <L, R>(l: Parser<L>, r: Parser<R>) => takeRight(l)(r) as Parser<R>;
+export const join = <T extends string>(parser: Parser<T[]>) => parser.map(xs => xs.join(""));
 
 export function nonNull<T>(value: T | null): value is T {
 	return value != null;
