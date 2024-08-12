@@ -1,4 +1,4 @@
-import * as Monaco from "monaco-editor";
+import { Monaco } from "./setup.ts";
 import { parse } from "../index.ts";
 import { ASTViewer } from "./astViewer.ts";
 
