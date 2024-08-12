@@ -26,7 +26,7 @@ import { ParserBase } from "./base.ts";
 
 // For test coverage 🙄
 test("ParserBase", () => {
-	expect(() => ParserBase.parser.run("test")).toThrow();
+	expect(ParserBase.parser.run("test").isError).toBe(true);
 });
 
 const testSource = `

@@ -1,4 +1,4 @@
-import { Parser } from "arcsecond";
+import { Parser, fail } from "arcsecond";
 
 export const enum SyntaxKind {
 	Unknown,
@@ -57,9 +57,7 @@ export const enum SyntaxKind {
 export abstract class ParserBase {
 	kind: SyntaxKind = SyntaxKind.Unknown;
 
-	static get parser(): Parser<unknown> {
-		throw new Error("Not implemented");
-	}
+	static parser = fail("Unimplemented!");
 
 	abstract toString(): string;
 }
