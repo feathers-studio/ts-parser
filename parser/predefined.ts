@@ -21,7 +21,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("any").map(() => new AnyType());
+		static parser = str("any").map(() => new AnyType());
 
 		toString() {
 			return "any";
@@ -37,7 +37,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("number").map(() => new NumberType());
+		static parser = str("number").map(() => new NumberType());
 
 		toString() {
 			return "number";
@@ -53,7 +53,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("boolean").map(() => new BooleanType());
+		static parser = str("boolean").map(() => new BooleanType());
 
 		toString() {
 			return "boolean";
@@ -69,7 +69,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("bigint").map(() => new BigIntType());
+		static parser = str("bigint").map(() => new BigIntType());
 
 		toString() {
 			return "bigint";
@@ -85,7 +85,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("string").map(() => new StringType());
+		static parser = str("string").map(() => new StringType());
 
 		toString() {
 			return "string";
@@ -99,7 +99,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("void").map(() => new VoidType());
+		static parser = str("void").map(() => new VoidType());
 
 		toString() {
 			return "void";
@@ -113,7 +113,7 @@ export namespace Predefined {
 			super();
 		}
 
-		static parse = str("never").map(() => new NeverType());
+		static parser = str("never").map(() => new NeverType());
 
 		toString() {
 			return "never";
@@ -122,13 +122,13 @@ export namespace Predefined {
 
 	export type Type = AnyType | NumberType | BooleanType | BigIntType | StringType | VoidType | NeverType;
 
-	export const parse: Parser<Type> = choice([
-		AnyType.parse,
-		NumberType.parse,
-		BooleanType.parse,
-		BigIntType.parse,
-		StringType.parse,
-		VoidType.parse,
-		NeverType.parse,
+	export const parser: Parser<Type> = choice([
+		AnyType.parser,
+		NumberType.parser,
+		BooleanType.parser,
+		BigIntType.parser,
+		StringType.parser,
+		VoidType.parser,
+		NeverType.parser,
 	]);
 }

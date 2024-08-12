@@ -128,6 +128,10 @@ interface CSSGroupingRule extends CSSRule {
 interface AbstractWorker {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorker/error_event) */
     onerror: ((this: AbstractWorker, ev: ErrorEvent) => any) | null;
+}
+
+interface AbortSignalEventMap {
+    "abort": Event;
 }`;
 
 const expectFixture: Statement[] = [
@@ -563,6 +567,13 @@ const expectFixture: Statement[] = [
 					" [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorker/error_event) ",
 				),
 			},
+		),
+	]),
+
+	new InterfaceDeclaration("AbortSignalEventMap", [
+		new PropertySignature(
+			new Literal.StringType("abort"), //
+			new TypeReference(new Identifier("Event")),
 		),
 	]),
 ];

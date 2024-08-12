@@ -26,7 +26,7 @@ export namespace Literal {
 			join(many(choice([EscapedChar, anyCharExcept(char('"')) as unknown as Parser<string>]))),
 		).map(value => new StringType(value, StringMode.Double));
 
-		static parse = choice([StringType.single, StringType.double]);
+		static parser = choice([StringType.single, StringType.double]);
 
 		toString() {
 			if (this.mode === StringMode.Single) return "'" + this.value.replaceAll("'", "\\'") + "'";
@@ -42,7 +42,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = seq([
+		static parser = seq([
 			possibly(str("-")), //
 			digits,
 			possibly(seq([str("."), digits]).map(([dot, digits]) => dot + digits)),
@@ -65,7 +65,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = choice([str("true"), str("false")]).map(value => new BooleanType(value === "true"));
+		static parser = choice([str("true"), str("false")]).map(value => new BooleanType(value === "true"));
 
 		toString() {
 			return `${this.value}`;
@@ -76,7 +76,7 @@ export namespace Literal {
 		primitive: true = true;
 		kind: SyntaxKind.LiteralNull = SyntaxKind.LiteralNull;
 
-		static parse = str("null").map(() => new NullType());
+		static parser = str("null").map(() => new NullType());
 
 		toString() {
 			return "null";
@@ -87,7 +87,7 @@ export namespace Literal {
 		primitive: true = true;
 		kind: SyntaxKind.LiteralUndefined = SyntaxKind.LiteralUndefined;
 
-		static parse = str("undefined").map(() => new UndefinedType());
+		static parser = str("undefined").map(() => new UndefinedType());
 
 		toString() {
 			return "undefined";
@@ -102,7 +102,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = sequenceOf([possibly(surroundWhitespace(str("unique"))), str("symbol")]).map(
+		static parser = sequenceOf([possibly(surroundWhitespace(str("unique"))), str("symbol")]).map(
 			([unique]) => new SymbolType(unique !== null),
 		);
 
@@ -120,7 +120,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parse = seq([digits, str("n")])
+		static parser = seq([digits, str("n")])
 			.map(([digits]) => BigInt(digits))
 			.map(value => new BigIntType(value));
 
@@ -131,13 +131,13 @@ export namespace Literal {
 
 	export type Type = StringType | NumberType | BooleanType | NullType | UndefinedType | SymbolType | BigIntType;
 
-	export const parse: Parser<Type> = choice([
-		BigIntType.parse,
-		NumberType.parse,
-		SymbolType.parse,
-		BooleanType.parse,
-		NullType.parse,
-		UndefinedType.parse,
-		StringType.parse,
+	export const parser: Parser<Type> = choice([
+		BigIntType.parser,
+		NumberType.parser,
+		SymbolType.parser,
+		BooleanType.parser,
+		NullType.parser,
+		UndefinedType.parser,
+		StringType.parser,
 	]);
 }

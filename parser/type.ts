@@ -142,7 +142,7 @@ PrimaryType:
 
 export const ParenthesisedType = bracketed(surroundWhitespace(Type), "(");
 export type PredefinedOrLiteralType = Predefined.Type | Literal.Type;
-export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([Predefined.parse, Literal.parse]);
+export const PredefinedOrLiteralType: Parser<PredefinedOrLiteralType> = choice([Predefined.parser, Literal.parser]);
 
 export const TypeParameters = bracketed(sepByN(char(","), 1)(surroundWhitespace(Type)), "<");
 
@@ -281,7 +281,7 @@ export class PropertySignature extends ParserBase {
 	optional: boolean;
 
 	constructor(
-		public key: Identifier | IndexSignature,
+		public key: Identifier | IndexSignature | Literal.StringType,
 		public value: Type,
 		extra?: {
 			doc?: DocString | null;
@@ -298,7 +298,7 @@ export class PropertySignature extends ParserBase {
 	static parser: Parser<PropertySignature> = PropertyWrap(
 		seq([
 			surroundWhitespace(many(Modifier)),
-			choice([Identifier.parser, IndexSignature.parser]),
+			choice([Identifier.parser, IndexSignature.parser, Literal.StringType.parser]),
 			optionalWhitespace,
 			possibly(char("?")).map(c => c != null),
 			optionalWhitespace,
