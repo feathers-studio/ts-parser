@@ -6,6 +6,7 @@
 	"scripts": {
 		"check": "tsc --project tsconfig.json",
 		"clean": "git clean -fXd dist/",
+		"start": "vite",
 		"build": "vite build",
 		"rebuild": "bun run clean && bun run build",
 		"deploy": "scp -r dist/* prod:parsers.thefeathers.in/",
