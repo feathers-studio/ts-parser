@@ -1,6 +1,14 @@
 import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "arcsecond";
 import { DocString } from "./docString.ts";
-import { PropertySignature, ObjectType, Type, MethodSignature, ConstructSignature } from "./type.ts";
+import {
+	PropertySignature,
+	ObjectType,
+	Type,
+	MethodSignature,
+	ConstructSignature,
+	GenericList,
+	Generic,
+} from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { sepByN, seq, surroundWhitespace } from "./utils.ts";
@@ -42,22 +50,27 @@ export const Extends = sequenceOf([
 ]) //
 	.map(([, , , value]) => ({ extends: value }));
 
-export const MaybeExtends = (parser: Parser<Identifier>): Parser<Identifier & { extends: Type[] | null }> =>
-	sequenceOf([parser, possibly(Extends)]) //
-		.map(([value, exts]) => ({ ...value, extends: exts ? exts.extends : null }));
-
 const interfaceHeader = sequenceOf([
 	possibly(seq([str("export"), whitespace])).map(x => !!x),
 	possibly(seq([str("declare"), whitespace])).map(x => !!x),
 	str("interface"),
 	whitespace,
-	MaybeExtends(Identifier.parser),
-]).map(([exported, declared, , , id]) => ({ name: id.name, extends: id.extends, exported, declared }));
+	Identifier.parser,
+	possibly(GenericList),
+	possibly(Extends),
+]).map(([exported, declared, , , id, generics, extending]) => ({
+	name: id.name,
+	generics: generics ?? [],
+	extends: extending?.extends,
+	exported,
+	declared,
+}));
 
 export class InterfaceDeclaration extends ParserBase {
 	kind: SyntaxKind.InterfaceDeclaration = SyntaxKind.InterfaceDeclaration;
 
 	exported: boolean;
+	generics: Generic[];
 	extends: Type[] | null;
 	doc: DocString | null;
 
@@ -66,12 +79,14 @@ export class InterfaceDeclaration extends ParserBase {
 		public members: (PropertySignature | MethodSignature | ConstructSignature | Comment | Directive | Pragma)[],
 		extra?: {
 			exported?: boolean;
+			generics?: Generic[];
 			extends?: Type[] | null;
 			doc?: DocString | null;
 		},
 	) {
 		super();
 		this.exported = extra?.exported ?? false;
+		this.generics = extra?.generics ?? [];
 		this.extends = extra?.extends ?? null;
 		this.doc = extra?.doc ?? null;
 	}
@@ -86,6 +101,7 @@ export class InterfaceDeclaration extends ParserBase {
 		([doc, , header, , object]) =>
 			new InterfaceDeclaration(header.name, object.members, {
 				doc,
+				generics: header.generics,
 				extends: header.extends,
 				exported: header.exported,
 			}),
