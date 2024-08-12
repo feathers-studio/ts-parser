@@ -385,27 +385,27 @@ export class RestParameter extends ParserBase {
 export class Generic {
 	kind: SyntaxKind.Generic = SyntaxKind.Generic;
 
-	constructor(public name: Identifier, public extendsType: Type | null = null) {}
+	constructor(public name: Identifier, public extendsType: Type | null = null, public defaults: Type | null = null) {}
 
 	static parser: Parser<Generic> = seq([
 		Identifier.parser,
-		possibly(
-			seq([optionalWhitespace, str("extends"), optionalWhitespace, Type]).map(([_, __, ___, types]) => types),
-		),
-	]).map(([name, extendsType]) => new Generic(name, extendsType));
+		possibly(seq([optionalWhitespace, str("extends"), optionalWhitespace, Type]).map(([, , , types]) => types)),
+		possibly(seq([optionalWhitespace, char("="), optionalWhitespace, Type]).map(([, , , types]) => types)),
+	]).map(([name, extendsType, defaults]) => new Generic(name, extendsType, defaults));
 
 	toString() {
 		let out = this.name.toString();
 		if (this.extendsType) out += " extends " + this.extendsType;
+		if (this.defaults) out += " = " + this.defaults;
 		return out;
 	}
 }
 
-const GenericList = bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<");
+export const GenericList = bracketed(sepByN(char(","), 1)(surroundWhitespace(Generic.parser)), "<");
 
 const comma = surroundWhitespace(char(","));
 
-const ParameterList = bracketed(
+export const ParameterList = bracketed(
 	surroundWhitespace(
 		choice([
 			seq([
