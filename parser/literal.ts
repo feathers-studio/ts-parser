@@ -11,6 +11,8 @@ import {
 	anyOfString,
 	fail,
 	coroutine,
+	lookAhead,
+	skip,
 } from "arcsecond";
 import { bw, join, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
@@ -43,17 +45,31 @@ const EscapedChar = choice([
 	str("\\b").map(() => "\b"),
 	str("\\f").map(() => "\f"),
 	str("\\\n").map(() => ""),
-	// Surrogate pairs not supported atm
+
+	// Hexadecimal escape sequence
+	seq([str("\\x"), Hex, Hex]).map(([_, a, b]) => String.fromCharCode(parseInt(a + b, 16))),
+
+	// TODO: Surrogate pairs not supported atm
 	// seq([str("\\u"), Hex, Hex, Hex, Hex, str("\\u"), Hex, Hex, Hex, Hex]).map(([_1, a, b, c, d, _2, e, f, g, h]) =>
 	// 	String.fromCharCode(parseInt(a + b + c + d, 16) + parseInt(e + f + g + h, 16)),
 	// ),
+
+	// Unicode escape sequence
 	seq([str("\\u"), Hex, Hex, Hex, Hex]).map(([_, a, b, c, d]) => String.fromCharCode(parseInt(a + b + c + d, 16))),
-	seq([str("\\x"), Hex, Hex]).map(([_, a, b]) => String.fromCharCode(parseInt(a + b, 16))),
-	seq([str("\\u{"), join(many(Hex)), str("}")]).chain(match => {
-		if (!match) return fail("Invalid Unicode code point");
-		const codePoint = parseInt(match[1], 16);
-		if (codePoint > 0x10ffff) return fail("Invalid Unicode code point");
-		return Parser.of(String.fromCodePoint(codePoint));
+
+	// Extended Unicode escape sequence
+	// TODO: This should ideally result in parse error over \u{10FFFF}, but it parses literally as
+	//       "\u{11FFFF}" because Arcsecond parses as string instead when escape sequence errors
+	coroutine(run => {
+		run(str("\\u{"));
+		const match = run(lookAhead(join(many(Hex))));
+		if (!match) run(fail("Hexadecimal digit expected"));
+		const codePoint = parseInt(match, 16);
+		if (codePoint > 0x10ffff)
+			run(fail("An extended Unicode escape value must be between 0x0 and 0x10FFFF inclusive."));
+		run(skip(str(match)));
+		run(str("}"));
+		return String.fromCodePoint(codePoint);
 	}),
 ]);
 
@@ -73,7 +89,14 @@ export namespace Literal {
 
 		static of = (type: '"' | "'") =>
 			bw(str(type))(
-				join(many(choice([EscapedChar, anyCharExcept(char(type)) as unknown as Parser<string>]))),
+				join(
+					many(
+						choice([
+							EscapedChar,
+							anyCharExcept(choice([char(type), EscapedChar])) as unknown as Parser<string>,
+						]),
+					),
+				),
 			).map(value => new StringType(value, type === '"' ? StringMode.Double : StringMode.Single));
 
 		static single = StringType.of("'");

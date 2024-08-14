@@ -434,7 +434,7 @@ test.skip("LiteralType: string (unicode double)", () => {
 	);
 });
 
-test("LiteralType: string (unicode long)", () => {
+test("LiteralType: string (extended Unicode escape sequence)", () => {
 	assertParser(
 		Type, //
 		"'\\u{10FFFF}'",
@@ -443,7 +443,9 @@ test("LiteralType: string (unicode long)", () => {
 	);
 });
 
-test.skip("LiteralType: string (unicode long)", () => {
+// This should ideally result in parse error, but it parses as "\u{11FFFF}"
+// because Arcsecond parses as string instead when escape sequence errors
+test.skip("LiteralType: string (invalid extended Unicode escape sequence)", () => {
 	assertParser(
 		Type, //
 		"'\\u{11FFFF}'",
