@@ -463,6 +463,10 @@ test("LiteralType: string (hex)", () => {
 	);
 });
 
+test("LiteralType: template string", () => {
+	assertParser(Type, "`Hello, World!`", new Literal.StringType("Hello, World!", Literal.StringMode.Template));
+});
+
 test("LiteralType: number", () => {
 	assertParser(Type, "123", new Literal.NumberType(123));
 });
@@ -493,6 +497,38 @@ test("LiteralType: number (float exponential)", () => {
 
 test("LiteralType: number (negative float exponential)", () => {
 	assertParser(Type, "-123.456e3", new Literal.NumberType(-123.456e3));
+});
+
+test("LiteralType: number (hexadecimal)", () => {
+	assertParser(Type, "0x123", new Literal.NumberType(0x123, "hexadecimal"));
+});
+
+test("LiteralType: number (hexadecimal negative)", () => {
+	assertParser(Type, "-0x123", new Literal.NumberType(-0x123, "hexadecimal"));
+});
+
+test("LiteralType: number (octal)", () => {
+	assertParser(Type, "0o123", new Literal.NumberType(0o123, "octal"));
+});
+
+test("LiteralType: number (octal negative)", () => {
+	assertParser(Type, "-0o123", new Literal.NumberType(-0o123, "octal"));
+});
+
+test("LiteralType: number (binary)", () => {
+	assertParser(Type, "0b1010", new Literal.NumberType(0b1010, "binary"));
+});
+
+test("LiteralType: number (binary negative)", () => {
+	assertParser(Type, "-0b1010", new Literal.NumberType(-0b1010, "binary"));
+});
+
+test("LiteralType: number (octal)", () => {
+	assertParser(Type, "0o123", new Literal.NumberType(0o123, "octal"));
+});
+
+test("LiteralType: number (octal negative)", () => {
+	assertParser(Type, "-0o123", new Literal.NumberType(-0o123, "octal"));
 });
 
 test("LiteralType: boolean (true)", () => {

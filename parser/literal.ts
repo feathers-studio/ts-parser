@@ -37,6 +37,7 @@ const EscapedChar = choice([
 	str("\\0").map(() => "\0"),
 	str("\\'").map(() => "'"),
 	str('\\"').map(() => '"'),
+	str("\\`").map(() => "`"),
 	str("\\\\").map(() => "\\"),
 	str("\\n").map(() => "\n"),
 	str("\\r").map(() => "\r"),
@@ -75,9 +76,12 @@ const EscapedChar = choice([
 
 export namespace Literal {
 	export const enum StringMode {
-		Single,
-		Double,
+		Single = "'",
+		Double = '"',
+		Template = "`",
 	}
+
+	const ModeMap = { "'": StringMode.Single, '"': StringMode.Double, "`": StringMode.Template };
 
 	export class StringType extends ParserBase {
 		primitive: true = true;
@@ -87,8 +91,8 @@ export namespace Literal {
 			super();
 		}
 
-		static of = (type: '"' | "'") =>
-			bw(str(type))(
+		static of = (type: keyof typeof ModeMap) =>
+			bw(char(type))(
 				join(
 					many(
 						choice([
@@ -97,15 +101,17 @@ export namespace Literal {
 						]),
 					),
 				),
-			).map(value => new StringType(value, type === '"' ? StringMode.Double : StringMode.Single));
+			).map(value => new StringType(value, ModeMap[type]));
 
-		static single = StringType.of("'");
-		static double = StringType.of('"');
-		static parser = choice([StringType.single, StringType.double]);
+		static single = StringType.of(StringMode.Single);
+		static double = StringType.of(StringMode.Double);
+		static template = StringType.of(StringMode.Template);
+		static parser = choice([StringType.single, StringType.double, StringType.template]);
 
 		toString() {
+			if (this.mode === StringMode.Double) return '"' + this.value.replaceAll('"', '\\"') + '"';
 			if (this.mode === StringMode.Single) return "'" + this.value.replaceAll("'", "\\'") + "'";
-			return '"' + this.value.replaceAll('"', '\\"') + '"';
+			return "`" + this.value.replaceAll("`", "\\`") + "`";
 		}
 	}
 
@@ -113,22 +119,42 @@ export namespace Literal {
 		primitive: true = true;
 		kind: SyntaxKind.LiteralNumber = SyntaxKind.LiteralNumber;
 
-		constructor(public value: number) {
+		constructor(public value: number, public mode: "decimal" | "hexadecimal" | "octal" | "binary" = "decimal") {
 			super();
 		}
 
-		static parser = seq([
-			possibly(str("-")), //
+		static hexadecimal = seq([str("0x"), join(many(Hex))]).map(
+			([_, digits]) => new NumberType(parseInt(digits, 16), "hexadecimal"),
+		);
+		static octal = seq([str("0o"), digits]).map(([_, digits]) => new NumberType(parseInt(digits, 8), "octal"));
+		static binary = seq([str("0b"), digits]).map(([_, digits]) => new NumberType(parseInt(digits, 2), "binary"));
+		static decimal = seq([
 			digits,
 			possibly(seq([str("."), digits]).map(([dot, digits]) => dot + digits)),
 			possibly(seq([str("e"), possibly(str("-")), digits]).map(([e, sign, digits]) => e + (sign ?? "") + digits)),
 		]).map(
-			([sign, digits, rest, exponent]) =>
-				new NumberType(parseFloat((sign ?? "") + digits + (rest ?? "") + (exponent ?? ""))),
+			([digits, rest, exponent]) =>
+				new NumberType(parseFloat(digits + (rest ?? "") + (exponent ?? "")), "decimal"),
 		);
 
+		static parser = seq([
+			possibly(str("-")),
+			choice([
+				NumberType.hexadecimal, //
+				NumberType.octal,
+				NumberType.binary,
+				NumberType.decimal,
+			]),
+		]).map(([sign, value]) => new NumberType(sign ? -value.value : value.value, value.mode));
+
 		toString() {
-			return `${this.value}`;
+			const sign = this.value < 0 ? "-" : "";
+			const value = Math.abs(this.value);
+
+			if (this.mode === "hexadecimal") return sign + "0x" + value.toString(16);
+			if (this.mode === "octal") return sign + "0o" + value.toString(8);
+			if (this.mode === "binary") return sign + "0b" + value.toString(2);
+			return sign + value.toString();
 		}
 	}
 
