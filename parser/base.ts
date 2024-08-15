@@ -1,4 +1,4 @@
-import { Parser, fail } from "arcsecond";
+import { fail } from "./deps/arcsecond.ts";
 
 export const enum SyntaxKind {
 	Unknown,

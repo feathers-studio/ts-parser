@@ -1,4 +1,4 @@
-import { Parser, ResultType } from "arcsecond";
+import { Parser, ResultType } from "./deps/arcsecond.ts";
 import { ends, last } from "./utils.ts";
 import { expect } from "bun:test";
 

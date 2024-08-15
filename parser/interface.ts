@@ -1,4 +1,4 @@
-import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "arcsecond";
+import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "./deps/arcsecond.ts";
 import { DocString } from "./docString.ts";
 import {
 	PropertySignature,

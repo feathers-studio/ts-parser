@@ -16,7 +16,6 @@
 	"author": "Muthu Kumar <@MKRhere> (https://mkr.pw)",
 	"license": "MIT",
 	"dependencies": {
-		"arcsecond": "^5.0.0",
 		"monaco-editor": "^0.50.0"
 	},
 	"devDependencies": {

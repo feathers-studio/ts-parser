@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import { assertParser } from "./test-util.ts";
-import { str } from "arcsecond";
+import { str } from "./deps/arcsecond.ts";
 import { maybeBracketed, quoted } from "./utils.ts";
 
 test("maybeBracketed: 1", () => {

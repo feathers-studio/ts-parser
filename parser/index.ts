@@ -1,4 +1,4 @@
-import { choice, many, Parser } from "arcsecond";
+import { choice, many, Parser } from "./deps/arcsecond.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import { ends, nonNull, ws } from "./utils.ts";
 import { InterfaceDeclaration, VariableStatement } from "./interface.ts";

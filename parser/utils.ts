@@ -13,7 +13,7 @@ import {
 	takeLeft,
 	takeRight,
 	whitespace,
-} from "arcsecond";
+} from "./deps/arcsecond.ts";
 
 export const head = <T>(xs: T[]) => xs[0];
 export const tail = <T>(xs: T[]) => xs.slice(1);

@@ -13,7 +13,7 @@ import {
 	coroutine,
 	lookAhead,
 	skip,
-} from "arcsecond";
+} from "./deps/arcsecond.ts";
 import { bw, join, seq, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
