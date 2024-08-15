@@ -3,7 +3,7 @@ import {
 	choice,
 	digits,
 	Parser,
-	sequenceOf,
+	seq,
 	str,
 	char,
 	many,
@@ -13,8 +13,8 @@ import {
 	coroutine,
 	lookAhead,
 	skip,
-} from "./deps/arcsecond.ts";
-import { bw, join, seq, surroundWhitespace } from "./utils.ts";
+} from "./arcthird/index.ts";
+import { bw, join, surroundWhitespace } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 /*
@@ -203,7 +203,7 @@ export namespace Literal {
 			super();
 		}
 
-		static parser = sequenceOf([possibly(surroundWhitespace(str("unique"))), str("symbol")]).map(
+		static parser = seq([possibly(surroundWhitespace(str("unique"))), str("symbol")]).map(
 			([unique]) => new SymbolType(unique !== null),
 		);
 

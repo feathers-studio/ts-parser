@@ -1,4 +1,4 @@
-import { fail } from "./deps/arcsecond.ts";
+import { fail } from "./arcthird/index.ts";
 
 export const enum SyntaxKind {
 	Unknown,

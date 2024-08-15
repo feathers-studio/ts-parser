@@ -1,4 +1,4 @@
-import { choice, Parser, str } from "./deps/arcsecond.ts";
+import { choice, Parser, str } from "./arcthird/index.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 /*

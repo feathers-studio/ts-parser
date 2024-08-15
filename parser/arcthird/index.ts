@@ -1,3 +1,14 @@
+/*
+
+This module is a vendored and adapted fork of the excellent library `Arcsecond`,
+by francisrstokes (https://github.com/francisrstokes/arcsecond).
+The original source code is borrowed under the terms of the MIT license.
+
+This fork removes support for UintArray and TypedArray, using raw JS strings instead.
+Henceforth it's much faster for our usecases (by a factor of ~35x).
+
+*/
+
 import {
 	Parser,
 	ParserState,
@@ -792,9 +803,9 @@ export function anyOfString(s: string): Parser<string> {
 	});
 }
 
-// namedSequenceOf :: [(String, Parser * * *)] -> Parser e (StrMap *) s
-export function namedSequenceOf(pairedParsers: Array<[string, Parser<any>]>): Parser<any[]> {
-	return new Parser(function namedSequenceOf$state(state) {
+// namedSeq :: [(String, Parser * * *)] -> Parser e (StrMap *) s
+export function namedSeq(pairedParsers: Array<[string, Parser<any>]>): Parser<any[]> {
+	return new Parser(function namedSeq$state(state) {
 		if (state.isError) return state;
 
 		const results: Record<string, any> = {};
@@ -814,21 +825,19 @@ export function namedSequenceOf(pairedParsers: Array<[string, Parser<any>]>): Pa
 	});
 }
 
-// sequenceOf :: [Parser * * *] -> Parser * [*] *
-export function sequenceOf<A>([p1]: [Parser<A>]): Parser<[A]>;
-export function sequenceOf<A, B>([p1, p2]: [Parser<A>, Parser<B>]): Parser<[A, B]>;
-export function sequenceOf<A, B, C>([p1, p2, p3]: [Parser<A>, Parser<B>, Parser<C>]): Parser<[A, B, C]>;
-export function sequenceOf<A, B, C, D>([p1, p2, p3, p4]: [Parser<A>, Parser<B>, Parser<C>, Parser<D>]): Parser<
-	[A, B, C, D]
->;
-export function sequenceOf<A, B, C, D, E>([p1, p2, p3, p4, p5]: [
+// seq :: [Parser * * *] -> Parser * [*] *
+export function seq<A>([p1]: [Parser<A>]): Parser<[A]>;
+export function seq<A, B>([p1, p2]: [Parser<A>, Parser<B>]): Parser<[A, B]>;
+export function seq<A, B, C>([p1, p2, p3]: [Parser<A>, Parser<B>, Parser<C>]): Parser<[A, B, C]>;
+export function seq<A, B, C, D>([p1, p2, p3, p4]: [Parser<A>, Parser<B>, Parser<C>, Parser<D>]): Parser<[A, B, C, D]>;
+export function seq<A, B, C, D, E>([p1, p2, p3, p4, p5]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
 	Parser<D>,
 	Parser<E>,
 ]): Parser<[A, B, C, D, E]>;
-export function sequenceOf<A, B, C, D, E, F>([p1, p2, p3, p4, p5, p6]: [
+export function seq<A, B, C, D, E, F>([p1, p2, p3, p4, p5, p6]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -836,7 +845,7 @@ export function sequenceOf<A, B, C, D, E, F>([p1, p2, p3, p4, p5, p6]: [
 	Parser<E>,
 	Parser<F>,
 ]): Parser<[A, B, C, D, E, F]>;
-export function sequenceOf<A, B, C, D, E, F, G>([p1, p2, p3, p4, p5, p6, p7]: [
+export function seq<A, B, C, D, E, F, G>([p1, p2, p3, p4, p5, p6, p7]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -845,7 +854,7 @@ export function sequenceOf<A, B, C, D, E, F, G>([p1, p2, p3, p4, p5, p6, p7]: [
 	Parser<F>,
 	Parser<G>,
 ]): Parser<[A, B, C, D, E, F, G]>;
-export function sequenceOf<A, B, C, D, E, F, G, H>([p1, p2, p3, p4, p5, p6, p7, p8]: [
+export function seq<A, B, C, D, E, F, G, H>([p1, p2, p3, p4, p5, p6, p7, p8]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -855,7 +864,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H>([p1, p2, p3, p4, p5, p6, p7, 
 	Parser<G>,
 	Parser<H>,
 ]): Parser<[A, B, C, D, E, F, G, H]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I>([p1, p2, p3, p4, p5, p6, p7, p8, p9]: [
+export function seq<A, B, C, D, E, F, G, H, I>([p1, p2, p3, p4, p5, p6, p7, p8, p9]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -866,7 +875,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I>([p1, p2, p3, p4, p5, p6, p
 	Parser<H>,
 	Parser<I>,
 ]): Parser<[A, B, C, D, E, F, G, H, I]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]: [
+export function seq<A, B, C, D, E, F, G, H, I, J>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -878,7 +887,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J>([p1, p2, p3, p4, p5, p6
 	Parser<I>,
 	Parser<J>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]: [
+export function seq<A, B, C, D, E, F, G, H, I, J, K>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -891,7 +900,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K>([p1, p2, p3, p4, p5,
 	Parser<J>,
 	Parser<K>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J, K]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12]: [
+export function seq<A, B, C, D, E, F, G, H, I, J, K, L>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -905,21 +914,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L>([p1, p2, p3, p4, 
 	Parser<K>,
 	Parser<L>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J, K, L]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M>([
-	p1,
-	p2,
-	p3,
-	p4,
-	p5,
-	p6,
-	p7,
-	p8,
-	p9,
-	p10,
-	p11,
-	p12,
-	p13,
-]: [
+export function seq<A, B, C, D, E, F, G, H, I, J, K, L, M>([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13]: [
 	Parser<A>,
 	Parser<B>,
 	Parser<C>,
@@ -934,7 +929,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M>([
 	Parser<L>,
 	Parser<M>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J, K, L, M]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M, N>([
+export function seq<A, B, C, D, E, F, G, H, I, J, K, L, M, N>([
 	p1,
 	p2,
 	p3,
@@ -965,7 +960,7 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M, N>([
 	Parser<M>,
 	Parser<N>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J, K, L, M, N]>;
-export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>([
+export function seq<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>([
 	p1,
 	p2,
 	p3,
@@ -998,8 +993,8 @@ export function sequenceOf<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>([
 	Parser<N>,
 	Parser<O>,
 ]): Parser<[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O]>;
-export function sequenceOf(parsers: Parser<any>[]): Parser<any[]>;
-export function sequenceOf(parsers: Parser<any>[]): Parser<any[]> {
+export function seq(parsers: Parser<any>[]): Parser<any[]>;
+export function seq(parsers: Parser<any>[]): Parser<any[]> {
 	return new Parser(function sequenceOf$state(state) {
 		if (state.isError) return state;
 
@@ -1292,7 +1287,7 @@ export function choice(parsers: Parser<any>[]): Parser<any> {
 export function between<L, T, R>(leftParser: Parser<L>): (rightParser: Parser<R>) => (parser: Parser<T>) => Parser<T> {
 	return function between$rightParser(rightParser) {
 		return function between$parser(parser) {
-			return sequenceOf([leftParser, parser, rightParser]).map(([_, x]) => x);
+			return seq([leftParser, parser, rightParser]).map(([_, x]) => x);
 		};
 	};
 }
@@ -1416,9 +1411,9 @@ export const whitespace: Parser<string> = regex(reWhitespaces)
 // optionalWhitespace :: Parser e String s
 export const optionalWhitespace: Parser<string | null> = possibly(whitespace).map(x => x || "");
 
-// recursiveParser :: (() => Parser e a s) -> Parser e a s
-export function recursiveParser<T, E, D>(parserThunk: () => Parser<T, E, D>): Parser<T, E, D> {
-	return new Parser(function recursiveParser$state(state) {
+// recursive :: (() => Parser e a s) -> Parser e a s
+export function recursive<T, E, D>(parserThunk: () => Parser<T, E, D>): Parser<T, E, D> {
+	return new Parser(function recursive$state(state) {
 		return parserThunk().p(state);
 	});
 }

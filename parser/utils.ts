@@ -5,23 +5,18 @@ import {
 	everyCharUntil,
 	optionalWhitespace,
 	Parser,
-	recursiveParser,
 	regex,
 	sepBy,
-	sequenceOf,
 	str,
 	takeLeft,
 	takeRight,
 	whitespace,
-} from "./deps/arcsecond.ts";
+} from "./arcthird/index.ts";
 
 export const head = <T>(xs: T[]) => xs[0];
 export const tail = <T>(xs: T[]) => xs.slice(1);
 export const init = <T>(xs: T[]) => xs.slice(0, xs.length - 1);
 export const last = <T>(xs: T[]) => xs[xs.length - 1];
-
-export const seq = sequenceOf;
-export const lazy = recursiveParser;
 
 export const ws = whitespace.map(() => null);
 export const wss = optionalWhitespace.map(() => null);

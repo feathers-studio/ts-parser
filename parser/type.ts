@@ -4,22 +4,23 @@ import {
 	choice,
 	many,
 	possibly,
-	sequenceOf,
+	seq,
 	str,
 	char,
 	optionalWhitespace,
 	lookAhead,
 	anyCharExcept,
+	recursive,
 	letter,
-} from "./deps/arcsecond.ts";
+} from "./arcthird/index.ts";
 
-import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces, left, right, bw } from "./utils.ts";
+import { bracketed, surroundWhitespace, sepByN, init, last, spaces, left, right } from "./utils.ts";
 import { Predefined } from "./predefined.ts";
 import { Literal } from "./literal.ts";
 import { Identifier } from "./identifier.ts";
 import { DocString } from "./docString.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
-import { Comment, Directive, Pragma } from "./comment.ts";
+import { Comment } from "./comment.ts";
 
 const arrayPostfix = seq([optionalWhitespace, char("["), optionalWhitespace, char("]")]).map(() => "array" as const);
 
@@ -34,7 +35,7 @@ export type NonArrayPrimaryType =
 	| TupleType
 	| FunctionType;
 
-export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
+export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = recursive(() =>
 	choice([
 		ThisType.parser,
 		KeyOfOperator.parser,
@@ -49,7 +50,7 @@ export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 );
 
 export type PrimaryType = NonArrayPrimaryType | ArrayType;
-export const PrimaryType: Parser<Type> = lazy(() =>
+export const PrimaryType: Parser<Type> = recursive(() =>
 	seq([choice([ParenthesisedType, NonArrayPrimaryType]), many(arrayPostfix)]) //
 		.map(([value, postfixes]): Type => {
 			if (postfixes.length)
@@ -68,7 +69,7 @@ export class IntersectionType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<IntersectionType> = lazy(() =>
+	static parser: Parser<IntersectionType> = recursive(() =>
 		seq([PrimaryType, surroundWhitespace(str("&")), IntersectionOrPrimaryType]).map(
 			([left, _, right]) => new IntersectionType([left, right]),
 		),
@@ -100,7 +101,7 @@ export class UnionType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<UnionType> = lazy(() =>
+	static parser: Parser<UnionType> = recursive(() =>
 		seq([IntersectionOrPrimaryType, surroundWhitespace(str("|")), UnionOrIntersectionOrPrimaryType]).map(
 			([left, _, right]) => new UnionType([left, right]),
 		),
@@ -162,7 +163,7 @@ export class QualifiedName extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<QualifiedName> = lazy(() =>
+	static parser: Parser<QualifiedName> = recursive(() =>
 		sepByN(
 			char("."),
 			2,
@@ -183,7 +184,7 @@ export class QualifiedName extends ParserBase {
 
 export type TypeName = QualifiedName | Identifier;
 
-export const TypeName: Parser<TypeName> = lazy(() => choice([QualifiedName.parser, Identifier.parser]));
+export const TypeName: Parser<TypeName> = recursive(() => choice([QualifiedName.parser, Identifier.parser]));
 
 export class TypeReference extends ParserBase {
 	kind: SyntaxKind.TypeReference = SyntaxKind.TypeReference;
@@ -195,7 +196,7 @@ export class TypeReference extends ParserBase {
 		this.typeArguments = typeArguments ?? null;
 	}
 
-	static parser: Parser<TypeReference> = lazy(() =>
+	static parser: Parser<TypeReference> = recursive(() =>
 		seq([TypeName, possibly(TypeParameters)]).map(
 			([name, typeArguments]) => new TypeReference(name, typeArguments),
 		),
@@ -245,8 +246,8 @@ export class IndexSignature extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<IndexSignature> = lazy(() =>
-		sequenceOf([str("["), surroundWhitespace(Identifier.parser), str(":"), surroundWhitespace(Type), str("]")]) //
+	static parser: Parser<IndexSignature> = recursive(() =>
+		seq([str("["), surroundWhitespace(Identifier.parser), str(":"), surroundWhitespace(Type), str("]")]) //
 			.map(([_, name, __, indexType]) => new IndexSignature(name.name, indexType)),
 	);
 
@@ -463,7 +464,7 @@ export class GetAccessor extends ParserBase {
 	}
 
 	// TODO: conditional return types
-	static parser: Parser<GetAccessor> = lazy(() =>
+	static parser: Parser<GetAccessor> = recursive(() =>
 		PropertyWrap(
 			seq([
 				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
@@ -499,7 +500,7 @@ export class SetAccessor extends ParserBase {
 		this.doc = extra?.doc ?? null;
 	}
 
-	static parser: Parser<SetAccessor> = lazy(() =>
+	static parser: Parser<SetAccessor> = recursive(() =>
 		PropertyWrap(
 			seq([
 				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
@@ -544,7 +545,7 @@ export class MethodSignature extends ParserBase {
 	}
 
 	// TODO: conditional return types
-	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
+	static parser: Parser<MethodSignature | ConstructSignature> = recursive(() =>
 		PropertyWrap(
 			seq([
 				choice([left(str("new"), lookAhead(anyCharExcept(letter))) as Parser<"new">, Identifier.parser]),
@@ -617,7 +618,7 @@ export class CallSignature extends ParserBase {
 		this.restParameter = extra?.restParameter ?? null;
 	}
 
-	static parser: Parser<CallSignature> = lazy(() =>
+	static parser: Parser<CallSignature> = recursive(() =>
 		PropertyWrap(
 			seq([
 				possibly(GenericList),
@@ -656,7 +657,7 @@ export class TypeLiteral extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<TypeLiteral> = lazy(() =>
+	static parser: Parser<TypeLiteral> = recursive(() =>
 		choice([bracketed(many(TypeMember), "{").map(members => new TypeLiteral(members ?? []))]),
 	);
 
@@ -693,7 +694,7 @@ export class TupleType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<TupleType> = lazy(() =>
+	static parser: Parser<TupleType> = recursive(() =>
 		bracketed(sepByN(char(","), 0)(surroundWhitespace(Type)), "[").map(values => new TupleType(values)),
 	);
 
@@ -721,7 +722,7 @@ export class FunctionType extends ParserBase {
 		this.restParameter = extra?.restParameter ?? null;
 	}
 
-	static parser: Parser<FunctionType> = lazy(() =>
+	static parser: Parser<FunctionType> = recursive(() =>
 		seq([possibly(GenericList), surroundWhitespace(ParameterList), surroundWhitespace(str("=>")), Type]).map(
 			([generics, { params, restParameter }, , returnType]) => {
 				return new FunctionType(params, returnType, { generics, restParameter });
@@ -750,7 +751,7 @@ export class IndexedAccessType extends ParserBase {
 		super();
 	}
 
-	static parser: Parser<IndexedAccessType> = lazy(() =>
+	static parser: Parser<IndexedAccessType> = recursive(() =>
 		seq([
 			// TODO: This is a temporary solution; more complex types will need to be handled differently
 			TypeName,

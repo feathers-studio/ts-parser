@@ -1,4 +1,4 @@
-import { choice, digit, letter, many, Parser, sequenceOf, str } from "./deps/arcsecond.ts";
+import { choice, digit, letter, many, Parser, seq, str } from "./arcthird/index.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 // "(_|$|[a-zA-Z])(_|$|[a-zA-Z0-9])+";
@@ -13,7 +13,7 @@ export class Identifier extends ParserBase {
 	}
 
 	static parser: Parser<Identifier> = //
-		sequenceOf([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
+		seq([fstChar, many(choice([fstChar, digit])).map(chars => chars.join(""))])
 			.map(([n, d]) => n + d)
 			.map(name => new Identifier(name));
 

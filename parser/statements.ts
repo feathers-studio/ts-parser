@@ -5,15 +5,16 @@ import {
 	optionalWhitespace,
 	Parser,
 	possibly,
-	sequenceOf,
+	seq,
 	str,
+	recursive,
 	whitespace,
-} from "./deps/arcsecond.ts";
+} from "./arcthird/index.ts";
 import { DocString } from "./docString.ts";
 import { TypeLiteral, Type, GenericList, Generic, ParameterList, RestParameter, Parameter } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
-import { lazy, left, nonNull, sepByN, seq, surroundWhitespace, ws } from "./utils.ts";
+import { left, nonNull, sepByN, surroundWhitespace, ws } from "./utils.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 
 export class ExportKeyword extends ParserBase {
@@ -44,15 +45,10 @@ export class DeclareKeyword extends ParserBase {
 	}
 }
 
-export const Extends = sequenceOf([
-	whitespace,
-	str("extends"),
-	whitespace,
-	sepByN(surroundWhitespace(char(",")), 1)(Type),
-]) //
+export const Extends = seq([whitespace, str("extends"), whitespace, sepByN(surroundWhitespace(char(",")), 1)(Type)]) //
 	.map(([, , , value]) => ({ extends: value }));
 
-const interfaceHeader = sequenceOf([
+const interfaceHeader = seq([
 	possibly(seq([str("export"), whitespace])).map(x => !!x),
 	possibly(seq([str("declare"), whitespace])).map(x => !!x),
 	str("interface"),
@@ -93,7 +89,7 @@ export class InterfaceDeclaration extends ParserBase {
 		this.doc = extra?.doc ?? null;
 	}
 
-	static parser: Parser<InterfaceDeclaration> = sequenceOf([
+	static parser: Parser<InterfaceDeclaration> = seq([
 		possibly(DocString.parser),
 		optionalWhitespace,
 		interfaceHeader,
@@ -158,7 +154,7 @@ export class VariableDeclaration extends ParserBase {
 		this.doc = extra?.doc ?? null;
 	}
 
-	static parser: Parser<VariableDeclaration> = sequenceOf([
+	static parser: Parser<VariableDeclaration> = seq([
 		possibly(DocString.parser),
 		optionalWhitespace,
 		Identifier.parser,
@@ -197,7 +193,7 @@ export class VariableStatement extends ParserBase {
 		this.declared = extra?.declared ?? false;
 	}
 
-	static parser: Parser<VariableStatement> = sequenceOf([
+	static parser: Parser<VariableStatement> = seq([
 		possibly(DocString.parser),
 		optionalWhitespace,
 		possibly(seq([str("export"), whitespace])).map(x => !!x),
@@ -245,7 +241,7 @@ export class TypeDeclaration extends ParserBase {
 		this.generics = extra?.generics ?? [];
 	}
 
-	static parser: Parser<TypeDeclaration> = sequenceOf([
+	static parser: Parser<TypeDeclaration> = seq([
 		possibly(DocString.parser),
 		optionalWhitespace,
 		str("type"),
@@ -368,7 +364,7 @@ export class ModuleDeclaration extends ParserBase {
 		this.declared = extra?.declared ?? false;
 	}
 
-	static parser: Parser<ModuleDeclaration> = lazy(() =>
+	static parser: Parser<ModuleDeclaration> = recursive(() =>
 		seq([
 			possibly(DocString.parser),
 			optionalWhitespace,

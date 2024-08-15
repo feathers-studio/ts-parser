@@ -1,5 +1,5 @@
-import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str } from "./deps/arcsecond.ts";
-import { bw, quoted, seq, wss } from "./utils.ts";
+import { choice, endOfInput, many, anyChar, letter, Parser, possibly, str, seq } from "./arcthird/index.ts";
+import { bw, quoted, wss } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 export class Comment extends ParserBase {

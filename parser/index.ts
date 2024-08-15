@@ -1,4 +1,4 @@
-import { choice, many, Parser } from "./deps/arcsecond.ts";
+import { choice, many, Parser } from "./arcthird/index.ts";
 import { ends, nonNull, ws } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { Statement } from "./statements.ts";
@@ -26,12 +26,3 @@ export class DeclarationFile extends ParserBase {
 }
 
 export const parse = (source: string) => ends(DeclarationFile.parser).run(source);
-
-/* TODO:
-
-[ ] Interface type params
-[ ] declare var
-[ ] declare function
-[ ] type
-
-*/
