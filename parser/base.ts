@@ -49,7 +49,7 @@ export const enum SyntaxKind {
 	QualifiedName,
 
 	FunctionType,
-	ObjectType,
+	TypeLiteral,
 	IntersectionType,
 	UnionType,
 	TupleType,

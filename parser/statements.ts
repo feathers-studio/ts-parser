@@ -1,20 +1,9 @@
 import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "./deps/arcsecond.ts";
 import { DocString } from "./docString.ts";
-import {
-	PropertySignature,
-	ObjectType,
-	Type,
-	MethodSignature,
-	ConstructSignature,
-	GenericList,
-	Generic,
-	GetAccessor,
-	SetAccessor,
-} from "./type.ts";
+import { TypeLiteral, Type, GenericList, Generic } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { sepByN, seq, surroundWhitespace } from "./utils.ts";
-import { Comment, Directive, Pragma } from "./comment.ts";
 
 export class ExportKeyword extends ParserBase {
 	kind: SyntaxKind.ExportKeyword = SyntaxKind.ExportKeyword;
@@ -78,16 +67,7 @@ export class InterfaceDeclaration extends ParserBase {
 
 	constructor(
 		public name: string,
-		public members: (
-			| GetAccessor
-			| SetAccessor
-			| PropertySignature
-			| MethodSignature
-			| ConstructSignature
-			| Comment
-			| Directive
-			| Pragma
-		)[],
+		public members: TypeLiteral["members"],
 		extra?: {
 			exported?: boolean;
 			generics?: Generic[];
@@ -107,7 +87,7 @@ export class InterfaceDeclaration extends ParserBase {
 		optionalWhitespace,
 		interfaceHeader,
 		optionalWhitespace,
-		ObjectType.parser,
+		TypeLiteral.parser,
 	]).map(
 		([doc, , header, , object]) =>
 			new InterfaceDeclaration(header.name, object.members, {

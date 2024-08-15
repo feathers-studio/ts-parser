@@ -13,7 +13,7 @@ import {
 	IndexSignature,
 	KeyOfOperator,
 	MethodSignature,
-	ObjectType,
+	TypeLiteral,
 	Parameter,
 	PropertySignature,
 	SetAccessor,
@@ -320,7 +320,7 @@ const expectFixture: Statement[] = [
 		[
 			new VariableDeclaration(
 				new Identifier("BroadcastChannel"),
-				new ObjectType([
+				new TypeLiteral([
 					new Comment(" new(name: string): BroadcastChannel;"),
 					new PropertySignature(
 						new Identifier("prototype"), //
@@ -343,7 +343,7 @@ const expectFixture: Statement[] = [
 		[
 			new VariableDeclaration(
 				new Identifier("ByteLengthQueuingStrategy"),
-				new ObjectType([
+				new TypeLiteral([
 					new PropertySignature(
 						new Identifier("prototype"), //
 						new TypeReference(new Identifier("ByteLengthQueuingStrategy")),

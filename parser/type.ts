@@ -28,7 +28,7 @@ export type NonArrayPrimaryType =
 	| PredefinedOrLiteralType
 	| TypeReference
 	| IndexedAccessType
-	| ObjectType
+	| TypeLiteral
 	| TupleType
 	| FunctionType;
 
@@ -40,7 +40,7 @@ export const NonArrayPrimaryType: Parser<NonArrayPrimaryType> = lazy(() =>
 		PredefinedOrLiteralType,
 		IndexedAccessType.parser,
 		TypeReference.parser,
-		ObjectType.parser,
+		TypeLiteral.parser,
 		TupleType.parser,
 		FunctionType.parser,
 	]),
@@ -609,10 +609,8 @@ export const ObjectChild = surroundWhitespace(
 	]),
 );
 
-export class ObjectType extends ParserBase {
-	kind: SyntaxKind.ObjectType = SyntaxKind.ObjectType;
-
-	doc: DocString | null;
+export class TypeLiteral extends ParserBase {
+	kind: SyntaxKind.TypeLiteral = SyntaxKind.TypeLiteral;
 
 	constructor(
 		public members: (
@@ -625,14 +623,12 @@ export class ObjectType extends ParserBase {
 			| Directive
 			| Pragma
 		)[],
-		extra?: { doc?: DocString },
 	) {
 		super();
-		this.doc = extra?.doc ?? null;
 	}
 
-	static parser: Parser<ObjectType> = lazy(() =>
-		choice([bracketed(many(ObjectChild), "{").map(members => new ObjectType(members ?? []))]),
+	static parser: Parser<TypeLiteral> = lazy(() =>
+		choice([bracketed(many(ObjectChild), "{").map(members => new TypeLiteral(members ?? []))]),
 	);
 
 	toString() {

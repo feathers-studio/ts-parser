@@ -6,7 +6,7 @@ import {
 	Parameter,
 	PropertySignature,
 	IndexSignature,
-	ObjectType,
+	TypeLiteral,
 	TupleType,
 	MethodSignature,
 	ConstructSignature,
@@ -917,7 +917,7 @@ test("Object with Parenthesis and Arrays", () => {
 		Type,
 		`({ key: string;
 		key2: number[] })`,
-		new ObjectType([
+		new TypeLiteral([
 			new PropertySignature(new Identifier("key"), new Predefined.StringType(), {
 				doc: null,
 				modifiers: [],
@@ -936,7 +936,7 @@ test("Object with Parenthesis and Arrays (2)", () => {
 	assertParser(
 		Type,
 		"({ foo: (string[])[] })",
-		new ObjectType([
+		new TypeLiteral([
 			new PropertySignature(new Identifier("foo"), new ArrayType(new ArrayType(new Predefined.StringType())), {
 				doc: null,
 				modifiers: [],
@@ -952,7 +952,7 @@ test("Object with Parenthesis and Arrays (3)", () => {
 		"({ foo: (string[])[] })[][]",
 		new ArrayType(
 			new ArrayType(
-				new ObjectType([
+				new TypeLiteral([
 					new PropertySignature(
 						new Identifier("foo"),
 						new ArrayType(new ArrayType(new Predefined.StringType())),
@@ -972,7 +972,7 @@ test("Object (complex)", () => {
 	assertParser(
 		Type,
 		'{ key: "value"; key2: { nestedKey: S.P.Q.R<X> }, [rest: string]: string }',
-		new ObjectType([
+		new TypeLiteral([
 			new PropertySignature(new Identifier("key"), new Literal.StringType("value"), {
 				doc: null,
 				modifiers: [],
@@ -980,7 +980,7 @@ test("Object (complex)", () => {
 			}),
 			new PropertySignature(
 				new Identifier("key2"),
-				new ObjectType([
+				new TypeLiteral([
 					new PropertySignature(
 						new Identifier("nestedKey"),
 						new TypeReference(
@@ -1015,7 +1015,7 @@ test("Object (complex) with optional members", () => {
 	assertParser(
 		Type,
 		'{ key?: "value"; key2?: { nestedKey: S.P.Q.R<X> }, [rest: string]?: string }',
-		new ObjectType([
+		new TypeLiteral([
 			new PropertySignature(new Identifier("key"), new Literal.StringType("value"), {
 				doc: null,
 				modifiers: [],
@@ -1023,7 +1023,7 @@ test("Object (complex) with optional members", () => {
 			}),
 			new PropertySignature(
 				new Identifier("key2"),
-				new ObjectType([
+				new TypeLiteral([
 					new PropertySignature(
 						new Identifier("nestedKey"),
 						new TypeReference(
@@ -1055,17 +1055,17 @@ test("Object (complex) with optional members", () => {
 });
 
 test("Object (empty)", () => {
-	assertParser(Type, "{}", new ObjectType([]));
+	assertParser(Type, "{}", new TypeLiteral([]));
 });
 
 test("Invalid syntax", () => {
-	assertParser(Type, "string | number x[][]", new ObjectType([]), { requireFail: true });
+	assertParser(Type, "string | number x[][]", new TypeLiteral([]), { requireFail: true });
 });
 
 test("Invalid syntax (2)", () => {
-	assertParser(Type, "string | number[] x", new ObjectType([]), { requireFail: true });
+	assertParser(Type, "string | number[] x", new TypeLiteral([]), { requireFail: true });
 });
 
 test("Invalid syntax (3)", () => {
-	assertParser(Type, "string | number[] x[]", new ObjectType([]), { requireFail: true });
+	assertParser(Type, "string | number[] x[]", new TypeLiteral([]), { requireFail: true });
 });
