@@ -19,7 +19,7 @@ const printErrorSrc = (
 
 	const afterError = source.slice(index + 1).split("\n")[0];
 
-	const leading = last(sourceBits).length - 1;
+	const leading = Math.max(0, last(sourceBits).length - 1);
 	const errLine = "\n" + " ".repeat(leading) + "^";
 	const errorSrc = sourceBits.join("\n") + afterError + errLine;
 
