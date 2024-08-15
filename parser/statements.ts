@@ -148,22 +148,26 @@ export class VariableDeclaration extends ParserBase {
 	}
 
 	static parser: Parser<VariableDeclaration> = sequenceOf([
+		possibly(DocString.parser),
+		optionalWhitespace,
 		Identifier.parser,
 		optionalWhitespace,
 		str(":"),
 		optionalWhitespace,
 		Type,
-	]).map(([id, , , , type]) => new VariableDeclaration(id, type));
+	]).map(([doc, , id, , , , type]) => new VariableDeclaration(id, type, { doc }));
 
 	toString() {
-		return `${this.name}: ${this.type}`;
+		let out = "";
+		if (this.doc) out += this.doc + "\n";
+		out += this.name + ": " + this.type;
+		return out;
 	}
 }
 
 export class VariableStatement extends ParserBase {
 	kind: SyntaxKind.VariableStatement = SyntaxKind.VariableStatement;
 
-	doc: DocString | null;
 	variableKind: VariableKind = VariableKind.Var;
 	exported: boolean;
 	declared: boolean;
@@ -171,35 +175,36 @@ export class VariableStatement extends ParserBase {
 	constructor(
 		public list: VariableDeclaration[],
 		extra?: {
-			doc?: DocString | null;
 			kind: VariableKind;
 			exported?: boolean;
 			declared?: boolean;
 		},
 	) {
 		super();
-		this.doc = extra?.doc ?? null;
 		this.variableKind = extra?.kind ?? VariableKind.Var;
 		this.exported = extra?.exported ?? false;
 		this.declared = extra?.declared ?? false;
 	}
 
 	static parser: Parser<VariableStatement> = sequenceOf([
+		possibly(DocString.parser),
+		optionalWhitespace,
 		possibly(seq([str("export"), whitespace])).map(x => !!x),
 		possibly(seq([str("declare"), whitespace])).map(x => !!x),
 		choice([str("var"), str("let"), str("const")]) as Parser<"var" | "let" | "const">,
 		whitespace,
 		sepByN(surroundWhitespace(char(",")), 1)(VariableDeclaration.parser),
 		possibly(char(";")),
-	]).map(
-		([exported, declared, kind, , list]) =>
-			new VariableStatement(list, { kind: VariableKindMap[kind], exported, declared }),
-	);
+	]).map(([doc, , exported, declared, kind, , list]) => {
+		const first = list[0];
+		if (first.doc) first.doc.text += doc?.text ?? "";
+		else first.doc = doc;
+		return new VariableStatement(list, { kind: VariableKindMap[kind], exported, declared });
+	});
 
 	toString() {
 		let out = "";
 
-		if (this.doc) out += this.doc + "\n";
 		if (this.exported) out += "export ";
 		if (this.declared) out += "declare ";
 		out += VariableKindReverseMap[this.variableKind] + " ";
