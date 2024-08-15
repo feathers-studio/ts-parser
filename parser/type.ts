@@ -522,7 +522,6 @@ export class MethodSignature extends ParserBase {
 	kind: SyntaxKind.MethodSignature = SyntaxKind.MethodSignature;
 
 	doc: DocString | null;
-	accessor?: "get" | "set" | null;
 	generics: Generic[];
 	restParameter: RestParameter | null;
 
@@ -532,14 +531,12 @@ export class MethodSignature extends ParserBase {
 		public returnType: Type | null,
 		extra?: {
 			doc?: DocString | null;
-			accessor?: "get" | "set" | null;
 			generics?: Generic[] | null;
 			restParameter?: RestParameter | null;
 		},
 	) {
 		super();
 		this.doc = extra?.doc ?? null;
-		this.accessor = extra?.accessor ?? null;
 		this.generics = extra?.generics ?? [];
 		this.restParameter = extra?.restParameter ?? null;
 	}
@@ -548,7 +545,6 @@ export class MethodSignature extends ParserBase {
 	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
 		PropertyWrap(
 			seq([
-				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
 				choice([str("new") as Parser<"new">, Identifier.parser]),
 				optionalWhitespace,
 				possibly(GenericList),
@@ -556,11 +552,10 @@ export class MethodSignature extends ParserBase {
 				ParameterList,
 				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
 			]),
-		).map(([doc, [accessor, name, _1, generics, _2, { params, restParameter }, returnType]]) => {
-			if (name === "new" && accessor == undefined)
+		).map(([doc, [name, _1, generics, _2, { params, restParameter }, returnType]]) => {
+			if (name === "new")
 				return new ConstructSignature(params, returnType ?? null, { doc, generics, restParameter });
-			name = typeof name === "string" ? new Identifier(name) : name;
-			return new MethodSignature(name, params, returnType ?? null, { doc, accessor, generics, restParameter });
+			return new MethodSignature(name, params, returnType ?? null, { doc, generics, restParameter });
 		}),
 	);
 
@@ -598,37 +593,69 @@ export class ConstructSignature extends ParserBase {
 	}
 }
 
+export class CallSignature extends ParserBase {
+	kind: SyntaxKind.CallSignature = SyntaxKind.CallSignature;
+
+	doc: DocString | null;
+	generics: Generic[];
+	restParameter: RestParameter | null;
+
+	constructor(
+		public parameters: Parameter[],
+		public returnType: Type | null,
+		extra?: {
+			doc?: DocString | null;
+			generics?: Generic[] | null;
+			restParameter?: RestParameter | null;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+		this.generics = extra?.generics ?? [];
+		this.restParameter = extra?.restParameter ?? null;
+	}
+
+	static parser: Parser<CallSignature> = lazy(() =>
+		PropertyWrap(
+			seq([
+				possibly(GenericList),
+				optionalWhitespace,
+				ParameterList,
+				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
+			]),
+		).map(([doc, [generics, _1, { params, restParameter }, returnType]]) => {
+			return new CallSignature(params, returnType ?? null, { doc, generics, restParameter });
+		}),
+	);
+
+	toString() {
+		return stringifyMethodLike("", this);
+	}
+}
+
 // ConstructSignature is not necessary here because MethodSignature already handles that case
-export const ObjectChild = surroundWhitespace(
+export const TypeMember = surroundWhitespace(
 	choice([
 		GetAccessor.parser, //
 		SetAccessor.parser,
+		CallSignature.parser,
 		PropertySignature.parser,
 		MethodSignature.parser,
 		Comment.parser,
 	]),
 );
 
+type Extract<T> = T extends Parser<infer U> ? U : never;
+
 export class TypeLiteral extends ParserBase {
 	kind: SyntaxKind.TypeLiteral = SyntaxKind.TypeLiteral;
 
-	constructor(
-		public members: (
-			| GetAccessor
-			| SetAccessor
-			| MethodSignature
-			| ConstructSignature
-			| PropertySignature
-			| Comment
-			| Directive
-			| Pragma
-		)[],
-	) {
+	constructor(public members: Extract<typeof TypeMember>[]) {
 		super();
 	}
 
 	static parser: Parser<TypeLiteral> = lazy(() =>
-		choice([bracketed(many(ObjectChild), "{").map(members => new TypeLiteral(members ?? []))]),
+		choice([bracketed(many(TypeMember), "{").map(members => new TypeLiteral(members ?? []))]),
 	);
 
 	toString() {

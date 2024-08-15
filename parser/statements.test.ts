@@ -197,6 +197,80 @@ test("InterfaceDeclaration: Real use", () => {
 	);
 });
 
+test("InterfaceDeclaration: Real use 2", () => {
+	assertParser(
+		InterfaceDeclaration.parser,
+		`interface CredentialsContainer {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/create) */
+    create(options?: CredentialCreationOptions): Promise<Credential | null>;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/get) */
+    get(options?: CredentialRequestOptions): Promise<Credential | null>;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/preventSilentAccess) */
+    preventSilentAccess(): Promise<void>;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/store) */
+    store(credential: Credential): Promise<void>;
+}`.trim(),
+		new InterfaceDeclaration("CredentialsContainer", [
+			new MethodSignature(
+				new Identifier("create"),
+				[
+					new Parameter(
+						new Identifier("options"),
+						new TypeReference(new Identifier("CredentialCreationOptions")),
+						{ optional: true },
+					),
+				],
+				new TypeReference(new Identifier("Promise"), [
+					new UnionType([new TypeReference(new Identifier("Credential")), new Literal.NullType()]),
+				]),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/create) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("get"),
+				[
+					new Parameter(
+						new Identifier("options"),
+						new TypeReference(new Identifier("CredentialRequestOptions")),
+						{ optional: true },
+					),
+				],
+				new TypeReference(new Identifier("Promise"), [
+					new UnionType([new TypeReference(new Identifier("Credential")), new Literal.NullType()]),
+				]),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/get) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("preventSilentAccess"),
+				[],
+				new TypeReference(new Identifier("Promise"), [new Predefined.VoidType()]),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/preventSilentAccess) ",
+					),
+				},
+			),
+			new MethodSignature(
+				new Identifier("store"),
+				[new Parameter(new Identifier("credential"), new TypeReference(new Identifier("Credential")))],
+				new TypeReference(new Identifier("Promise"), [new Predefined.VoidType()]),
+				{
+					doc: new DocString(
+						" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CredentialsContainer/store) ",
+					),
+				},
+			),
+		]),
+	);
+});
+
 test("VariableStatement: 1", () => {
 	assertParser(
 		VariableStatement.parser,

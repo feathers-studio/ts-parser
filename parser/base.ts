@@ -38,13 +38,14 @@ export const enum SyntaxKind {
 
 	ThisType,
 
-	IndexSignature,
+	GetAccessor,
+	SetAccessor,
+	CallSignature,
 	PropertySignature,
 	MethodSignature,
 	ConstructSignature,
-	GetAccessor,
-	SetAccessor,
 
+	IndexSignature,
 	TypeReference,
 	QualifiedName,
 
