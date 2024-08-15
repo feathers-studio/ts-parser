@@ -1,23 +1,7 @@
 import { choice, many, Parser } from "./deps/arcsecond.ts";
-import { Comment, Directive, Pragma } from "./comment.ts";
 import { ends, nonNull, ws } from "./utils.ts";
-import { InterfaceDeclaration, TypeDeclaration, VariableStatement } from "./statements.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
-
-export type Statement =
-	| Directive //
-	| Pragma
-	| Comment
-	| InterfaceDeclaration
-	| VariableStatement
-	| TypeDeclaration;
-
-export const Statement: Parser<Statement> = choice([
-	InterfaceDeclaration.parser,
-	VariableStatement.parser,
-	TypeDeclaration.parser,
-	Comment.parser,
-]);
+import { Statement } from "./statements.ts";
 
 export class DeclarationFile extends ParserBase {
 	kind: SyntaxKind.DeclarationFile = SyntaxKind.DeclarationFile;

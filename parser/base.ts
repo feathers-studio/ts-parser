@@ -23,6 +23,8 @@ export const enum SyntaxKind {
 	VariableDeclaration,
 	VariableStatement,
 	TypeDeclaration,
+	ModuleDeclaration,
+	FunctionDeclaration,
 
 	LiteralNumber,
 	LiteralBigInt,

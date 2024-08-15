@@ -2,20 +2,24 @@ import { test } from "bun:test";
 import { assertParser } from "./test-util.ts";
 
 import {
+	FunctionDeclaration,
 	InterfaceDeclaration,
 	TypeDeclaration,
 	VariableDeclaration,
 	VariableKind,
 	VariableStatement,
+	ModuleDeclaration,
 } from "./statements.ts";
 import {
 	FunctionType,
 	Generic,
+	GetAccessor,
 	IndexedAccessType,
 	KeyOfOperator,
 	MethodSignature,
 	Parameter,
 	PropertySignature,
+	SetAccessor,
 	TypeReference,
 	UnionType,
 } from "./type.ts";
@@ -287,5 +291,168 @@ test("TypeDeclaration: 1", () => {
 		TypeDeclaration.parser,
 		`type Hello = World;`,
 		new TypeDeclaration(new Identifier("Hello"), new TypeReference(new Identifier("World"))),
+	);
+});
+
+test("Namespace: 1", () => {
+	assertParser(
+		ModuleDeclaration.parser,
+		`export declare namespace Random {
+
+	interface RandomThings {
+		"abort": Event;
+		get foo(): string;
+		set foo(value: string);
+		onfullscreenchange: ((this: Document, ev: Event) => any) | null;
+		clear(): void;
+		createElementNS<K extends keyof SVGElementTagNameMap>(namespaceURI: "http://www.w3.org/2000/svg", qualifiedName: K): SVGElementTagNameMap[K];
+	}
+
+}`,
+		new ModuleDeclaration(
+			"Random",
+			[
+				new InterfaceDeclaration("RandomThings", [
+					new PropertySignature(new Literal.StringType("abort"), new TypeReference(new Identifier("Event")), {
+						optional: false,
+					}),
+					new GetAccessor(new Identifier("foo"), new Predefined.StringType()),
+					new SetAccessor(new Identifier("foo"), [
+						new Parameter(new Identifier("value"), new Predefined.StringType()),
+					]),
+					new PropertySignature(
+						new Identifier("onfullscreenchange"),
+						new UnionType([
+							new FunctionType(
+								[
+									new Parameter(
+										new Identifier("this"),
+										new TypeReference(new Identifier("Document")),
+									),
+									new Parameter(new Identifier("ev"), new TypeReference(new Identifier("Event"))),
+								],
+								new Predefined.AnyType(),
+							),
+							new Literal.NullType(),
+						]),
+						{ optional: false },
+					),
+					new MethodSignature(new Identifier("clear"), [], new Predefined.VoidType()),
+					new MethodSignature(
+						new Identifier("createElementNS"),
+						[
+							new Parameter(
+								new Identifier("namespaceURI"),
+								new Literal.StringType("http://www.w3.org/2000/svg"),
+							),
+							new Parameter(new Identifier("qualifiedName"), new TypeReference(new Identifier("K"))),
+						],
+						new IndexedAccessType(
+							new Identifier("SVGElementTagNameMap"),
+							new TypeReference(new Identifier("K")),
+						),
+						{
+							generics: [
+								new Generic(
+									new Identifier("K"),
+									new KeyOfOperator(new TypeReference(new Identifier("SVGElementTagNameMap"))),
+								),
+							],
+						},
+					),
+				]),
+			],
+			{ declared: true, exported: true },
+		),
+	);
+});
+
+test("Namespace: 2", () => {
+	assertParser(
+		ModuleDeclaration.parser,
+		`/** Holds useful CSS-related methods. No object with this interface are implemented: it contains only static methods and therefore is a utilitarian interface. */
+namespace CSS {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/highlights_static) */
+    var highlights: HighlightRegistry;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) */
+    function Hz(value: number): CSSUnitValue;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) */
+    function Q(value: number): CSSUnitValue;
+    function cap(value: number): CSSUnitValue;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) */
+    function ch(value: number): CSSUnitValue;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) */
+    function cm(value: number): CSSUnitValue;
+}`,
+		new ModuleDeclaration(
+			"CSS",
+			[
+				new VariableStatement(
+					[
+						new VariableDeclaration(
+							new Identifier("highlights"),
+							new TypeReference(new Identifier("HighlightRegistry")),
+							{
+								doc: new DocString(
+									" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/highlights_static) ",
+								),
+							},
+						),
+					],
+					{ kind: VariableKind.Var },
+				),
+				new FunctionDeclaration(
+					new Identifier("Hz"),
+					[new Parameter(new Identifier("value"), new Predefined.NumberType())],
+					new TypeReference(new Identifier("CSSUnitValue")),
+					{
+						doc: new DocString(
+							" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) ",
+						),
+					},
+				),
+				new FunctionDeclaration(
+					new Identifier("Q"),
+					[new Parameter(new Identifier("value"), new Predefined.NumberType())],
+					new TypeReference(new Identifier("CSSUnitValue")),
+					{
+						doc: new DocString(
+							" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) ",
+						),
+					},
+				),
+				new FunctionDeclaration(
+					new Identifier("cap"),
+					[new Parameter(new Identifier("value"), new Predefined.NumberType())],
+					new TypeReference(new Identifier("CSSUnitValue")),
+				),
+				new FunctionDeclaration(
+					new Identifier("ch"),
+					[new Parameter(new Identifier("value"), new Predefined.NumberType())],
+					new TypeReference(new Identifier("CSSUnitValue")),
+					{
+						doc: new DocString(
+							" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) ",
+						),
+					},
+				),
+				new FunctionDeclaration(
+					new Identifier("cm"),
+					[new Parameter(new Identifier("value"), new Predefined.NumberType())],
+					new TypeReference(new Identifier("CSSUnitValue")),
+					{
+						doc: new DocString(
+							" [MDN Reference](https://developer.mozilla.org/docs/Web/API/CSS/factory_functions_static) ",
+						),
+					},
+				),
+			],
+			{
+				declared: false,
+				doc: new DocString(
+					" Holds useful CSS-related methods. No object with this interface are implemented: it contains only static methods and therefore is a utilitarian interface. ",
+				),
+			},
+		),
 	);
 });

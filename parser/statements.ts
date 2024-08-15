@@ -1,9 +1,20 @@
-import { char, choice, optionalWhitespace, Parser, possibly, sequenceOf, str, whitespace } from "./deps/arcsecond.ts";
+import {
+	char,
+	choice,
+	many,
+	optionalWhitespace,
+	Parser,
+	possibly,
+	sequenceOf,
+	str,
+	whitespace,
+} from "./deps/arcsecond.ts";
 import { DocString } from "./docString.ts";
-import { TypeLiteral, Type, GenericList, Generic } from "./type.ts";
+import { TypeLiteral, Type, GenericList, Generic, ParameterList, RestParameter, Parameter } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
-import { sepByN, seq, surroundWhitespace } from "./utils.ts";
+import { lazy, left, nonNull, sepByN, seq, surroundWhitespace, ws } from "./utils.ts";
+import { Comment, Directive, Pragma } from "./comment.ts";
 
 export class ExportKeyword extends ParserBase {
 	kind: SyntaxKind.ExportKeyword = SyntaxKind.ExportKeyword;
@@ -261,3 +272,147 @@ export class TypeDeclaration extends ParserBase {
 		return out;
 	}
 }
+
+export class FunctionDeclaration extends ParserBase {
+	kind: SyntaxKind.FunctionDeclaration = SyntaxKind.FunctionDeclaration;
+
+	doc: DocString | null;
+	exported: boolean;
+	declared: boolean;
+	generics: Generic[] | null;
+	restParameter: RestParameter | null;
+
+	constructor(
+		public name: Identifier,
+		public args: Parameter[],
+		public returnType: Type,
+		extra?: {
+			doc?: DocString | null;
+			exported?: boolean;
+			declared?: boolean;
+			generics?: Generic[] | null;
+			restParameter?: RestParameter | null;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+		this.exported = extra?.exported ?? false;
+		this.declared = extra?.declared ?? false;
+		this.generics = extra?.generics ?? null;
+		this.restParameter = extra?.restParameter ?? null;
+	}
+
+	static parser: Parser<FunctionDeclaration> = seq([
+		seq([
+			possibly(DocString.parser),
+			optionalWhitespace,
+			possibly(seq([str("export"), whitespace])).map(x => !!x),
+			possibly(seq([str("declare"), whitespace])).map(x => !!x),
+			str("function"),
+			whitespace,
+			Identifier.parser,
+		]),
+		optionalWhitespace,
+		seq([
+			possibly(GenericList), //
+			optionalWhitespace,
+			ParameterList,
+			optionalWhitespace,
+			str(":"),
+			optionalWhitespace,
+			Type,
+		]),
+		optionalWhitespace,
+		char(";"),
+	]).map(
+		([[doc, , exported, declared, , , name], , [generics, , { params, restParameter }, , , , returnType]]) =>
+			new FunctionDeclaration(name, params, returnType, { doc, exported, declared, generics, restParameter }),
+	);
+
+	toString() {
+		let out = "";
+
+		if (this.doc) out += this.doc + "\n";
+		if (this.exported) out += "export ";
+		if (this.declared) out += "declare ";
+		out += "function " + this.name;
+		if (this.generics) out += "<" + this.generics.join(", ") + ">";
+		out += "(";
+		out += this.args.map(arg => arg.toString()).join(", ");
+		if (this.restParameter) out += ", " + this.restParameter.toString();
+		out += "): " + this.returnType + ";";
+
+		return out;
+	}
+}
+
+export class ModuleDeclaration extends ParserBase {
+	kind: SyntaxKind.ModuleDeclaration = SyntaxKind.ModuleDeclaration;
+
+	doc: DocString | null;
+	exported: boolean;
+	declared: boolean;
+
+	constructor(
+		public readonly name: string,
+		public readonly statements: Statement[],
+		extra?: {
+			doc?: DocString | null;
+			exported?: boolean;
+			declared?: boolean;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+		this.exported = extra?.exported ?? false;
+		this.declared = extra?.declared ?? false;
+	}
+
+	static parser: Parser<ModuleDeclaration> = lazy(() =>
+		seq([
+			possibly(DocString.parser),
+			optionalWhitespace,
+			possibly(left(str("export"), whitespace)).map(x => !!x),
+			possibly(left(str("declare"), whitespace)).map(x => !!x),
+			str("namespace"),
+			whitespace,
+			Identifier.parser,
+			optionalWhitespace,
+			str("{"),
+			many(choice([ws, Statement])).map(stuff => stuff.filter(nonNull)),
+			str("}"),
+		]).map(
+			([doc, , exported, declared, , , name, , , statements]) =>
+				new ModuleDeclaration(name.name, statements, { doc, exported, declared }),
+		),
+	);
+
+	toString(): string {
+		let out = "";
+		if (this.doc) out += this.doc + "\n";
+		if (this.exported) out += "export ";
+		if (this.declared) out += "declare ";
+		out += "namespace " + this.name + " {\n";
+		for (const statement of this.statements) out += statement.toString().split("\n").join("\n\t") + "\n";
+		return out + "}";
+	}
+}
+
+export type Statement =
+	| Directive
+	| Pragma
+	| Comment
+	| InterfaceDeclaration
+	| VariableStatement
+	| TypeDeclaration
+	| ModuleDeclaration
+	| FunctionDeclaration;
+
+export const Statement: Parser<Statement> = choice([
+	ModuleDeclaration.parser,
+	FunctionDeclaration.parser,
+	InterfaceDeclaration.parser,
+	VariableStatement.parser,
+	TypeDeclaration.parser,
+	Comment.parser,
+]);
