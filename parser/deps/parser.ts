@@ -1,33 +1,7 @@
-import { encoder } from "./unicode.ts";
-import { InputType, InputTypes, isTypedArray } from "./inputTypes.ts";
-
 // createParserState :: x -> s -> ParserState e a s
-const createParserState = <D>(target: InputType, data: D | null = null): ParserState<null, string | null, D | null> => {
-	let dataView: DataView;
-	let inputType;
-
-	if (typeof target === "string") {
-		const bytes = encoder.encode(target);
-		dataView = new DataView(bytes.buffer);
-		inputType = InputTypes.STRING;
-	} else if (target instanceof ArrayBuffer) {
-		dataView = new DataView(target);
-		inputType = InputTypes.ARRAY_BUFFER;
-	} else if (isTypedArray(target)) {
-		dataView = new DataView(target.buffer);
-		inputType = InputTypes.TYPED_ARRAY;
-	} else if (target instanceof DataView) {
-		dataView = target;
-		inputType = InputTypes.DATA_VIEW;
-	} else {
-		throw new Error(
-			`Cannot process input. Must be a string, ArrayBuffer, TypedArray, or DataView. but got ${typeof target}`,
-		);
-	}
-
+const createParserState = <D>(source: string, data: D | null = null): ParserState<null, string | null, D | null> => {
 	return {
-		dataView,
-		inputType,
+		source,
 
 		isError: false,
 		error: null,
@@ -71,8 +45,7 @@ type StateTransformerFunction<T, E = any, D = any> = (state: ParserState<any, an
 export type FnReturingParserIterator<T> = () => Iterator<Parser<any>, T>;
 
 export type ParserState<T, E, D> = {
-	dataView: DataView;
-	inputType: InputType;
+	source: string;
 } & InternalResultType<T, E, D>;
 
 export type InternalResultType<T, E, D> = {
@@ -107,7 +80,7 @@ export class Parser<T, E = string, D = any> {
 	}
 
 	// run :: Parser e a s ~> x -> Either e a
-	run(target: InputType): ResultType<T, E, D> {
+	run(target: string): ResultType<T, E, D> {
 		const state = createParserState(target);
 
 		const resultState = this.p(state);
@@ -131,7 +104,7 @@ export class Parser<T, E = string, D = any> {
 
 	// fork :: Parser e a s ~> x -> (e -> ParserState e a s -> f) -> (a -> ParserState e a s -> b)
 	fork<F>(
-		target: InputType,
+		target: string,
 		errorFn: (errorMsg: E, parsingState: ParserState<T, E, D>) => F,
 		successFn: (result: T, parsingState: ParserState<T, E, D>) => F,
 	) {

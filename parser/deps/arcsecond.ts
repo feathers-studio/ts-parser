@@ -1,5 +1,3 @@
-import { decoder, encoder, getCharacterLength, getNextCharWidth, getString } from "./unicode.ts";
-import { InputType, InputTypes } from "./inputTypes.ts";
 import {
 	Parser,
 	ParserState,
@@ -20,21 +18,9 @@ const reLetters = /^[a-zA-Z]+/;
 const reWhitespaces = /^\s+/;
 const reErrorExpectation = /ParseError.+Expecting/;
 
-export type { ParserState, ResultType, Err, Ok, InputType };
+export type { ParserState, ResultType, Err, Ok };
 
-export {
-	encoder,
-	decoder,
-	updateData,
-	Parser,
-	updateError,
-	updateParserState,
-	updateResult,
-	InputTypes,
-	getCharacterLength,
-	getNextCharWidth,
-	getString,
-};
+export { updateData, Parser, updateError, updateParserState, updateResult };
 
 // getData :: Parser e a s
 export const getData = new Parser(function getData$state(state) {
@@ -468,7 +454,7 @@ export function tapParser<T, E, D>(fn: (state: ParserState<T, E, D>) => void): P
 }
 
 // parse :: Parser e a s -> String -> Either e a
-export function parse<T, E, D>(parser: Parser<T, E, D>): (target: InputType) => ResultType<T, E, D> {
+export function parse<T, E, D>(parser: Parser<T, E, D>): (target: string) => ResultType<T, E, D> {
 	return function parse$targetString(target) {
 		return parser.run(target);
 	};
@@ -608,9 +594,7 @@ export const many = function many<T>(parser: Parser<T>): Parser<T[]> {
 				nextState = out;
 				results.push(nextState.result);
 
-				if (nextState.index >= nextState.dataView.byteLength) {
-					break;
-				}
+				if (nextState.index > nextState.source.length - 1) break;
 			}
 		}
 
@@ -651,24 +635,23 @@ export function errorMapTo<E, E2, D>(fn: (error: E, index: number, data: D) => E
 
 // char :: Char -> Parser e Char s
 export const char = function char(c: string): Parser<string> {
-	if (!c || getCharacterLength(c) !== 1) {
-		throw new TypeError(`char must be called with a single character, but got ${c}`);
-	}
+	if (!c || c.length !== 1) throw new TypeError(`char must be called with a single character, but got ${c}`);
 
 	return new Parser(function char$state(state) {
 		if (state.isError) return state;
 
-		const { index, dataView } = state;
-		if (index < dataView.byteLength) {
-			const charWidth = getNextCharWidth(index, dataView);
-			if (index + charWidth <= dataView.byteLength) {
-				const char = getString(index, charWidth, dataView);
-				return char === c
-					? updateParserState(state, c, index + charWidth)
-					: updateError(state, `ParseError (position ${index}): Expecting character '${c}', got '${char}'`);
-			}
-		}
-		return updateError(state, `ParseError (position ${index}): Expecting character '${c}', but got end of input.`);
+		const { index, source } = state;
+
+		if (index > source.length - 1)
+			return updateError(
+				state,
+				`ParseError (position ${index}): Expecting character '${c}', but got end of input.`,
+			);
+
+		const char = source[index];
+		return char === c
+			? updateParserState(state, c, index + 1)
+			: updateError(state, `ParseError (position ${index}): Expecting character '${c}', got '${char}'`);
 	});
 };
 
@@ -676,47 +659,40 @@ export const char = function char(c: string): Parser<string> {
 export const anyChar: Parser<string> = new Parser(function anyChar$state(state) {
 	if (state.isError) return state;
 
-	const { index, dataView } = state;
-	if (index < dataView.byteLength) {
-		const charWidth = getNextCharWidth(index, dataView);
-		if (index + charWidth <= dataView.byteLength) {
-			const char = getString(index, charWidth, dataView);
-			return updateParserState(state, char, index + charWidth);
-		}
-	}
-	return updateError(state, `ParseError (position ${index}): Expecting a character, but got end of input.`);
+	const { index, source } = state;
+
+	if (index > source.length - 1)
+		return updateError(state, `ParseError (position ${index}): Expecting any character, but got end of input.`);
+
+	const char = source[index];
+	return updateParserState(state, char, index + 1);
 });
 
 // peek :: Parser e Char s
-export const peek: Parser<number> = new Parser(function peek$state(state) {
+export const peek: Parser<string> = new Parser(function peek$state(state) {
 	if (state.isError) return state;
 
-	const { index, dataView } = state;
-	if (index < dataView.byteLength) {
-		return updateParserState(state, dataView.getUint8(index), index);
-	}
-	return updateError(state, `ParseError (position ${index}): Unexpected end of input.`);
+	const { index, source } = state;
+
+	if (index > source.length - 1)
+		return updateError(state, `ParseError (position ${index}): Expecting any character, but got end of input.`);
+
+	return updateParserState(state, source[index], index);
 });
 
 // str :: String -> Parser e String s
 export function str(s: string): Parser<string> {
-	if (!s || getCharacterLength(s) < 1) {
-		throw new TypeError(`str must be called with a string with length > 1, but got ${s}`);
-	}
-
-	const encodedStr = encoder.encode(s);
+	if (!s || s.length < 1) throw new TypeError(`str must be called with a string with length > 1, but got ${s}`);
 
 	return new Parser(function str$state(state) {
-		const { index, dataView } = state;
+		const { index, source } = state;
 
-		const remainingBytes = dataView.byteLength - index;
-		if (remainingBytes < encodedStr.byteLength) {
+		if (source.length < s.length)
 			return updateError(state, `ParseError (position ${index}): Expecting string '${s}', but got end of input.`);
-		}
 
-		const stringAtIndex = getString(index, encodedStr.byteLength, dataView);
+		const stringAtIndex = source.slice(index, index + s.length);
 		return s === stringAtIndex
-			? updateParserState(state, s, index + encoder.encode(s).byteLength)
+			? updateParserState(state, s, index + s.length)
 			: updateError(state, `ParseError (position ${index}): Expecting string '${s}', got '${stringAtIndex}...'`);
 	});
 }
@@ -734,13 +710,13 @@ export function regex(re: RegExp): Parser<string> {
 
 	return new Parser(function regex$state(state) {
 		if (state.isError) return state;
-		const { dataView, index } = state;
-		const rest = getString(index, dataView.byteLength - index, dataView);
+		const { source, index } = state;
+		const rest = source.slice(index);
 
 		if (rest.length >= 1) {
 			const match = rest.match(re);
 			return match
-				? updateParserState(state, match[0], index + encoder.encode(match[0]).byteLength)
+				? updateParserState(state, match[0], index + match[0].length)
 				: updateError(
 						state,
 						`ParseError (position ${index}): Expecting string matching '${re}', got '${rest.slice(
@@ -760,19 +736,15 @@ export function regex(re: RegExp): Parser<string> {
 export const digit: Parser<string> = new Parser(function digit$state(state) {
 	if (state.isError) return state;
 
-	const { dataView, index } = state;
+	const { source, index } = state;
 
-	if (dataView.byteLength > index) {
-		const charWidth = getNextCharWidth(index, dataView);
-		if (index + charWidth <= dataView.byteLength) {
-			const char = getString(index, charWidth, dataView);
-			return dataView.byteLength && char && reDigit.test(char)
-				? updateParserState(state, char, index + charWidth)
-				: updateError(state, `ParseError (position ${index}): Expecting digit, got '${char}'`);
-		}
-	}
+	if (index > source.length - 1)
+		return updateError(state, `ParseError (position ${index}): Expecting digit, but got end of input.`);
 
-	return updateError(state, `ParseError (position ${index}): Expecting digit, but got end of input.`);
+	const char = source[index];
+	return char && reDigit.test(char)
+		? updateParserState(state, char, index + 1)
+		: updateError(state, `ParseError (position ${index}): Expecting digit, got '${char}'`);
 });
 
 // digits :: Parser e String s
@@ -784,19 +756,15 @@ export const digits: Parser<string> = regex(reDigits).errorMap(
 export const letter: Parser<string> = new Parser(function letter$state(state) {
 	if (state.isError) return state;
 
-	const { index, dataView } = state;
+	const { index, source } = state;
 
-	if (dataView.byteLength > index) {
-		const charWidth = getNextCharWidth(index, dataView);
-		if (index + charWidth <= dataView.byteLength) {
-			const char = getString(index, charWidth, dataView);
-			return dataView.byteLength && char && reLetter.test(char)
-				? updateParserState(state, char, index + charWidth)
-				: updateError(state, `ParseError (position ${index}): Expecting letter, got '${char}'`);
-		}
-	}
+	if (index > source.length - 1)
+		return updateError(state, `ParseError (position ${index}): Expecting letter, but got end of input.`);
 
-	return updateError(state, `ParseError (position ${index}): Expecting letter, but got end of input.`);
+	const char = source[index];
+	return char && reLetter.test(char)
+		? updateParserState(state, char, index + 1)
+		: updateError(state, `ParseError (position ${index}): Expecting letter, got '${char}'`);
 });
 
 // letters :: Parser e String s
@@ -809,25 +777,18 @@ export function anyOfString(s: string): Parser<string> {
 	return new Parser(function anyOfString$state(state) {
 		if (state.isError) return state;
 
-		const { dataView, index } = state;
+		const { source, index } = state;
 
-		if (dataView.byteLength > index) {
-			const charWidth = getNextCharWidth(index, dataView);
-			if (index + charWidth <= dataView.byteLength) {
-				const char = getString(index, charWidth, dataView);
-				return s.includes(char)
-					? updateParserState(state, char, index + charWidth)
-					: updateError(
-							state,
-							`ParseError (position ${index}): Expecting any of the string "${s}", got ${char}`,
-					  );
-			}
-		}
+		if (index > source.length - 1)
+			return updateError(
+				state,
+				`ParseError (position ${index}): Expecting any of the string "${s}", but got end of input.`,
+			);
 
-		return updateError(
-			state,
-			`ParseError (position ${index}): Expecting any of the string "${s}", but got end of input.`,
-		);
+		const char = source[index];
+		return s.includes(char)
+			? updateParserState(state, char, index + 1)
+			: updateError(state, `ParseError (position ${index}): Expecting any of the string "${s}", got ${char}`);
 	});
 }
 
@@ -1336,60 +1297,35 @@ export function between<L, T, R>(leftParser: Parser<L>): (rightParser: Parser<R>
 	};
 }
 
-// everythingUntil :: Parser e a s -> Parser e String s
-export function everythingUntil(parser: Parser<any>): Parser<number[]> {
+// everyCharUntil :: Parser e a s -> Parser e String s
+export const everyCharUntil = (parser: Parser<any>) => {
 	return new Parser(state => {
 		if (state.isError) return state;
 
-		const results = [];
+		let result = "";
 		let nextState = state;
 
 		while (true) {
 			const out = parser.p(nextState);
 
 			if (out.isError) {
-				const { index, dataView } = nextState;
+				const { index, source } = nextState;
 
-				if (dataView.byteLength <= index) {
+				if (index > source.length - 1)
 					return updateError(
 						nextState,
 						`ParseError 'everythingUntil' (position ${nextState.index}): Unexpected end of input.`,
 					);
-				}
 
-				const val = dataView.getUint8(index);
+				const val = source[index];
 				if (val) {
-					results.push(val);
+					result += val;
 					nextState = updateParserState(nextState, val, index + 1);
 				}
-			} else {
-				break;
-			}
+			} else break;
 		}
 
-		return updateResult(nextState, results);
-	});
-}
-
-// everyCharUntil :: Parser e a s -> Parser e String s
-export const everyCharUntil = (parser: Parser<any>) =>
-	everythingUntil(parser).map(results => decoder.decode(Uint8Array.from(results)));
-
-// anythingExcept :: Parser e a s -> Parser e Char s
-export const anythingExcept = function anythingExcept(parser: Parser<any>): Parser<number> {
-	return new Parser(function anythingExcept$state(state) {
-		if (state.isError) return state;
-		const { dataView, index } = state;
-
-		const out = parser.p(state);
-		if (out.isError) {
-			return updateParserState(state, dataView.getUint8(index), index + 1);
-		}
-
-		return updateError(
-			state,
-			`ParseError 'anythingExcept' (position ${index}): Matched '${out.result}' from the exception parser`,
-		);
+		return updateResult(nextState, result);
 	});
 };
 
@@ -1397,18 +1333,15 @@ export const anythingExcept = function anythingExcept(parser: Parser<any>): Pars
 export const anyCharExcept = function anyCharExcept(parser: Parser<any>): Parser<number> {
 	return new Parser(function anyCharExcept$state(state) {
 		if (state.isError) return state;
-		const { dataView, index } = state;
+		const { source, index } = state;
 
 		const out = parser.p(state);
 		if (out.isError) {
-			if (index < dataView.byteLength) {
-				const charWidth = getNextCharWidth(index, dataView);
-				if (index + charWidth <= dataView.byteLength) {
-					const char = getString(index, charWidth, dataView);
-					return updateParserState(state, char, index + charWidth);
-				}
-			}
-			return updateError(state, `ParseError 'anyCharExcept' (position ${index}): Unexpected end of input`);
+			if (index > source.length - 1)
+				return updateError(state, `ParseError 'anyCharExcept' (position ${index}): Unexpected end of input`);
+
+			const char = source[index];
+			return updateParserState(state, char, index + 1);
 		}
 
 		return updateError(
@@ -1462,12 +1395,9 @@ export const startOfInput = new Parser<null, string>(function startOfInput$state
 // endOfInput :: Parser e Null s
 export const endOfInput = new Parser<null, string>(function endOfInput$state(state) {
 	if (state.isError) return state;
-	const { dataView, index, inputType } = state;
-	if (index !== dataView.byteLength) {
-		const errorByte =
-			inputType === InputTypes.STRING
-				? String.fromCharCode(dataView.getUint8(index))
-				: `0x${dataView.getUint8(index).toString(16).padStart(2, "0")}`;
+	const { source, index } = state;
+	if (index !== source.length) {
+		const errorByte = source[index];
 
 		return updateError(
 			state,
