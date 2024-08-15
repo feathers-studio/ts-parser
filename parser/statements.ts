@@ -8,6 +8,8 @@ import {
 	ConstructSignature,
 	GenericList,
 	Generic,
+	GetAccessor,
+	SetAccessor,
 } from "./type.ts";
 import { Identifier } from "./identifier.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
@@ -76,7 +78,16 @@ export class InterfaceDeclaration extends ParserBase {
 
 	constructor(
 		public name: string,
-		public members: (PropertySignature | MethodSignature | ConstructSignature | Comment | Directive | Pragma)[],
+		public members: (
+			| GetAccessor
+			| SetAccessor
+			| PropertySignature
+			| MethodSignature
+			| ConstructSignature
+			| Comment
+			| Directive
+			| Pragma
+		)[],
 		extra?: {
 			exported?: boolean;
 			generics?: Generic[];

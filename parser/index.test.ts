@@ -2,12 +2,13 @@ import { test, expect } from "bun:test";
 import { DeclarationFile, parse, Statement } from "./index.ts";
 import { assertParser, assertParserFn } from "./test-util.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
-import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
+import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./statements.ts";
 import {
 	ArrayType,
 	ConstructSignature,
 	FunctionType,
 	Generic,
+	GetAccessor,
 	IndexedAccessType,
 	IndexSignature,
 	KeyOfOperator,
@@ -15,6 +16,7 @@ import {
 	ObjectType,
 	Parameter,
 	PropertySignature,
+	SetAccessor,
 	TypeReference,
 	UnionType,
 } from "./type.ts";
@@ -130,8 +132,13 @@ interface AbstractWorker {
     onerror: ((this: AbstractWorker, ev: ErrorEvent) => any) | null;
 }
 
-interface AbortSignalEventMap {
+interface RandomThings {
     "abort": Event;
+	get foo(): string;
+	set foo(value: string);
+	onfullscreenchange: ((this: Document, ev: Event) => any) | null;
+	clear(): void;
+	createElementNS<K extends keyof SVGElementTagNameMap>(namespaceURI: "http://www.w3.org/2000/svg", qualifiedName: K): SVGElementTagNameMap[K];
 }`;
 
 const expectFixture: Statement[] = [
@@ -570,10 +577,42 @@ const expectFixture: Statement[] = [
 		),
 	]),
 
-	new InterfaceDeclaration("AbortSignalEventMap", [
+	new InterfaceDeclaration("RandomThings", [
 		new PropertySignature(
 			new Literal.StringType("abort"), //
 			new TypeReference(new Identifier("Event")),
+		),
+		new GetAccessor(new Identifier("foo"), new Predefined.StringType()),
+		new SetAccessor(new Identifier("foo"), [new Parameter(new Identifier("value"), new Predefined.StringType())]),
+		new PropertySignature(
+			new Identifier("onfullscreenchange"),
+			new UnionType([
+				new FunctionType(
+					[
+						new Parameter(new Identifier("this"), new TypeReference(new Identifier("Document"))),
+						new Parameter(new Identifier("ev"), new TypeReference(new Identifier("Event"))),
+					],
+					new Predefined.AnyType(),
+				),
+				new Literal.NullType(),
+			]),
+		),
+		new MethodSignature(new Identifier("clear"), [], new Predefined.VoidType()),
+		new MethodSignature(
+			new Identifier("createElementNS"),
+			[
+				new Parameter(new Identifier("namespaceURI"), new Literal.StringType("http://www.w3.org/2000/svg")),
+				new Parameter(new Identifier("qualifiedName"), new TypeReference(new Identifier("K"))),
+			],
+			new IndexedAccessType(new Identifier("SVGElementTagNameMap"), new TypeReference(new Identifier("K"))),
+			{
+				generics: [
+					new Generic(
+						new Identifier("K"),
+						new KeyOfOperator(new TypeReference(new Identifier("SVGElementTagNameMap"))),
+					),
+				],
+			},
 		),
 	]),
 ];

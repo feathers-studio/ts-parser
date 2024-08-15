@@ -425,29 +425,104 @@ function stringifyMethodLike(
 	{
 		doc,
 		generics,
-		parameters,
+		parameters = [],
 		returnType,
 	}: {
 		doc: DocString | null;
-		generics: Generic[];
-		parameters: Parameter[];
-		returnType: Type | null;
+		generics?: Generic[];
+		parameters?: Parameter[];
+		returnType?: Type | null;
 	},
 ) {
 	let out = "";
 	if (doc) out += doc + "\n\t";
 	out += name;
-	if (generics.length) out += "<" + generics.join(", ") + ">";
+	if (generics?.length) out += "<" + generics.join(", ") + ">";
 	out += " (";
 	out += parameters.join(", ") + ")";
 	if (returnType) out += ": " + returnType;
 	return out + ";";
 }
 
+export class GetAccessor extends ParserBase {
+	kind: SyntaxKind.GetAccessor = SyntaxKind.GetAccessor;
+
+	doc: DocString | null;
+
+	constructor(
+		public name: Identifier,
+		public returnType: Type | null,
+		extra?: {
+			doc?: DocString | null;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+	}
+
+	// TODO: conditional return types
+	static parser: Parser<GetAccessor> = lazy(() =>
+		PropertyWrap(
+			seq([
+				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
+				whitespace,
+				choice([Identifier.parser]),
+				optionalWhitespace,
+				str("("),
+				optionalWhitespace,
+				str(")"),
+				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
+			]),
+		).map(([doc, [, , name, , , , , returnType]]) => new GetAccessor(name, returnType, { doc })),
+	);
+
+	toString() {
+		return stringifyMethodLike("get " + this.name.toString(), this);
+	}
+}
+
+export class SetAccessor extends ParserBase {
+	kind: SyntaxKind.SetAccessor = SyntaxKind.SetAccessor;
+
+	doc: DocString | null;
+
+	constructor(
+		public name: Identifier,
+		public parameters: [Parameter],
+		extra?: {
+			doc?: DocString | null;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+	}
+
+	static parser: Parser<SetAccessor> = lazy(() =>
+		PropertyWrap(
+			seq([
+				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
+				whitespace,
+				choice([Identifier.parser]),
+				optionalWhitespace,
+				str("("),
+				optionalWhitespace,
+				Parameter.parser,
+				optionalWhitespace,
+				str(")"),
+			]),
+		).map(([doc, [, , name, , , , param, ,]]) => new SetAccessor(name, [param], { doc })),
+	);
+
+	toString() {
+		return stringifyMethodLike("set " + this.name.toString(), this);
+	}
+}
+
 export class MethodSignature extends ParserBase {
 	kind: SyntaxKind.MethodSignature = SyntaxKind.MethodSignature;
 
 	doc: DocString | null;
+	accessor?: "get" | "set" | null;
 	generics: Generic[];
 	restParameter: RestParameter | null;
 
@@ -457,12 +532,14 @@ export class MethodSignature extends ParserBase {
 		public returnType: Type | null,
 		extra?: {
 			doc?: DocString | null;
+			accessor?: "get" | "set" | null;
 			generics?: Generic[] | null;
 			restParameter?: RestParameter | null;
 		},
 	) {
 		super();
 		this.doc = extra?.doc ?? null;
+		this.accessor = extra?.accessor ?? null;
 		this.generics = extra?.generics ?? [];
 		this.restParameter = extra?.restParameter ?? null;
 	}
@@ -471,6 +548,7 @@ export class MethodSignature extends ParserBase {
 	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
 		PropertyWrap(
 			seq([
+				possibly(choice([str("get"), str("set")]) as Parser<"get" | "set">),
 				choice([str("new") as Parser<"new">, Identifier.parser]),
 				optionalWhitespace,
 				possibly(GenericList),
@@ -478,10 +556,11 @@ export class MethodSignature extends ParserBase {
 				ParameterList,
 				possibly(seq([surroundWhitespace(str(":")), Type]).map(([_, type]) => type)),
 			]),
-		).map(([doc, [name, _1, generics, _2, { params, restParameter }, returnType]]) => {
-			if (name === "new")
+		).map(([doc, [accessor, name, _1, generics, _2, { params, restParameter }, returnType]]) => {
+			if (name === "new" && accessor == undefined)
 				return new ConstructSignature(params, returnType ?? null, { doc, generics, restParameter });
-			else return new MethodSignature(name, params, returnType ?? null, { doc, generics, restParameter });
+			name = typeof name === "string" ? new Identifier(name) : name;
+			return new MethodSignature(name, params, returnType ?? null, { doc, accessor, generics, restParameter });
 		}),
 	);
 
@@ -521,7 +600,13 @@ export class ConstructSignature extends ParserBase {
 
 // ConstructSignature is not necessary here because MethodSignature already handles that case
 export const ObjectChild = surroundWhitespace(
-	choice([PropertySignature.parser, MethodSignature.parser, Comment.parser]),
+	choice([
+		GetAccessor.parser, //
+		SetAccessor.parser,
+		PropertySignature.parser,
+		MethodSignature.parser,
+		Comment.parser,
+	]),
 );
 
 export class ObjectType extends ParserBase {
@@ -530,7 +615,16 @@ export class ObjectType extends ParserBase {
 	doc: DocString | null;
 
 	constructor(
-		public members: (MethodSignature | ConstructSignature | PropertySignature | Comment | Directive | Pragma)[],
+		public members: (
+			| GetAccessor
+			| SetAccessor
+			| MethodSignature
+			| ConstructSignature
+			| PropertySignature
+			| Comment
+			| Directive
+			| Pragma
+		)[],
 		extra?: { doc?: DocString },
 	) {
 		super();

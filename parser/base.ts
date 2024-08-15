@@ -42,6 +42,9 @@ export const enum SyntaxKind {
 	PropertySignature,
 	MethodSignature,
 	ConstructSignature,
+	GetAccessor,
+	SetAccessor,
+
 	TypeReference,
 	QualifiedName,
 
