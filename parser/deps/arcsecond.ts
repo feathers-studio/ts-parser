@@ -1,4 +1,4 @@
-import { decoder, encoder, getCharacterLength, getNextCharWidth, getString, getUtf8Char } from "./unicode.ts";
+import { decoder, encoder, getCharacterLength, getNextCharWidth, getString } from "./unicode.ts";
 import { InputType, InputTypes } from "./inputTypes.ts";
 import {
 	Parser,
@@ -19,7 +19,9 @@ const reLetter = /[a-zA-Z]/;
 const reLetters = /^[a-zA-Z]+/;
 const reWhitespaces = /^\s+/;
 const reErrorExpectation = /ParseError.+Expecting/;
+
 export type { ParserState, ResultType, Err, Ok, InputType };
+
 export {
 	encoder,
 	decoder,
@@ -32,7 +34,6 @@ export {
 	getCharacterLength,
 	getNextCharWidth,
 	getString,
-	getUtf8Char,
 };
 
 // getData :: Parser e a s
@@ -661,7 +662,7 @@ export const char = function char(c: string): Parser<string> {
 		if (index < dataView.byteLength) {
 			const charWidth = getNextCharWidth(index, dataView);
 			if (index + charWidth <= dataView.byteLength) {
-				const char = getUtf8Char(index, charWidth, dataView);
+				const char = getString(index, charWidth, dataView);
 				return char === c
 					? updateParserState(state, c, index + charWidth)
 					: updateError(state, `ParseError (position ${index}): Expecting character '${c}', got '${char}'`);
@@ -679,7 +680,7 @@ export const anyChar: Parser<string> = new Parser(function anyChar$state(state) 
 	if (index < dataView.byteLength) {
 		const charWidth = getNextCharWidth(index, dataView);
 		if (index + charWidth <= dataView.byteLength) {
-			const char = getUtf8Char(index, charWidth, dataView);
+			const char = getString(index, charWidth, dataView);
 			return updateParserState(state, char, index + charWidth);
 		}
 	}
@@ -764,7 +765,7 @@ export const digit: Parser<string> = new Parser(function digit$state(state) {
 	if (dataView.byteLength > index) {
 		const charWidth = getNextCharWidth(index, dataView);
 		if (index + charWidth <= dataView.byteLength) {
-			const char = getUtf8Char(index, charWidth, dataView);
+			const char = getString(index, charWidth, dataView);
 			return dataView.byteLength && char && reDigit.test(char)
 				? updateParserState(state, char, index + charWidth)
 				: updateError(state, `ParseError (position ${index}): Expecting digit, got '${char}'`);
@@ -788,7 +789,7 @@ export const letter: Parser<string> = new Parser(function letter$state(state) {
 	if (dataView.byteLength > index) {
 		const charWidth = getNextCharWidth(index, dataView);
 		if (index + charWidth <= dataView.byteLength) {
-			const char = getUtf8Char(index, charWidth, dataView);
+			const char = getString(index, charWidth, dataView);
 			return dataView.byteLength && char && reLetter.test(char)
 				? updateParserState(state, char, index + charWidth)
 				: updateError(state, `ParseError (position ${index}): Expecting letter, got '${char}'`);
@@ -813,7 +814,7 @@ export function anyOfString(s: string): Parser<string> {
 		if (dataView.byteLength > index) {
 			const charWidth = getNextCharWidth(index, dataView);
 			if (index + charWidth <= dataView.byteLength) {
-				const char = getUtf8Char(index, charWidth, dataView);
+				const char = getString(index, charWidth, dataView);
 				return s.includes(char)
 					? updateParserState(state, char, index + charWidth)
 					: updateError(
@@ -1403,7 +1404,7 @@ export const anyCharExcept = function anyCharExcept(parser: Parser<any>): Parser
 			if (index < dataView.byteLength) {
 				const charWidth = getNextCharWidth(index, dataView);
 				if (index + charWidth <= dataView.byteLength) {
-					const char = getUtf8Char(index, charWidth, dataView);
+					const char = getString(index, charWidth, dataView);
 					return updateParserState(state, char, index + charWidth);
 				}
 			}

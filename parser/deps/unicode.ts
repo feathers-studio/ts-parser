@@ -14,11 +14,8 @@ if (typeof TextEncoder !== "undefined") {
 export const encoder = new text.Encoder();
 export const decoder = new text.Decoder();
 
-export const getString = (index: number, length: number, dataView: DataView) => {
-	const bytes = Uint8Array.from({ length }, (_, i) => dataView.getUint8(index + i));
-	const decodedString = decoder.decode(bytes);
-	return decodedString;
-};
+export const getString = (index: number, length: number, dv: DataView) =>
+	decoder.decode(new Uint8Array(dv.buffer, dv.byteOffset + index, length));
 
 export const getNextCharWidth = (index: number, dataView: DataView) => {
 	const byte = dataView.getUint8(index);
@@ -27,11 +24,6 @@ export const getNextCharWidth = (index: number, dataView: DataView) => {
 	else if ((byte & 0xf0) >> 4 === 0b1110) return 3;
 	else if ((byte & 0xf0) >> 4 === 0b1111) return 4;
 	return 1;
-};
-
-export const getUtf8Char = (index: number, length: number, dataView: DataView) => {
-	const bytes = Uint8Array.from({ length }, (_, i) => dataView.getUint8(index + i));
-	return decoder.decode(bytes);
 };
 
 export const getCharacterLength = (str: string) => {
