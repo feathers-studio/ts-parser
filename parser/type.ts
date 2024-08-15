@@ -9,6 +9,8 @@ import {
 	char,
 	optionalWhitespace,
 	lookAhead,
+	anyCharExcept,
+	letter,
 } from "./deps/arcsecond.ts";
 
 import { lazy, bracketed, surroundWhitespace, sepByN, init, last, seq, spaces, left, right, bw } from "./utils.ts";
@@ -545,7 +547,7 @@ export class MethodSignature extends ParserBase {
 	static parser: Parser<MethodSignature | ConstructSignature> = lazy(() =>
 		PropertyWrap(
 			seq([
-				choice([str("new") as Parser<"new">, Identifier.parser]),
+				choice([left(str("new"), lookAhead(anyCharExcept(letter))) as Parser<"new">, Identifier.parser]),
 				optionalWhitespace,
 				possibly(GenericList),
 				optionalWhitespace,
