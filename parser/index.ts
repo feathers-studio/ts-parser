@@ -1,7 +1,7 @@
 import { choice, many, Parser } from "./deps/arcsecond.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import { ends, nonNull, ws } from "./utils.ts";
-import { InterfaceDeclaration, VariableStatement } from "./interface.ts";
+import { InterfaceDeclaration, TypeDeclaration, VariableStatement } from "./statements.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 
 export type Statement =
@@ -9,11 +9,13 @@ export type Statement =
 	| Pragma
 	| Comment
 	| InterfaceDeclaration
-	| VariableStatement;
+	| VariableStatement
+	| TypeDeclaration;
 
 export const Statement: Parser<Statement> = choice([
 	InterfaceDeclaration.parser,
 	VariableStatement.parser,
+	TypeDeclaration.parser,
 	Comment.parser,
 ]);
 

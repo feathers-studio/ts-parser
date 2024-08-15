@@ -22,6 +22,7 @@ export const enum SyntaxKind {
 	InterfaceDeclaration,
 	VariableDeclaration,
 	VariableStatement,
+	TypeDeclaration,
 
 	LiteralNumber,
 	LiteralBigInt,

@@ -218,3 +218,50 @@ export class VariableStatement extends ParserBase {
 		return out;
 	}
 }
+
+export class TypeDeclaration extends ParserBase {
+	kind: SyntaxKind.TypeDeclaration = SyntaxKind.TypeDeclaration;
+
+	doc: DocString | null;
+	generics: Generic[];
+
+	constructor(
+		public name: Identifier,
+		public type: Type,
+		extra?: {
+			doc?: DocString | null;
+			generics?: Generic[] | null;
+		},
+	) {
+		super();
+		this.doc = extra?.doc ?? null;
+		this.generics = extra?.generics ?? [];
+	}
+
+	static parser: Parser<TypeDeclaration> = sequenceOf([
+		possibly(DocString.parser),
+		optionalWhitespace,
+		str("type"),
+		whitespace,
+		Identifier.parser,
+		optionalWhitespace,
+		possibly(GenericList),
+		optionalWhitespace,
+		str("="),
+		optionalWhitespace,
+		Type,
+		optionalWhitespace,
+		char(";"),
+	]).map(([doc, , , , id, , generics, , , , type]) => new TypeDeclaration(id, type, { doc, generics: generics }));
+
+	toString() {
+		let out = "";
+
+		if (this.doc) out += this.doc + "\n";
+		out += "type " + this.name;
+		if (this.generics.length) out += "<" + this.generics.join(", ") + ">";
+		out += " = " + this.type + ";";
+
+		return out;
+	}
+}

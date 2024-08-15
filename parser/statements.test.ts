@@ -1,7 +1,13 @@
 import { test } from "bun:test";
 import { assertParser } from "./test-util.ts";
 
-import { InterfaceDeclaration, VariableDeclaration, VariableKind, VariableStatement } from "./interface.ts";
+import {
+	InterfaceDeclaration,
+	TypeDeclaration,
+	VariableDeclaration,
+	VariableKind,
+	VariableStatement,
+} from "./statements.ts";
 import {
 	FunctionType,
 	Generic,
@@ -199,5 +205,13 @@ test("VariableStatement: 1", () => {
 			[new VariableDeclaration(new Identifier("hello"), new TypeReference(new Identifier("World")))],
 			{ declared: true, kind: VariableKind.Var },
 		),
+	);
+});
+
+test("TypeDeclaration: 1", () => {
+	assertParser(
+		TypeDeclaration.parser,
+		`type Hello = World;`,
+		new TypeDeclaration(new Identifier("Hello"), new TypeReference(new Identifier("World"))),
 	);
 });
