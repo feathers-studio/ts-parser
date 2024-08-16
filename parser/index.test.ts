@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { DeclarationFile, parse } from "./index.ts";
+import { SourceFile, parse } from "./index.ts";
 import { assertParser, assertParserFn } from "./test-util.ts";
 import { Comment, Directive, Pragma } from "./comment.ts";
 import {
@@ -643,9 +643,9 @@ const expectFixture: Statement[] = [
 ];
 
 test("DeclarationFile", () => {
-	assertParser(DeclarationFile.parser, testSource, new DeclarationFile(expectFixture));
+	assertParser(SourceFile.parser, testSource, new SourceFile(expectFixture));
 });
 
 test("parse", () => {
-	assertParserFn(parse, testSource, new DeclarationFile(expectFixture));
+	assertParserFn(parse, testSource, new SourceFile(expectFixture));
 });

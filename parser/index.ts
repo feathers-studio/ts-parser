@@ -3,16 +3,16 @@ import { ends, nonNull, ws } from "./utils.ts";
 import { ParserBase, SyntaxKind } from "./base.ts";
 import { Statement } from "./statements.ts";
 
-export class DeclarationFile extends ParserBase {
+export class SourceFile extends ParserBase {
 	kind: SyntaxKind.DeclarationFile = SyntaxKind.DeclarationFile;
 
 	constructor(public readonly statements: Statement[]) {
 		super();
 	}
 
-	static parser: Parser<DeclarationFile> = many(choice([ws, Statement]))
+	static parser: Parser<SourceFile> = many(choice([ws, Statement]))
 		.map(stuff => stuff.flat().filter(nonNull))
-		.map(stuff => new DeclarationFile(stuff));
+		.map(stuff => new SourceFile(stuff));
 
 	toString(): string {
 		let out = "";
@@ -25,4 +25,4 @@ export class DeclarationFile extends ParserBase {
 	}
 }
 
-export const parse = (source: string) => ends(DeclarationFile.parser).run(source);
+export const parse = (source: string) => ends(SourceFile.parser).run(source);
