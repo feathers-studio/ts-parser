@@ -350,8 +350,8 @@ export class ModuleDeclaration extends ParserBase {
 	declared: boolean;
 
 	constructor(
-		public readonly name: string,
-		public readonly statements: Statement[],
+		public name: string,
+		public statements: Statement[],
 		extra?: {
 			doc?: DocString | null;
 			exported?: boolean;

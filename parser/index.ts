@@ -6,7 +6,7 @@ import { Statement } from "./statements.ts";
 export class SourceFile extends ParserBase {
 	kind: SyntaxKind.DeclarationFile = SyntaxKind.DeclarationFile;
 
-	constructor(public readonly statements: Statement[]) {
+	constructor(public statements: Statement[]) {
 		super();
 	}
 
